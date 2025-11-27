@@ -8,7 +8,8 @@
 
 
 namespace YLP
-{	struct GTAPointers
+{
+	struct GTAPointers
 	{
 		Pointer GameState{};
 		Pointer GameTime{};
@@ -25,8 +26,8 @@ namespace YLP
 	{
 		GTAPointers Legacy;
 		GTAPointers Enhanced;
+		
 		void Init();
-
 		void Reset() noexcept
 		{
 			Legacy.Reset();

@@ -121,7 +121,6 @@ namespace YLP
 				    Notifier::Info,
 				    [] {
 					    GUI::SetActiveTab(ICON_SETTINGS);
-					    Notifier::Close();
 				    });
 				m_State = Pending;
 				return;

@@ -38,7 +38,7 @@ namespace YLP
 		YimMenu(const YimMenu&) = delete;
 		YimMenu& operator=(const YimMenu&) = delete;
 
-		explicit operator bool() const
+		explicit operator bool() const noexcept
 		{
 			return m_Exists;
 		}
@@ -52,12 +52,12 @@ namespace YLP
 			PendingUpdate,
 		};
 
-		eMenuViewState GetState() const
+		eMenuViewState GetState() const noexcept
 		{
 			return m_State;
 		}
 
-		void ResetState()
+		void ResetState() noexcept
 		{
 			m_State = Idle;
 		}
@@ -68,7 +68,7 @@ namespace YLP
 			Notifier::Add(title, msg, level);
 			
 			if (log)
-				Logger::Log(static_cast<Logger::eLogLevel>(level), msg);
+				Logger::Log(static_cast<Logger::eLogLevel>(level), title + ": " + msg);
 		}
 
 		bool SanityCheck()
@@ -100,6 +100,9 @@ namespace YLP
 			m_DllPath = path / m_DllName;
 			m_Exists = IO::Exists(m_DllPath);
 			m_ChecksumPath = path / (m_Name + ".sha256");
+
+			if (Config().gtaExePaths.contains(m_TargetProcess))
+				m_ExePath = Config().gtaExePaths[m_TargetProcess];
 
 			if (m_Exists && !ReadChecksum())
 				UpdateChecksum();
@@ -252,6 +255,7 @@ namespace YLP
 		std::string m_TargetProcess{};
 		std::string m_Url{};
 		std::filesystem::path m_DllPath{};
+		std::filesystem::path m_ExePath{};
 	};
 
 	class YimMenuHandler : public Singleton<YimMenuHandler>
@@ -323,12 +327,9 @@ namespace YLP
 		{
 			switch (ver)
 			{
-			case YimMenuV1:
-				return GetInstance().m_V1;
-			case YimMenuV2:
-				return GetInstance().m_V2;
-			default:
-				return GetInstance().m_V1;
+			case YimMenuV1: return GetInstance().m_V1;
+			case YimMenuV2: return GetInstance().m_V2;
+			default:        return GetInstance().m_V1;
 			}
 		}
 

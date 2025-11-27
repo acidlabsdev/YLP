@@ -71,11 +71,12 @@ namespace YLP::Frontend
 			return Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
 		}
 
-		static void LaunchGame(int launcherIndex, eYimVersion version, std::shared_ptr<ProcessMonitor>& monitor)
+		static void LaunchGame(int launcherIndex, YimMenu& menu, std::shared_ptr<ProcessMonitor>& monitor)
 		{
 			m_AttemptedGameLaunch = true;
 			std::string cmd;
 			std::string epicID;
+			auto version = menu.m_Version;
 
 			switch (launcherIndex)
 			{
@@ -98,9 +99,25 @@ namespace YLP::Frontend
 				break;
 			case 3:
 			{
+				if (!menu.m_ExePath.empty())
+				{
+					if (!IO::Exists(menu.m_ExePath))
+					{
+						std::string msg = "The previously saved GTA V executable path is no longer valid. Please select the executable again.";
+						LOG_WARN(msg);
+						Notifier::Add("YLP", msg, Notifier::Warning);
+						Config().gtaExePaths.erase(menu.m_TargetProcess);
+						menu.m_ExePath.clear();
+					}
+					else
+					{
+						cmd = menu.m_ExePath.string();
+						break;
+					}
+				}
+
 				const std::vector<COMDLG_FILTERSPEC> filters = {{L"EXE (*.exe)", L"*.exe"}};
 				std::filesystem::path selected = IO::BrowseFile(filters, L"Select GTA V Executable");
-
 				if (selected.empty())
 					break;
 
@@ -114,6 +131,8 @@ namespace YLP::Frontend
 				}
 
 				cmd = selected.string();
+				menu.m_ExePath = selected;
+				Config().gtaExePaths[menu.m_TargetProcess] = selected;
 				break;
 			}
 			default:
@@ -132,8 +151,13 @@ namespace YLP::Frontend
 			}
 
 			IO::Open(cmd);
+
 			if (!monitor->WaitForGameReady(35000))
-				LOG_WARN("Timed out while waiting for the game to start.");
+			{
+				std::string msg = "The game process was not detected after launching. Is it taking too long to start?";
+				LOG_WARN(msg);
+				Notifier::Add("YLP", msg, Notifier::Warning);
+			}
 
 			m_AttemptedGameLaunch = false;
 		}
@@ -274,13 +298,28 @@ namespace YLP::Frontend
 				ImGui::Spinner("##playbuttonspinenr");
 			else if (ImGui::Button(ICON_PLAY))
 			{
+				if (ImGui::GetIO().KeyShift && m_LauncherIndex == 3)
+				{
+					menu.m_ExePath.clear();
+				}
+
 				ThreadManager::RunDetached([&menu, &monitor] {
-					LaunchGame(m_LauncherIndex, menu.m_Version, monitor);
+					LaunchGame(m_LauncherIndex, menu, monitor);
 				});
-			};
+			}
 			ImGui::EndDisabled();
 			if (!isRunning)
-				ImGui::ToolTip("Play");
+			{
+				if (m_LauncherIndex == 3)
+				{
+					if (menu.m_ExePath.empty())
+						ImGui::ToolTip("Browse for game executable (Will automatically start when a valid exe is selected).");
+					else
+						ImGui::ToolTip("Use the last known executable path (SHIFT + Left Click to browse again).");
+				}
+				else
+					ImGui::ToolTip("Play");
+			}
 
 			ImGui::Spacing();
 			ImGui::PushFont(Fonts::Small);

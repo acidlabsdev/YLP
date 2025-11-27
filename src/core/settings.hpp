@@ -59,6 +59,7 @@ namespace YLP
 			int mainWindowIndex = 0;
 
 			std::vector<DllInfo> savedDlls{};
+			std::unordered_map<std::string, std::filesystem::path> gtaExePaths{}; // exeName -> path
 		};
 
 		static void Init(const std::filesystem::path& path)
@@ -132,6 +133,9 @@ namespace YLP
 				    {"checksum", dll.checksum},
 				});
 
+			for (const auto& pair : m_Config.gtaExePaths)
+				j["gta_exe_paths"][pair.first] = pair.second.string();
+
 			std::ofstream f(m_FilePath);
 			f << std::setw(4) << j;
 			f.close();
@@ -183,6 +187,14 @@ namespace YLP
 					dll.checksum = entry.value("checksum", "");
 
 					m_Config.savedDlls.push_back(std::move(dll));
+				}
+			}
+
+			if (j.contains("gta_exe_paths") && !j["gta_exe_paths"].is_null() && j["gta_exe_paths"].is_object())
+			{
+				for (auto& [key, value] : j["gta_exe_paths"].items())
+				{
+					m_Config.gtaExePaths[key] = value.get<std::string>();
 				}
 			}
 		}

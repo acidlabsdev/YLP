@@ -96,6 +96,8 @@ namespace YLP
 		ImGui::EndDisabled();
 		ImGui::PopFont();
 		ImGui::PopStyleVar(2);
+
+		Notifier::DrawToast();
 		ImGui::End();
 	}
 

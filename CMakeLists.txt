@@ -31,6 +31,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 message(STATUS "Setting up linked libraries...")
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui OpenGL::GL nlohmann_json::nlohmann_json)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 message(STATUS "Adding compile definitions...")
 add_compile_definitions("_CRT_SECURE_NO_WARNINGS" "NOMINMAX" "WIN32_LEAN_AND_MEAN")

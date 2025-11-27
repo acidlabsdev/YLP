@@ -132,7 +132,7 @@ jobs:
         run: cmake -D CMAKE_BUILD_TYPE=Release -D OPTIMIZE=YES -S. -Bbuild -G Ninja
 
       - name: Build x64 Executable
-        run: cmake --build ./build --config Release --target YLP --
+        run: cmake --build ./build --config Release --target YLP
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -197,7 +197,7 @@ jobs:
               ### Build SHA256:
                     ${{ steps.build_sha.outputs.build_sha }}
               
-              ### v${{ needs.build.outputs.new_tag }} Changelog
+              ## Changelog
               ${{ env.changelog_body }}
           files: |
             YLP.exe

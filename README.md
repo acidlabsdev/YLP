@@ -19,11 +19,11 @@ more refined workflow.
 - A standalone injector + custom DLLs.
 - An improved Lua manager.
 - All features from **YLP Python** refined and ported to **C++**.
-- Significantly smaller binary size: from **84MB** down to only **1.7MB**.
+- Significantly smaller binary size: From **84MB** down to **<5MB**.
 
 ------------------------------------------------------------------------
 
->[!Important]
+>[!Note]
 > For returning users, the legacy **Python version of YLP** is **no longer supported**.
 > Automatic updates from that version will not work anymore.
 > However, you can still access its full source code under the [legacy branch](https://github.com/xesdoog/ylp/tree/legacy_ylp_python).
@@ -40,8 +40,7 @@ more refined workflow.
 4. The built-in updater will keep you up to date.
 
 >[!Note]
-> Windows will flag the executable on first launch. You'll have to whitelist it in your anti-virus.
-> I neither have the money nor the reputation for Microsoft to trust my code. You'll have to read the source and decide for yourself.
+> Windows will flag the executable on first launch. You'll need to whitelist both the executable and its data folder (`%AppData%\YLP`) in your anti-virus.
 
 ------------------------------------------------------------------------
 
@@ -53,8 +52,6 @@ Your feedback helps shape the next iterations of YLP.
 ------------------------------------------------------------------------
 
 ### ❤️ Thank You
-
-To everyone who supported YLP's early Python prototype, thank you! This C++ rewrite exists because of your feedback, patience, and enthusiasm.
 
 A huge thanks to the open source community and their immense contributions. You can find out more in the [Third Party](/Thirdparty/Readme.md) section.
 

@@ -33,16 +33,14 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		std::filesystem::create_directories(g_ProjectPath);
 
 	Logger::Init(g_ProjectPath / "cout.log");
-	LOG_INFO("========== Initializing YLP ==========");
-
 	Settings::Init(g_ProjectPath / "settings.json");
 	ThreadManager::Init(4);
 
 	if (!std::filesystem::exists(g_YimPath))
-		LOG_INFO("User does not seem to have used YimMenu before.");
+		LOG_INFO("User does not seem to have used YimMenu before, or at least not recently.");
 
 	if (!std::filesystem::exists(g_YimV2Path))
-		LOG_INFO("User does not seem to have used YimMenu V2 before.");
+		LOG_INFO("User does not seem to have used YimMenu V2 before, or at least not recently.");
 
 	if (!Renderer::Init())
 	{

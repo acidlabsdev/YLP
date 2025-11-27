@@ -20,6 +20,13 @@
 
 namespace YLP
 {
+	void Notifier::AddToastImpl(const std::shared_ptr<Notification>& notif)
+	{
+		auto toast = std::make_shared<Toast>();
+		toast->Bind(notif);
+		m_Toasts.push_back(toast);
+	}
+
 	void Notifier::AddImpl(const std::string& title,
 	    const std::string& message,
 	    eNotificationLevel level,
@@ -39,27 +46,32 @@ namespace YLP
 		const char* icon{};
 		ImVec4 color;
 		GetStyle(level, icon, color);
+		auto notif = std::make_shared<Notification>(
+		    Notification{
+		        header,
+		        message,
+		        ChildID,
+		        now,
+		        level,
+		        callback,
+		        false,
+		        icon,
+		        color});
 
-		m_Notifications.emplace_back(Notification{
-		    header,
-		    message,
-		    ChildID,
-		    now,
-		    level,
-		    callback,
-		    false,
-		    icon,
-		    color});
-
+		m_Notifications.push_back(notif);
+		AddToast(notif);
 		PlaySoundQueue();
+
 		m_Viewed = false;
 	}
 
 	void Notifier::ClearReadImpl()
 	{
-		std::erase_if(m_Notifications, [](const Notification& n) {
-			return n.m_Read;
+		std::erase_if(m_Notifications, [](std::shared_ptr<Notification> n) {
+			return n->m_Read;
 		});
+
+		m_Viewed = true;
 	}
 
 	void Notifier::PlaySoundQueueImpl()
@@ -74,14 +86,14 @@ namespace YLP
 
 	float Notifier::ComputeTotalHeight()
 	{
-		float total = 60.0f;
+		float total = 80.0f;
 
 		for (auto& n : GetInstance().m_Notifications)
 		{
-			if (n.m_Read)
+			if (n->m_Read)
 				continue;
 
-			total += n.ComputeHeight();
+			total += n->ComputeHeight();
 			total += 20.0f;
 		}
 
@@ -114,6 +126,7 @@ namespace YLP
 
 		if (m_ShouldClose)
 		{
+			LOG_DEBUG("shouldClose");
 			ImGui::CloseCurrentPopup();
 			m_IsOpen = false;
 			m_ShouldClose = false;
@@ -140,17 +153,20 @@ namespace YLP
 		draw->AddRectFilled(winTL, winBR, popupBg, popupRounding);
 		draw->AddRect(winTL, winBR, popupBorder, popupRounding, 0, 1.0f);
 
-
 		if (!m_Notifications.empty())
 		{
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 12.0f);
-			if (ImGui::Button(ICON_DELETE "Clear All"))
+			ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + 12.0f, 20.0f));
+			ImGui::TitleText("Notifications");
+			ImGui::SameLine();
+			ImGui::SetCursorPos(ImVec2(popupSize.x - 40.f, 15.0f));
+			if (ImGui::Button(ICON_DELETE))
 			{
 				std::scoped_lock lock(m_Mutex);
 				m_Notifications.clear();
 			}
-
-			ImGui::Dummy(ImVec2(1, 8));
+			ImGui::ToolTip("Clear All Notifications");
+			ImGui::Separator();
+			ImGui::Spacing();
 		}
 
 		{
@@ -169,27 +185,57 @@ namespace YLP
 
 			for (auto& n : m_Notifications)
 			{
-				if (n.m_Read)
+				if (n->m_Read)
 					continue;
 
-				n.Draw(xLeft, contentW, draw);
+				n->Draw(xLeft, contentW, draw);
 				ImGui::Dummy(ImVec2(1, 12));
 			}
 			ClearReadImpl();
 		}
-
 		ImGui::EndPopup();
 	}
 
-	void Notifier::ShowToastImpl()
+	void Notifier::DrawToastImpl()
 	{
-		// TODO; or not...
+		if (m_Toasts.empty() || m_IsOpen)
+			return;
+
+		ImDrawList* drawList = ImGui::GetForegroundDrawList();
+		ImGuiIO& io = ImGui::GetIO();
+		const float margin = 15.0f;
+		const float maxWidth = 360.0f;
+		ImVec2 pos(
+		    ImGui::GetIO().DisplaySize.x - maxWidth - margin,
+		    margin * 4);
+
+		for (auto it = m_Toasts.begin(); it != m_Toasts.end();)
+		{
+			Toast& toast = **it;
+			auto notif = toast.Get();
+			if (!notif || toast.ShouldExpire())
+			{
+				it = m_Toasts.erase(it);
+				continue;
+			}
+
+			{
+				ImGui::SetCursorScreenPos(pos);
+				notif->Draw(pos.x, maxWidth, drawList);
+				float h = notif->ComputeHeight();
+				pos.y -= (h + 10.0f);		
+				++it;
+			}
+		}
 	}
 
 	void Notifier::Notification::Dismiss()
 	{
 		m_Read = true;
 		m_Callback = nullptr;
+
+		if (!Notifier::IsOpen())
+			Notifier::ClearRead();
 	}
 
 	void Notifier::Notification::Invoke()
@@ -199,9 +245,11 @@ namespace YLP
 			auto& callback = m_Callback;
 			ThreadManager::Run([callback] {
 				callback();
+
+				if (Notifier::IsOpen())
+					Notifier::Close();
 			});
 		}
-
 		Dismiss();
 	}
 
@@ -275,10 +323,15 @@ namespace YLP
 
 		ImVec2 bodyPos = ImVec2(accentCenter.x, accentCenter.y + titleSize.y + titleSpacing);
 		ImGui::PushFont(bodyFont);
-		ImGui::SetCursorScreenPos(ImVec2(bodyPos.x, cardTL.y + padding + titleSize.y + titleSpacing));
-		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.85f, alpha));
-		ImGui::TextWrapped("%s", m_Message.c_str());
-		ImGui::PopStyleColor();
+		drawList->AddText(
+		    bodyFont,
+		    ImGui::GetFontSize(),
+		    ImVec2(cardTL.x + padding, cardTL.y + padding + titleSize.y + titleSpacing),
+		    ImGui::GetColorU32(ImVec4(0.85f, 0.85f, 0.85f, alpha)),
+		    m_Message.c_str(),
+		    nullptr,
+		    contentW - (padding * 2.0f) - accentWidth - rightButtonW
+		);
 		ImGui::PopFont();
 
 		ImRect btnRect(btnPos, btnBR);

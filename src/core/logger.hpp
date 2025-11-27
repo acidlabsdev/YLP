@@ -31,7 +31,7 @@ namespace YLP
 			std::scoped_lock lock(m_Mutex);
 			if (m_FileStream.is_open())
 			{
-				m_FileStream << "\n\n============== Farewell ==============\n";
+				m_FileStream << "\n============== Farewell ==============\n\n";
 				m_FileStream.close();
 			}
 		}

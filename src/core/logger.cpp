@@ -77,6 +77,7 @@ namespace YLP
 			return;
 		}
 
+		m_FileStream << "========== Initializing YLP ==========\n\n";
 		InstallExceptionHandler();
 		m_FilePath = file;
 		m_MaxFileSize = maxFileSize;

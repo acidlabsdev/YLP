@@ -39,16 +39,6 @@ namespace YLP
 		};
 
 	private:
-		void AddImpl(const std::string& title,
-		    const std::string& message,
-		    eNotificationLevel level,
-		    NotificationCallback callback);
-
-		void ShowToastImpl();
-		void DrawImpl();
-		void ClearReadImpl();
-		void PlaySoundQueueImpl();
-
 		struct Notification
 		{
 			std::string m_Title;
@@ -67,6 +57,67 @@ namespace YLP
 			float ComputeHeight() const noexcept;
 		};
 
+		class Toast
+		{
+		public:
+			void Bind(const std::shared_ptr<Notification>& notif)
+			{
+				m_Notif = notif;
+			}
+
+			bool ShouldExpire() const noexcept
+			{
+				bool cond = false;
+				if (auto n = m_Notif.lock())
+				{
+					auto now = std::chrono::system_clock::now();
+					auto age = n->m_TimeCreated;
+					cond = n->m_Read || now - age >= 5s;
+				}
+
+				return m_Expired || cond;
+			}
+
+			std::shared_ptr<Notification> Get()
+			{
+				return m_Notif.lock();
+			}
+
+			void Dismiss()
+			{
+				m_Expired = true;
+				if (auto n = m_Notif.lock())
+				{
+					n->Dismiss();
+				}
+			}
+
+			void Invoke()
+			{
+				m_Expired = true;
+				if (auto n = m_Notif.lock())
+				{
+					n->Invoke();
+				}
+			}
+
+		private:
+			std::weak_ptr<Notification> m_Notif;
+			bool m_Expired{false};
+		};
+
+	private:
+		void AddImpl(const std::string& title,
+		    const std::string& message,
+		    eNotificationLevel level,
+		    NotificationCallback callback);
+
+		void AddToastImpl(const std::shared_ptr<Notification>& notif);
+		void DrawToastImpl();
+		void DrawImpl();
+		void ClearReadImpl();
+		void PlaySoundQueueImpl();
+
 	public:
 		static void Add(const std::string& title,
 		    const std::string& message,
@@ -76,14 +127,19 @@ namespace YLP
 			GetInstance().AddImpl(title, message, level, callback);
 		}
 
+		static void AddToast(const std::shared_ptr<Notification>& notif)
+		{
+			GetInstance().AddToastImpl(notif);
+		}
+
 		static void Draw()
 		{
 			GetInstance().DrawImpl();
 		}
 
-		static void ShowToast()
+		static void DrawToast()
 		{
-			GetInstance().ShowToastImpl();
+			GetInstance().DrawToastImpl();
 		}
 
 
@@ -149,7 +205,8 @@ namespace YLP
 
 	private:
 		std::mutex m_Mutex;
-		std::vector<Notification> m_Notifications{};
+		std::vector<std::shared_ptr<Notification>> m_Notifications{};
+		std::vector<std::shared_ptr<Toast>> m_Toasts{};
 		std::chrono::steady_clock::time_point m_LastAudioQueueTime;
 		bool m_IsOpen{false};
 		bool m_ShouldClose{false};
