@@ -173,7 +173,7 @@ jobs:
 
                 const sections = {
                   "### 🚀 Features": extractField(body, "feature_text"),
-                  "### 🪲 Fixes": extractField(body, "fix_text"),
+                  "### 🔧 Fixes": extractField(body, "fix_text"),
                   "### 🧩 Refactors": extractField(body, "refactor_text"),
                   "### 📝 Documentation": extractField(body, "docs_text"),
                   "### 🧹 Chores": extractField(body, "chore_text")
@@ -192,17 +192,23 @@ jobs:
                 }
               }
             } else {
-              const { data: commits } = await github.rest.repos.listCommits({
-                owner, repo, sha: "main", since: lastTagDate.toISOString()
+              const compared = await github.rest.repos.compareCommits({
+                owner,
+                repo,
+                base: lastTag,
+                head: "main"
               });
 
-              for (const commit of commits.reverse()) {
-                if (commit.commit.message.toLowerCase().startsWith("merge"))
+              const commits = compared.data.commits;
+              for (const commit of commits) {
+                const msg = commit.commit.message;
+                const body = commit.commit.body;
+                if (msg.toLowerCase().startsWith("merge pull"))
                   continue;
-          
-                changelog += `## ${commit.commit.message}\n\n`;
-                if (commit.commit.body)
-                  changelog += `${commit.commit.body}\n\n`;
+
+                changelog += `## ${msg}\n\n`;
+                if (body)
+                  changelog += `${body}\n\n`;
               }
             }
 

@@ -11,7 +11,7 @@ body:
       description: Check all that apply (at least one)
       options:
         - label: 🚀 Feature
-        - label: 🪲 Fix
+        - label: 🔧 Fix
         - label: 🧩 Refactor
         - label: 📝 Documentation
         - label: 🧹 Chore
