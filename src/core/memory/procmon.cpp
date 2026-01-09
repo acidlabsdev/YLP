@@ -121,7 +121,8 @@ namespace YLP
 
 	bool ProcessMonitor::AutoInject()
 	{
-		if (m_MonitorMode == MonitorEnhanced) // not supported yet
+		if (m_MonitorMode == MonitorEnhanced)
+			// Not supported yet. This only needs a pattern for GameState so help with it would be appreciated. I don't have GTA V Enhanced
 			return false;
 
 		if (!m_Scanner || !m_Menu)
@@ -139,12 +140,47 @@ namespace YLP
 			return false;
 		}
 
+		while (true)
+		{
+			auto state = m_Menu->GetState();
+			if (state == YimMenu::eMenuViewState::Idle)
+				break;
+
+			switch (state)
+			{
+			case YimMenu::eMenuViewState::Error:
+				LOG_ERROR("[ProcMon]: Aborting auto-inject! Failed to verify DLL state.");
+				return false;
+			case YimMenu::eMenuViewState::Checking:
+				std::this_thread::sleep_for(250ms);
+				break;
+			case YimMenu::eMenuViewState::PendingUpdate:
+				LOG_INFO("[ProcMon]: Updating DLL...");
+				m_Menu->Download();
+				std::this_thread::sleep_for(500ms);
+				break;
+			case YimMenu::eMenuViewState::Downloading:
+				std::this_thread::sleep_for(1s);
+				break;
+			default:
+				LOG_WARN("[ProcMon]: Unknown menu state! Aborting.");
+				return false;
+			}
+		}
+
 		LOG_INFO("[ProcMon]: Preparing to auto-inject...");
 
 		auto& pointers = (m_MonitorMode == MonitorLegacy) ? g_Pointers.Legacy : g_Pointers.Enhanced;
 		if (!pointers.GameTime || !pointers.GameState)
 		{
 			LOG_ERROR("[ProcMon]: Auto-inject failed! Game pointers not ready.");
+			return false;
+		}
+
+		if (!m_Menu->MatchGameVersion(pointers.OnlineVersion, pointers.GameVersion))
+		{
+			LOG_WARN("[ProcMon]: Game version mismatch! Auto-inject aborted but you can still inject manually.");
+			Notifier::Add("ProcMon", "Game version mismatch! Auto-inject aborted but you can still inject manually.", Notifier::Warning);
 			return false;
 		}
 

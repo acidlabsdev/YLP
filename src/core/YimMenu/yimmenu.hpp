@@ -1,4 +1,4 @@
-// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -100,12 +100,17 @@ namespace YLP
 			m_DllPath = path / m_DllName;
 			m_Exists = IO::Exists(m_DllPath);
 			m_ChecksumPath = path / (m_Name + ".sha256");
+			m_SupportedVersionPath = path / (m_Name + ".version");
+
+			ReadSupportedGameVersion();
 
 			if (Config().gtaExePaths.contains(m_TargetProcess))
 				m_ExePath = Config().gtaExePaths[m_TargetProcess];
 
 			if (m_Exists && !ReadChecksum())
-				UpdateChecksum();
+				ThreadManager::Run([this]() {
+					UpdateChecksum();
+				});
 		}
 
 		bool ReadChecksum()
@@ -139,13 +144,74 @@ namespace YLP
 			}
 		}
 
-		void GetCommitHash()
+		void UpdateCommitHash()
 		{
 			m_LastCommitHash = Utils::RegexMatchHtml(
 			    m_ReleaseUrl.first,
 			    m_ReleaseUrl.second,
 			    R"(/commit/([0-9a-f]+)/hovercard)",
 			    1);
+		}
+
+		void UpdateSupportedGameVersion()
+		{
+			std::string match;
+
+			if (m_Version == YimMenuV2)
+			{
+				match = "Unknown";
+			}
+			else
+			{
+				match = Utils::RegexMatchHtml(
+				    L"raw.githubusercontent.com",
+				    L"Mr-X-GTA/YimMenu/refs/heads/master/src/pointers.cpp",
+				    R"(#define GTA_VERSION_TARGET\s+\"(.*?)\")", 1);
+			}
+
+			if (match.empty())
+			{
+				Notify("Failed to fetch supported game version from GitHub!", Notifier::Error, true);
+				match = "Unknown";
+			}
+
+			std::ofstream f(m_SupportedVersionPath);
+			if (f.is_open())
+			{
+				f << match;
+				f.close();
+			}
+
+			m_SupportedGameVersion = match;
+		}
+
+		void ReadSupportedGameVersion()
+		{
+			if (!IO::Exists(m_SupportedVersionPath))
+				return;
+
+			std::ifstream f(m_SupportedVersionPath);
+			if (!f.is_open())
+			{
+				LOG_WARN("{}: Failed to read supported game version from file.", m_Name);
+				return;
+			}
+
+			std::getline(f, m_SupportedGameVersion);
+			f.close();
+		}
+
+		std::string GetSupportedGameVersion() const
+		{
+			return m_SupportedGameVersion;
+		}
+
+		bool MatchGameVersion(const std::string& online, const std::string& build) const
+		{
+			if (m_SupportedGameVersion.empty() || m_SupportedGameVersion == "Unknown")
+				return false;
+
+			return m_SupportedGameVersion == (online + "-" + build);
 		}
 
 		void Download()
@@ -171,7 +237,8 @@ namespace YLP
 				}
 
 				UpdateChecksum();
-				GetCommitHash();
+				UpdateCommitHash();
+				UpdateSupportedGameVersion();
 				ResetState();
 				m_Exists = IO::Exists(m_DllPath);
 				LOG_INFO("{}: Done.", m_Name);
@@ -213,6 +280,7 @@ namespace YLP
 				if (!pendingUpdate)
 				{
 					LOG_INFO("[{}]: No new releases found.", m_Name);
+					UpdateSupportedGameVersion(); // sometimes the supported version changes without a new release
 					m_State = Idle;
 				}
 				else
@@ -222,7 +290,7 @@ namespace YLP
 				}
 
 				if (m_LastCommitHash.empty())
-					GetCommitHash();
+					UpdateCommitHash();
 			}
 			catch (const std::exception& e)
 			{
@@ -245,6 +313,7 @@ namespace YLP
 
 		std::filesystem::path m_BasePath{};
 		std::filesystem::path m_ChecksumPath{};
+		std::filesystem::path m_SupportedVersionPath{};
 		std::pair<std::wstring, std::wstring> m_ReleaseUrl{};
 		std::pair<std::wstring, std::wstring> m_DownloadUrl{};
 		std::mutex m_Mutex;
@@ -259,6 +328,7 @@ namespace YLP
 		std::string m_DllName{};
 		std::string m_Checksum{};
 		std::string m_LastCommitHash{};
+		std::string m_SupportedGameVersion{};
 		std::string m_TargetProcess{};
 		std::string m_Url{};
 		std::filesystem::path m_DllPath{};
