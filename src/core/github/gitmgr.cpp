@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -143,8 +143,8 @@ namespace YLP
 		if (has_pending_updates)
 		{
 			Notifier::Add("Lua", "Updates are available for some of your installed scripts.", Notifier::Info, [this] {
-				SetSortMode(eSortMode::INSTALLED);
-				GUI::SetActiveTab(GUI::eTabID::TAB_LUA);
+				SetSortMode(eLuaRepoSortMode::INSTALLED);
+				GUI::SetActiveTab(GUI::eTabID::TAB_YIMMENU_LUA);
 			});
 		}
 
@@ -296,25 +296,26 @@ namespace YLP
 
 	void GitHubManager::SortRepositoriesImpl()
 	{
+		uint8_t mode = Config().luaRepoSortMode;
 		std::vector<const Repository*> sorted;
 		{
 			std::shared_lock lock(m_Mutex);
 			sorted.reserve(m_Repos.size());
 			for (auto& [name, repo] : m_Repos)
 			{
-				if (m_SortMode == eSortMode::INSTALLED && !repo.isInstalled)
+				if (mode == eLuaRepoSortMode::INSTALLED && !repo.isInstalled)
 					continue;
 
 				sorted.push_back(&repo);
 			}
 		}
 
-		std::sort(sorted.begin(), sorted.end(), [mode = m_SortMode](auto a, auto b) {
+		std::sort(sorted.begin(), sorted.end(), [mode = mode](auto a, auto b) {
 			switch (mode)
 			{
-			case eSortMode::NAME:   return a->name < b->name;
-			case eSortMode::STARS:  return a->stars > b->stars;
-			case eSortMode::COMMIT: return a->lastUpdate > b->lastUpdate;
+			case eLuaRepoSortMode::NAME:   return a->name < b->name;
+			case eLuaRepoSortMode::STARS:  return a->stars > b->stars;
+			case eLuaRepoSortMode::COMMIT: return a->lastUpdate > b->lastUpdate;
 			default:                return false;
 			}
 		});

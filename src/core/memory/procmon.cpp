@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -121,8 +121,7 @@ namespace YLP
 
 	bool ProcessMonitor::AutoInject()
 	{
-		if (m_MonitorMode == MonitorEnhanced)
-			// Not supported yet. This only needs a pattern for GameState so help with it would be appreciated. I don't have GTA V Enhanced
+		if (!(Config().autoMonitorFlags & m_MonitorMode))
 			return false;
 
 		if (!m_Scanner || !m_Menu)
@@ -136,7 +135,7 @@ namespace YLP
 
 		if (m_Scanner->IsModuleLoaded(m_Menu->m_DllName))
 		{
-			LOG_WARN("[ProcMon]: Module was already injected. Auto-inject skipped.");
+			LOG_WARN("[ProcMon]: Module was already injected! Auto-inject skipped.");
 			return false;
 		}
 
@@ -163,21 +162,22 @@ namespace YLP
 				std::this_thread::sleep_for(1s);
 				break;
 			default:
-				LOG_WARN("[ProcMon]: Unknown menu state! Aborting.");
+				LOG_ERROR("[ProcMon]: Unknown menu state! Aborting.");
 				return false;
 			}
 		}
 
 		LOG_INFO("[ProcMon]: Preparing to auto-inject...");
 
-		auto& pointers = (m_MonitorMode == MonitorLegacy) ? g_Pointers.Legacy : g_Pointers.Enhanced;
+		bool isLegacy = (m_MonitorMode == MonitorLegacy);
+		auto& pointers = isLegacy ? g_Pointers.Legacy : g_Pointers.Enhanced;
 		if (!pointers.GameTime || !pointers.GameState)
 		{
 			LOG_ERROR("[ProcMon]: Auto-inject failed! Game pointers not ready.");
 			return false;
 		}
 
-		if (pointers.OnlineVersion && pointers.GameVersion)
+		if (isLegacy && (pointers.OnlineVersion && pointers.GameVersion)) // V2 doesn't store supported version in the source code.
 		{
 			const std::string& gv = pointers.GameVersion.Read<std::string>();
 			const std::string& ov = pointers.OnlineVersion.Read<std::string>();
@@ -191,7 +191,6 @@ namespace YLP
 
 		bool attempted_inject = false;
 		std::string last_log;
-
 		while (g_Running && m_Running && !attempted_inject)
 		{
 			int32_t gametime = pointers.GameTime.Read<int32_t>();
@@ -253,12 +252,14 @@ namespace YLP
 
 		LOG_INFO("[ProcMon]: Module {} loaded successfully. Checking process stability after injection...", dllName);
 		auto result = PsUtils::WaitForProcessExit(m_Scanner->GetProcessHandle(), 10000);
-
 		if (result.has_value())
 		{
 			DWORD exitCode = result.value();
-			LOG_WARN("[ProcMon]: Possible crash detected! Exit Code: 0x{:X} ({})", exitCode, PsUtils::TranslateError(exitCode));
-			return false;
+			if (exitCode != 0)
+			{
+				LOG_WARN("[ProcMon]: Possible crash detected! Exit Code: 0x{:X} ({})", exitCode, PsUtils::TranslateError(exitCode));
+				return false;
+			}
 		}
 
 		LOG_INFO("[ProcMon]: Everything seems fine.");
@@ -278,9 +279,6 @@ namespace YLP
 
 	void ProcessMonitor::MonitorLoop()
 	{
-		if (m_MonitorMode == MonitorEnhanced && !Config().supportsV2)
-			return;
-
 		if (!(Config().autoMonitorFlags & m_MonitorMode))
 			return;
 
@@ -323,7 +321,7 @@ namespace YLP
 								WaitForGameReady(20000);
 								m_OnFound(*m_Scanner);
 
-								if (m_Menu && Config().autoInject)
+								if (Config().autoMonitorFlags & m_MonitorMode)
 									AutoInject();
 							}
 							catch (const std::exception& e)

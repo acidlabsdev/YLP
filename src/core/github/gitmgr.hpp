@@ -42,15 +42,6 @@ namespace YLP
 			FAILED
 		};
 
-		enum class eSortMode
-		{
-			NAME,
-			STARS,
-			COMMIT,
-			INSTALLED
-		};
-
-		eSortMode m_SortMode = eSortMode::STARS;
 		mutable std::shared_mutex m_Mutex{};
 
 		static void Init()
@@ -98,17 +89,17 @@ namespace YLP
 			return GetInstance().m_SortedView;
 		}
 
-		static const eSortMode GetSortMode()
+		static const uint8_t GetSortMode() noexcept
 		{
-			return GetInstance().m_SortMode;
+			return Config().luaRepoSortMode;
 		}
 
-		static void SetSortMode(const eSortMode mode)
+		static void SetSortMode(const eLuaRepoSortMode mode)
 		{
-			if (GetSortMode() == mode)
+			if (Config().luaRepoSortMode == mode)
 				return;
 
-			GetInstance().m_SortMode = mode;
+			Config().luaRepoSortMode = mode;
 			SortRepositories();
 		}
 

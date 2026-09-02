@@ -215,7 +215,7 @@ namespace YLP::IO
 			}
 		}
 
-		hr = pFileOpen->Show(nullptr);
+		hr = pFileOpen->Show(g_Hwnd);
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -199,7 +199,7 @@ namespace YLP::PsUtils
 		const auto& opt = nt->OptionalHeader;
 		if (opt.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size > 0 && opt.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress != 0)
 		{
-			info.has_exports = true;
+			info.hasExports = true;
 		}
 
 		info.ok = true;
@@ -214,7 +214,11 @@ namespace YLP::PsUtils
 		const std::vector<COMDLG_FILTERSPEC> filters = {{L"DLL (*.dll)", L"*.dll"}};
 		std::filesystem::path dllPath = IO::BrowseFile(filters, L"Select a DLL");
 		if (dllPath.empty())
-			return {};
+		{
+			DllInfo info{};
+			info.error = "Canceled by user";
+			return info;
+		}
 
 		DllInfo info = ValidateDLL(dllPath);
 		info.checksum = Utils::CalcSha256(dllPath);

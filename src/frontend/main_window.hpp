@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -29,6 +29,11 @@
 
 namespace YLP::Frontend
 {
+	/*
+	This UI is still damn hideous. I hate designing UIs.
+	I'll try to make it look better in the future.
+	For now it does the job and that's it.
+	*/
 	class YimMenuUI
 	{
 	public:
@@ -37,39 +42,29 @@ namespace YLP::Frontend
 
 		static void Draw()
 		{
-			if (Config().supportsV2)
-			{
-				float childWidth = ImGui::GetContentRegionAvail().x;
-				float tabButtonWidth = ImGui::CalcTextSize("Enhanced").x + 40.f + ImGui::GetStyle().ItemSpacing.x;
-				float centerX = (childWidth - (tabButtonWidth * 2)) / 2;
+			ImVec2 cursorPos = ImGui::GetCursorPos();
+			ImVec2 childSize = ImGui::GetWindowSize();
+			auto branchIdx = Config().mainWindowIndex;
+			float tabButtonWidth = ImGui::CalcTextSize("Enhanced").x + 40.f + (ImGui::GetStyle().ItemSpacing.x * 2);
+			float centerX = (childSize.x - (tabButtonWidth * 2)) * 0.5;
 
-				ImGui::SetCursorPosX(centerX);
-				ImGui::PushFont(Fonts::Title);
-				ImGui::RadioButton("Legacy", &Config().mainWindowIndex, 0);
-				ImGui::SameLine();
-				ImGui::RadioButton("Enhanced", &Config().mainWindowIndex, 1);
-				ImGui::PopFont();
-			}
+			ImGui::PushFont(Fonts::Title);
+			ImGui::SegmentedControl("##branchSelector",
+				&Config().mainWindowIndex, {"Legacy", "Enhanced"}, 
+				ImGui::ImSegmentedControlAnchorPos::CENTER);
+			ImGui::PopFont();
 
-			if (Config().mainWindowIndex == 0 || !Config().supportsV2)
+			if (branchIdx == 0)
 				DrawLegacy();
-
-			if (Config().supportsV2 && Config().mainWindowIndex == 1)
+			else if (branchIdx == 1)
 				DrawEnhanced();
 		}
 
 	private:
-		enum eKVflags
-		{
-			KVflagsNone,
-			KVflagsHyperlink,
-			KVflagsBullet
-		};
-
-		static inline ImFont* GetScaledFont() noexcept
-		{
-			return Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
-		}
+		//static inline ImFont* GetScaledFont() noexcept
+		//{
+		//	return Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
+		//}
 
 		static void LaunchGame(int launcherIndex, YimMenu& menu, std::shared_ptr<ProcessMonitor>& monitor)
 		{
@@ -117,7 +112,7 @@ namespace YLP::Frontend
 					}
 				}
 
-				const std::vector<COMDLG_FILTERSPEC> filters = {{L"EXE (*.exe)", L"*.exe"}};
+				const std::vector<COMDLG_FILTERSPEC> filters = {{L"Executable", L"*.exe"}};
 				std::filesystem::path selected = IO::BrowseFile(filters, L"Select GTA V Executable");
 				if (selected.empty())
 					break;
@@ -125,8 +120,8 @@ namespace YLP::Frontend
 				std::string filename = Utils::StringToLower(selected.filename().string());
 				if (filename.find("gta") == std::string::npos)
 				{
-					LOG_ERROR("Selected file does not appear to be a GTA V executable.");
-					MsgBox::Error("Invalid file", "Selected file does not appear to be a GTA V executable.");
+					LOG_ERROR("Selected file does not appear to be a GTA executable.");
+					MsgBox::Error("Invalid file", "Selected file does not appear to be a GTA executable.");
 					m_AttemptedGameLaunch = false;
 					return;
 				}
@@ -152,52 +147,17 @@ namespace YLP::Frontend
 			}
 
 			IO::Open(cmd);
-
-			monitor->WaitForGameReady(6e4);
+			monitor->WaitForProcessStart(6e4); // this is returns earlier than WaitForGameReady which should only be used to gate memory scans
 			m_AttemptedGameLaunch = false;
 		}
-
-		static void DrawKeyValue(const char* key,
-		    const std::string& value,
-		    bool copyable = false,
-		    ImVec4 valueColor = ImGui::GetStyle().Colors[ImGuiCol_Text],
-		    eKVflags valueDrawFlags = KVflagsNone,
-		    std::string optionalUrl = "")
-		{
-			ImGui::TextUnformatted(key);
-			auto valsize = ImGui::CalcTextSize(value.c_str());
-			ImGui::SameLine(ImGui::GetContentRegionAvail().x - valsize.x - (copyable ? 40 : 5));
-			ImGui::PushStyleColor(ImGuiCol_Text, valueColor);
-
-			switch (valueDrawFlags)
-			{
-			case KVflagsHyperlink:
-				ImGui::TextLinkOpenURL(value.c_str(), optionalUrl.c_str());
-				break;
-			case KVflagsBullet:
-				ImGui::BulletText(value.c_str());
-				break;
-			default:
-				ImGui::TextUnformatted(value.c_str());
-				break;
-			}
-
-			ImGui::PopStyleColor();
-			if (copyable)
-			{
-				ImGui::SameLine();
-				if (ImGui::SmallButton(ICON_COPY))
-					ImGui::SetClipboardText(value.c_str());
-				ImGui::ToolTip("Copy");
-			}
-		};
 
 		static void DrawMenuDownload(YimMenu& menu)
 		{
 			if (menu || menu.GetState() == YimMenu::eMenuViewState::Downloading)
 				return;
 
-			if (ImGui::Button(ICON_DOWNLOAD " Download", ButtonBig))
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_MD_DOWNLOAD " Download", ButtonBig))
 			{
 				ThreadManager::Run([&menu] {
 					menu.Download();
@@ -208,42 +168,50 @@ namespace YLP::Frontend
 		static void DrawMenuControls(YimMenu& menu)
 		{
 			auto state = menu.GetState();
-
 			if (state == YimMenu::eMenuViewState::Downloading)
 				ImGui::ProgressBar(menu.m_DownloadProgress, ButtonBig);
 
-			if (!menu)
-				return;
-
 			switch (state)
 			{
-			case YimMenu::eMenuViewState::PendingUpdate:
-			{
-				if (ImGui::Button(ICON_UPDATE))
+				case YimMenu::eMenuViewState::PendingUpdate:
 				{
-					ThreadManager::Run([&menu] {
-						menu.Download();
-					});
+					if (ImGui::Button(ICON_MD_UPDATE))
+					{
+						ThreadManager::Run([&menu] {
+							menu.Download();
+						});
+					}
+					ImGui::ToolTip("Update");
+					ImGui::SameLine();
+					ImGui::Text("Update Available!");
+					break;
 				}
-				ImGui::ToolTip("Update");
-				ImGui::SameLine();
-				ImGui::Text("Update Available!");
-				break;
-			}
-			case YimMenu::eMenuViewState::Checking:
-				ImGui::Spinner("Please wait...");
-				break;
-			case YimMenu::eMenuViewState::Idle:
-			{
-				if (ImGui::Button(ICON_REFRESH))
+				case YimMenu::eMenuViewState::Checking:
+					ImGui::Spinner("Checking for updates...");
+					break;
+				case YimMenu::eMenuViewState::Idle:
 				{
-					ThreadManager::Run([&menu] {
-						menu.CheckForUpdates();
-					});
+				    if (ImGui::Button(ICON_MD_SYNC))
+					{
+						ThreadManager::Run([&menu] {
+							menu.CheckForUpdates();
+						});
+					}
+					ImGui::SameLine();
+					ImGui::Text("Check For Updates");
+				    ImGui::Spacing();
+
+				    const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
+				    bool wantsAutoInject = (Config().autoMonitorFlags & monitorTarget) != 0;
+				    if (ImGui::Checkbox("Auto-Inject", &wantsAutoInject))
+				    {
+					    Config().autoMonitorFlags ^= monitorTarget;
+					    SwitchMonitorMode();
+				    }
+				    ImGui::Spacing();
+				    break;
 				}
-				ImGui::SameLine();
-				ImGui::Text("Check For Updates");
-			}
+			    default: break;
 			}
 		}
 
@@ -253,9 +221,12 @@ namespace YLP::Frontend
 				return;
 
 			ImGui::Spacing();
-			bool disabledCond = (menu.m_Version == YimMenuV1 && Config().autoInject) || injected || !running;
+			const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
+			bool wantsAutoInject = (Config().autoMonitorFlags & monitorTarget) != 0;
+			bool disabledCond = (wantsAutoInject || injected || !running);
+			auto injectLabel = injected ? ICON_MD_CHECK_CIRCLE_OUTLINE " Injected" : ICON_MD_START " Inject";
 			ImGui::BeginDisabled(disabledCond);
-			if (ImGui::Button(ICON_INJECT " Inject", ButtonBig))
+			if (ImGui::Button(injectLabel, ButtonBig))
 			{
 				ThreadManager::Run([&menu] {
 					auto result = menu.Inject();
@@ -271,125 +242,177 @@ namespace YLP::Frontend
 				ImGui::ToolTip("Currently unavailable.\n\nMake sure the game is running, auto-inject is off, and the menu isn't already injected.");
 		}
 
-		static void DrawMenuCard(YimMenu& menu,
+		static void DrawMenuUI(YimMenu& menu,
 		    ImTextureID iconTexture,
 		    std::shared_ptr<ProcessMonitor>& monitor,
 		    GTAPointers pointers)
 		{
 			bool isRunning = monitor->IsProcessRunning();
 			ImVec4 defaultTextCol = ImGui::GetStyle().Colors[ImGuiCol_Text];
-
-			ImGui::Spacing();
-			ImGui::BeginChild("##sidebar", ImVec2(240, 0), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
-			ImGui::SetCursorPosX(40);
+			ImGui::Dummy(ImVec2(0, 30));
+			ImGui::SetNextWindowBgAlpha(0.f);
+			ImGui::BeginChild("##logo", ImVec2(153, 165), ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
 			ImGui::Image(iconTexture, ImVec2(153, 135));
-			ImGui::Spacing();
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+			ImGui::SetNextWindowBgAlpha(0.f);
+			ImGui::BeginChild("##game", ImVec2(0, 165));
+			const char* playBtnLabel = isRunning ? "Playing" : ICON_MD_PLAY_ARROW " Play";
+			if (m_AttemptedGameLaunch)
+				playBtnLabel = hourglassIcons[static_cast<int>(ImGui::GetTime() / 0.12f) & 3];
 
 			ImGui::BeginDisabled(m_AttemptedGameLaunch || isRunning);
-			ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 50);
-			ImGui::Combo("##launchers", &m_LauncherIndex, m_Launchers, IM_ARRAYSIZE(m_Launchers));
-			ImGui::SameLine();
-			if (m_AttemptedGameLaunch)
-				ImGui::Spinner("##playbuttonspinenr");
-			else if (ImGui::Button(ICON_PLAY))
+			if (ImGui::Button(playBtnLabel, ImVec2(144, 35)))
 			{
-				if (ImGui::GetIO().KeyShift && m_LauncherIndex == 3)
-				{
-					menu.m_ExePath.clear();
-				}
-
 				ThreadManager::RunDetached([&menu, &monitor] {
 					LaunchGame(m_LauncherIndex, menu, monitor);
 				});
 			}
 			ImGui::EndDisabled();
-			if (!isRunning)
-			{
-				const char* tooltip = "Play";
-				if (m_LauncherIndex == 3)
-				{
-					if (menu.m_ExePath.empty())
-						tooltip = "Browse for game executable (Will automatically start when a valid executable is selected).";
-					else
-						tooltip = "Use the last known executable path or press SHIFT + Left Click to browse again.";
-				}
 
-				ImGui::ToolTip(tooltip);
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_MD_MORE_VERT, ImVec2(35, 35)))
+				ImGui::OpenPopup("##launcherPopup");
+
+			ImVec2 launcherPopupPos = ImGui::GetItemRectMax();
+			if (ImGui::IsPopupOpen("##launcherPopup"))
+				ImGui::SetNextWindowPos(ImVec2(launcherPopupPos.x, launcherPopupPos.y), ImGuiCond_Always);
+
+			if (ImGui::BeginPopup("##launcherPopup"))
+			{
+				ImGui::TextCentered("Select Launcher");
+				ImGui::Separator();
+				const size_t numLaunchers = m_Launchers.size();
+				bool hasExePath = !menu.m_ExePath.empty();
+				for (size_t i = 0; i < numLaunchers; i++)
+				{
+					const auto& launcher = m_Launchers[i];
+					bool isSelected = (m_LauncherIndex == i);
+
+					ImGui::Selectable(launcher, isSelected);
+					if (ImGui::IsItemClicked(0))
+					{
+						m_LauncherIndex = static_cast<int>(i);
+						if (m_LauncherIndex == 3 && !hasExePath)
+						{
+							const std::vector<COMDLG_FILTERSPEC> filters = {{L"EXE (*.exe)", L"*.exe"}};
+							std::filesystem::path selected = IO::BrowseFile(filters, L"Select GTA V Executable");
+							if (selected.empty())
+								break;
+
+							std::string filename = Utils::StringToLower(selected.filename().string());
+							if (filename.find("gta") == std::string::npos)
+							{
+								LOG_ERROR("Selected file does not appear to be a GTA V executable.");
+								MsgBox::Error("Invalid file", "Selected file does not appear to be a GTA V executable.");
+								break;
+							}
+							menu.m_ExePath = selected;
+							Config().gtaExePaths[menu.m_TargetProcess] = selected;
+						}
+					}
+				}
+				if (hasExePath)
+				{
+					ImGui::Dummy(ImVec2(0, 10));
+					ImGui::Separator();
+					ImGui::Spacing();
+					ImGui::Text("Custom Executable Path:");
+					ImGui::Spacing();
+					if (ImGui::SelectableLabel(ICON_MD_CLEAR, false))
+					{
+						menu.m_ExePath.clear();
+						Config().gtaExePaths.erase(menu.m_TargetProcess);
+					}
+					ImGui::SameLine();
+					ImGui::BeginDisabled();
+					ImGui::PushFont(Fonts::Small);
+					ImGui::TextWrapped(menu.m_ExePath.string().c_str());
+					ImGui::PopFont();
+					ImGui::EndDisabled();
+				}
+				ImGui::EndPopup();
 			}
 
 			ImGui::Spacing();
 			ImGui::PushFont(Fonts::Small);
-			DrawKeyValue("Status:", isRunning ? ICON_CHECKMARK : ICON_BLOCK, false, isRunning ? ImGreen : ImRed);
+			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK, false, isRunning ? ImGreen : ImRed);
 
 			auto gv = pointers.GameVersion ? pointers.GameVersion.Read<std::string>() : "";
 			auto ov = pointers.OnlineVersion ? pointers.OnlineVersion.Read<std::string>() : "";
-			DrawKeyValue("Version:", std::format("{} (Online: {})", gv.empty() ? "?" : gv, ov.empty() ? "?" : ov));
+			ImGui::DrawKeyValue("Version:", std::format("{} (Online: {})", gv.empty() ? "?" : gv, ov.empty() ? "?" : ov));
 
 			auto runtime = (isRunning && pointers.GameTime) ? pointers.GameTime.Read<int32_t>() : 0;
 			if (runtime > 0)
-				DrawKeyValue("Play Time:", Utils::Int32ToTime(runtime / 1000));
+				ImGui::DrawKeyValue("Play Time:", Utils::Int32ToTime(runtime / 1000));
 
 			auto baseAddress = monitor->GetBaseAddress();
-			DrawKeyValue("Module Base:", std::format("0x{:X}", baseAddress), baseAddress != 0);
+			ImGui::DrawKeyValue("Module Base:", std::format("0x{:X}", baseAddress), baseAddress != 0);
 
 			bool heWatchin = monitor->IsHeWatchin();
-			DrawKeyValue("BattlEye:", heWatchin ? "Running!" : "Disabled", false, heWatchin ? ImRed : ImGreen);
-
+			ImGui::DrawKeyValue("BattlEye:", heWatchin ? "Running!" : "Disabled", false, heWatchin ? ImRed : ImGreen);
 			ImGui::PopFont();
 			ImGui::EndChild();
 
-			ImGui::SameLine();
-			ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 3.0f);
-			ImGui::SameLine();
-
-			ImGui::BeginChild("##yimmenu");
-			ImGui::PushFont(Fonts::Title);
-			ImGui::SeparatorText(menu.m_Name.c_str());
-			ImGui::PopFont();
+			ImGui::Dummy(ImVec2(0, 20));
+			ImGui::SetNextWindowBgAlpha(0.f);
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.4f);
+			ImGui::BeginChild("##menu", ImVec2(0, 0), ImGuiChildFlags_Borders);
+			ImGui::PopStyleVar();
+			ImGui::TextCentered(menu.m_Name.c_str(), Fonts::Title);
+			ImGui::Spacing();
+			ImGui::Separator();
 			ImGui::Spacing();
 
-			ImGui::BeginGroup();
-			ImGui::PushFont(GetScaledFont());
-
-			DrawKeyValue(
-			    "Official GitHub Source: ",
-			    std::format("{} {}", ICON_OCTOCAT, menu.m_Name),
-			    false,
-			    defaultTextCol,
-			    KVflagsHyperlink,
-			    menu.m_Url);
-
+			ImGui::SetNextWindowBgAlpha(0.f);
+			ImGui::BeginChild("##controls", ImVec2(ImGui::GetContentRegionAvail().x * 0.5, 0), 0,
+				ImGuiWindowFlags_AlwaysUseWindowPadding);
 			bool injected = monitor->IsModuleLoaded(menu.m_DllName);
+			DrawMenuDownload(menu);
+			DrawMenuControls(menu);
+			DrawInjectButton(menu, isRunning, injected);
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+			ImGui::SetNextWindowBgAlpha(0.f);
+			ImGui::BeginChild("##stats", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
+			ImGui::TextCentered("Stats For Nerds");
+			ImGui::Separator();
+			ImGui::BeginGroup();
+			ImGui::PushFont(ImGui::GetScaledFont());
+
+			ImGui::DrawKeyValue(
+				"Official GitHub Source: ",
+				std::format("{} {}", menu.m_Name, ICON_MD_OPEN_IN_NEW),
+				false,
+				defaultTextCol,
+			    ImGui::KVflagsHyperlink,
+				menu.m_Url);
+
 			std::string shortCommit = menu.m_LastCommitHash.substr(0, std::min<size_t>(7, menu.m_LastCommitHash.size()));
 
-			DrawKeyValue("Short SHA256 Checksum: ", menu.m_Checksum.empty() ? "Unknown" : menu.m_Checksum.substr(0, 8));
+			ImGui::DrawKeyValue("Short SHA256 Checksum: ", menu.m_Checksum.empty() ? "Unknown" : menu.m_Checksum.substr(0, 8));
 			ImGui::ToolTip(std::format("Full SHA: {}", menu.m_Checksum).c_str());
 
-			DrawKeyValue("Last Commit Hash: ",
-			    shortCommit.empty() ? "Unknown" : shortCommit,
-			    false,
-			    defaultTextCol,
-			    menu.m_LastCommitHash.empty() ? KVflagsNone : KVflagsHyperlink,
-			    std::format("{}/commit/{}", menu.m_Url, menu.m_LastCommitHash));
+			ImGui::DrawKeyValue("Latest Release Commit:",
+				shortCommit.empty() ? "Unknown" : shortCommit,
+				false,
+				defaultTextCol,
+			    menu.m_LastCommitHash.empty() ? ImGui::KVflagsNone : ImGui::KVflagsHyperlink,
+				std::format("{}/commit/{}", menu.m_Url, menu.m_LastCommitHash));
 
 			if (!menu.m_LastCommitHash.empty())
 				ImGui::ToolTip(std::format("Full commit hash: {}", menu.m_LastCommitHash).c_str(), Fonts::Small, true, 0);
 
-			DrawKeyValue("Injected:",
-			    injected ? ICON_CHECKMARK : ICON_BLOCK,
-			    false,
-			    injected ? ImGreen : defaultTextCol);
+			ImGui::DrawKeyValue("Injected:",
+				injected ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK,
+				false,
+				injected ? ImGreen : defaultTextCol);
 
 			ImGui::PopFont();
 			ImGui::EndGroup();
-
-			ImGui::Separator();
-			ImGui::Spacing();
-
-			DrawMenuDownload(menu);
-			DrawMenuControls(menu);
-			DrawInjectButton(menu, isRunning, injected);
-
+			ImGui::EndChild();
 			ImGui::EndChild();
 		}
 
@@ -397,7 +420,7 @@ namespace YLP::Frontend
 		{
 			if (!IconGTAV) // this is redundant because renderer loads once anyway but it would bebetter to make it lazy-load instead. i'm too lazy to do it
 				IconGTAV = Renderer::LoadTextureFromMemory(gta_legacy_data, gta_legacy_size, "IconGTAV");
-			DrawMenuCard(g_YimV1, IconGTAV, g_ProcLegacy, g_Pointers.Legacy);
+			DrawMenuUI(g_YimV1, IconGTAV, g_ProcLegacy, g_Pointers.Legacy);
 		}
 
 		static void DrawEnhanced()
@@ -405,20 +428,54 @@ namespace YLP::Frontend
 			if (!IconGTAVE)
 				IconGTAVE = Renderer::LoadTextureFromMemory(gta_enhanced_data, gta_enhanced_size, "IconGTAVE");
 
-			DrawMenuCard(g_YimV2, IconGTAVE, g_ProcEnhanced, g_Pointers.Enhanced);
+			DrawMenuUI(g_YimV2, IconGTAVE, g_ProcEnhanced, g_Pointers.Enhanced);
+		}
+
+		static void SwitchMonitorMode()
+		{
+			switch (Config().autoMonitorFlags)
+			{
+			case MonitorNone:
+				g_ProcLegacy->Stop();
+				g_ProcEnhanced->Stop();
+				break;
+			case MonitorLegacy:
+				g_ProcLegacy->Start(100ms);
+				g_ProcEnhanced->Stop();
+				break;
+			case MonitorEnhanced:
+				g_ProcLegacy->Stop();
+				g_ProcEnhanced->Start(100ms);
+				break;
+			case MonitorBoth:
+				g_ProcLegacy->Start(100ms);
+				g_ProcEnhanced->Start(100ms);
+				break;
+			default:
+				break;
+			}
 		}
 
 	private:
 		static inline ImTextureID IconGTAV = NULL;
 		static inline ImTextureID IconGTAVE = NULL;
+		static inline ImTextureID LegacyWallpaper = NULL;
+		static inline ImTextureID EnhancedWallpaper = NULL;
 		static inline ImVec4 ImRed = ImVec4(1, 0, 0, 1);
 		static inline ImVec4 ImGreen = ImVec4(0, 1, 0, 1);
 		static inline ImVec4 ImBlue = ImVec4(0, 0, 1, 1);
-		static inline ImVec2 ButtonBig = ImVec2(150, 37);
+		static inline ImVec2 ButtonBig = ImVec2(-1, 37);
 		static inline int m_LauncherIndex = 0;
 		static inline bool m_AttemptedGameLaunch = false;
 
-		static inline const char* m_Launchers[] = {
+		static inline std::array hourglassIcons{
+			ICON_MD_HOURGLASS_EMPTY, 
+			ICON_MD_HOURGLASS_TOP, 
+			ICON_MD_HOURGLASS_EMPTY, 
+			ICON_MD_HOURGLASS_BOTTOM
+		};
+
+		static inline std::array m_Launchers{
 		    "Steam",
 		    "Rockstar Games Launcher",
 		    "Epic Games Launcher",

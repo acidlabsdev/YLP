@@ -1,4 +1,4 @@
-﻿// YLP Project - GPL-3.0
+// YLP Project - GPL-3.0
 // See LICENSE file or <https://www.gnu.org/licenses/> for details.
 
 
@@ -50,6 +50,12 @@ namespace YLP
 					    Enhanced.GameVersion = gvov.Add(0x3).Rip();
 					    Enhanced.OnlineVersion = gvov.Add(0x47).Add(3).Rip();
 				    }
+			    }
+			    {
+					// https://github.com/TupoyeMenu/BadAPI/blob/master/src/gta/pointers.cpp#L49C33-L49C70
+				    auto gs = scanner.FindPattern("83 3D ? ? ? ? ? 0F 85 ? ? ? ? BA ? 00", "Game State");
+				    if (gs)
+					    Enhanced.GameState = gs.Add(0x2).Rip().Add(0x1);
 			    }
 			    {
 				    auto glt = scanner.FindPattern("3B 2D ? ? ? ? 76 ? 89 D9", "Game Time");

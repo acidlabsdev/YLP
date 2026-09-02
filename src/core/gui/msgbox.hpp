@@ -18,9 +18,10 @@
 #pragma once
 
 #include <commctrl.h>
-#include <playsoundapi.h>
 
 #pragma comment(lib, "winmm.lib") // not fsl lol
+#pragma comment(lib, "comctl32.lib")
+#pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 
 namespace YLP
@@ -63,8 +64,7 @@ namespace YLP
 
 		static bool Confirm(const std::wstring& title, const std::wstring& message)
 		{
-			int result = Show(title, message, Buttons::YesNo, Icon::Question);
-			return result == IDYES;
+			return Show(title, message, Buttons::YesNo, Icon::Question) == IDYES;
 		}
 
 		static void Info(const std::string& title, const std::string& message)
@@ -95,8 +95,5 @@ namespace YLP
 
 		static PCWSTR GetIcon(Icon icon);
 		static UINT GetButtons(Buttons buttons);
-		static UINT GetMsgBoxFlags(Buttons buttons);
-		static UINT GetMsgBoxIcon(Icon icon);
-		static PCWSTR GetSoundAlias(Icon icon);
 	};
 }

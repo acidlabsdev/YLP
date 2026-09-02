@@ -129,10 +129,10 @@ namespace YLP
 		void ReleaseTextureImpl(const std::string& name);
 		void LoadPendingTexturesImpl();
 
-		WNDCLASSEX m_WndClass;
-		HWND m_HWND;
-		HDC m_HDC;
-		HGLRC m_HGLRC;
+		WNDCLASSEX m_WndClass{};
+		HWND m_HWND{};
+		HDC m_HDC{};
+		HGLRC m_HGLRC{};
 
 		bool m_Initialized = false;
 		bool m_ResizePending = false;

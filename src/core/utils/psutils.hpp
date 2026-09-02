@@ -18,10 +18,11 @@
 #pragma once
 
 #include <condition_variable>
-#include <shellapi.h>
 #include <system_error>
-#include <TlHelp32.h>
 #include <thread>
+
+#include <shellapi.h>
+#include <TlHelp32.h>
 
 
 namespace YLP::PsUtils
@@ -47,11 +48,12 @@ namespace YLP::PsUtils
 	{
 		bool ok = false;
 		bool is64bit = false;
-		bool has_exports = false;
-		std::filesystem::path filepath;
-		std::string error;
-		std::string checksum;
-		std::string name;
+		bool hasExports = false;
+		std::filesystem::path filepath{};
+		std::string error{};
+		std::string checksum{};
+		std::string name{};
+		std::string lastKnownProcess{};
 	};
 
 	struct EnumWindowData
@@ -72,11 +74,10 @@ namespace YLP::PsUtils
 
 		void StartUpdating();
 		void StopUpdating();
+		void UpdateProcesses();
 		std::vector<ProcessEntry> GetSnapshot();
 
 	private:
-		void UpdateProcesses();
-
 		std::vector<ProcessEntry> m_Processes;
 		std::mutex m_Mutex;
 		std::thread m_Worker;

@@ -17,23 +17,30 @@
 
 #pragma once
 
-#include <core/gui/fonts/fonts.hpp>
+#include "renderer.hpp"
+#include "theme.hpp"
+#include "fonts/fonts.hpp"
+#include "widgets/info_callout.hpp"
+#include "widgets/segmented_ctrl.hpp"
+#include "widgets/spinner.hpp"
+#include "widgets/theme_preview.hpp"
+#include "widgets/wrapped_selectable.hpp"
 
 
 namespace ImGui
 {
+	enum ImKVflags // for DrawKeyValue
+	{
+		KVflagsNone,
+		KVflagsHyperlink,
+		KVflagsBullet
+	};
+
 	struct ImButtonColorScheme
 	{
 		ImVec4 Base;
 		ImVec4 Hover;
 		ImVec4 Active;
-	};
-
-	enum class ImCalloutType
-	{
-		Note,
-		Warning,
-		Important
 	};
 
 	ImButtonColorScheme MakeButtonColors(
@@ -60,9 +67,17 @@ namespace ImGui
 	    float textWrapWidth = -1.0f);
 
 	void HelpMarker(const char* text, ImFont* font = nullptr);
-	void Spinner(const char* label, float radius = 10.0f, float thickness = 2.0f);
 	void WarningMessage(const char* text);
 	void TitleText(const char* text, bool separator = false);
-	void InfoCallout(ImCalloutType type, const std::string& text, float wrapWidth = 0.0f);
-	bool WrappedSelectable(const char* label);
+	void TextCentered(const char* text, ImFont* font = nullptr, float availWidth = 0.0f);
+	void SameLineIfAvail(float itemwidth, float region = -1.0f);
+	bool SelectableLabel(const char* label, bool selected);
+	void DrawKeyValue(const char* key,
+	    const std::string& value,
+	    bool copyable = false,
+	    ImVec4 valueColor = ImGui::GetStyle().Colors[ImGuiCol_Text],
+	    ImKVflags valueDrawFlags = KVflagsNone,
+	    std::string optionalUrl = "");
+
+	ImFont* GetScaledFont();
 }

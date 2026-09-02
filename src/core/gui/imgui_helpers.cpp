@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -17,51 +17,16 @@
 
 #include "imgui_helpers.hpp"
 
-
 namespace ImGui
 {
-	void Spinner(const char* label, float radius, float thickness)
+	void SameLineIfAvail(float itemwidth, float region)
 	{
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
-		if (window->SkipItems)
-			return;
+		if (region <= 0.f)
+			region = ImGui::GetContentRegionAvail().x;
 
-		ImGuiStyle& style = ImGui::GetStyle();
-		ImGuiContext& g = *GImGui;
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 center = ImVec2(pos.x + thickness + radius, pos.y + thickness + radius);
-
-		const int num_segments = 30;
-		const float speed = 8.0f;
-		float time = static_cast<float>(ImGui::GetTime());
-		float start = fmodf(time * speed, IM_PI * 2.0f);
-		float a_min = start;
-		float a_max = start + IM_PI * 1.5f;
-
-		ImVec4 col1(0.2f, 0.5f, 1.0f, 1.0f);
-		ImVec4 col2(0.4f, 0.7f, 1.0f, 1.0f);
-		float phase = fmodf(time * 1.5f, 1.0f);
-		ImVec4 col = ImLerp(col1, col2, (sinf(phase * IM_PI * 2.0f) * 0.5f) + 0.5f);
-		ImU32 color = ImGui::ColorConvertFloat4ToU32(col);
-		ImDrawList* draw_list = ImGui::GetWindowDrawList();
-		draw_list->PathClear();
-
-		for (int i = 0; i <= num_segments; i++)
-		{
-			float a = a_min + (i / (float)num_segments) * (a_max - a_min);
-			draw_list->PathLineTo(ImVec2(center.x + cosf(a) * radius,
-			    center.y + sinf(a) * radius));
-		}
-
-		draw_list->PathStroke(color, 0, thickness);
-
-		if (label && label[0] && strncmp(label, "##", 2) != 0)
-		{
-			ImVec2 text_pos = ImVec2(center.x + radius + thickness + style.ItemSpacing.x, pos.y + (radius * 0.5));
-			draw_list->AddText(text_pos, ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]), label);
-		}
-
-		ImGui::Dummy(ImVec2(radius * 2 + style.FramePadding.x + thickness, radius * 2 + style.FramePadding.y + thickness));
+		ImGui::SameLine();
+		if (itemwidth >= ImGui::GetContentRegionAvail().x)
+			ImGui::NewLine();
 	}
 
 	void ToolTip(const char* text, ImFont* font, bool delayed, float textWrapWidth)
@@ -92,7 +57,7 @@ namespace ImGui
 	void HelpMarker(const char* text, ImFont* font)
 	{
 		ImGui::SameLine();
-		ImGui::TextDisabled(ICON_HELP);
+		ImGui::TextDisabled(ICON_MD_HELP);
 		ToolTip(text, font, false);
 	}
 
@@ -100,7 +65,7 @@ namespace ImGui
 	{
 		ImGui::PushFont(Fonts::Title);
 		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35);
-		ImGui::TextColored(ImVec4(1.0f, 0.7568, 0.027f, 1.0f), ICON_WARNING);
+		ImGui::TextColored(ImVec4(1.0f, 0.7568, 0.027f, 1.0f), ICON_MD_WARNING);
 		ImGui::SameLine();
 		ImGui::Text("Warning");
 		ImGui::PopFont();
@@ -119,65 +84,6 @@ namespace ImGui
 		else
 			ImGui::Text(text);
 		ImGui::PopFont();
-	}
-
-	void InfoCallout(ImCalloutType type, const std::string& text, float wrapWidth)
-	{
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
-		if (!window)
-			return;
-
-		ImVec4 accentColor;
-		const char* label{};
-		const char* icon{};
-
-		switch (type)
-		{
-		case ImCalloutType::Note:
-			accentColor = ImVec4(0.0f, 0.001f, 0.803f, 1.0f);
-			label = "Note";
-			icon = ICON_MESSAGE;
-			break;
-		case ImCalloutType::Warning:
-			accentColor = ImVec4(1.0f, 0.7568, 0.027f, 1.0f);
-			label = "Warning";
-			icon = ICON_WARNING;
-			break;
-		case ImCalloutType::Important:
-			accentColor = ImVec4(0.498f, 0.1f, 1.0f, 1.0f);
-			label = "Important";
-			icon = ICON_IMPORTANT;
-			break;
-		}
-
-		if (wrapWidth <= 0.0f)
-			wrapWidth = ImGui::GetContentRegionAvail().x - 10.0f;
-
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 textSize = ImGui::CalcTextSize(text.c_str(), nullptr, false, wrapWidth);
-		float panelHeight = textSize.y + 30 + (ImGui::GetStyle().WindowPadding.y * 2);
-		float barWidth = 5.0f;
-
-		drawList->AddRectFilled(pos, ImVec2(pos.x + barWidth, pos.y + panelHeight), ImColor(accentColor));
-		ImGui::SetCursorScreenPos(ImVec2(pos.x + barWidth, pos.y));
-		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.f);
-		ImGui::SetNextWindowBgAlpha(0.1f);
-		ImGui::BeginChild(("##panel_" + std::to_string((int)type) + "_" + std::to_string(window->GetID(text.c_str()))).c_str(),
-		    ImVec2(0, panelHeight),
-		    ImGuiChildFlags_None,
-		    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_AlwaysUseWindowPadding);
-
-		ImGui::PushFont(Fonts::Bold);
-		ImGui::TextColored(accentColor, std::format("{} {}", icon, label).c_str());
-		ImGui::PopFont();
-		ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrapWidth);
-		ImGui::TextWrapped(text.c_str());
-		ImGui::PopTextWrapPos();
-
-		ImGui::EndChild();
-		ImGui::PopStyleVar();
-		ImGui::Dummy(ImVec2(0, ImGui::GetStyle().ItemSpacing.y));
 	}
 
 	ImButtonColorScheme MakeButtonColors(ImVec4 baseColor, float hoverFactor, float activeFactor)
@@ -220,35 +126,78 @@ namespace ImGui
 		ImGui::Dummy(ImVec2(diameter, diameter));
 	}
 
-	bool WrappedSelectable(const char* label)
+	void TextCentered(const char* text, ImFont* font, float availWidth)
 	{
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
-		if (window->SkipItems)
-			return false;
+		float windowWidth = availWidth ? availWidth : ImGui::GetWindowSize().x;
+		float textWidth = ImGui::CalcTextSize(text).x;
+		float textPosX = (windowWidth - textWidth) * 0.5f;
+		ImGui::SetCursorPosX(textPosX);
+		if (font)
+			ImGui::PushFont(font);
+		ImGui::TextUnformatted(text);
+		if (font)
+			ImGui::PopFont();
+	}
 
-		ImGuiStyle& style = ImGui::GetStyle();
-		ImVec4 hoverColor = style.Colors[ImGuiCol_HeaderHovered];
-		ImVec4 activeColor = style.Colors[ImGuiCol_HeaderActive];
+	bool SelectableLabel(const char* icon, bool selected)
+	{
+		ImGui::BeginGroup();
+		const ImVec2 framePadding = ImGui::GetStyle().FramePadding;
+		const ImVec2 cursorPos = ImGui::GetCursorPos();
+		float frameHeight = ImGui::GetFrameHeight();
+		bool clicked = ImGui::InvisibleButton(icon, ImVec2(frameHeight, frameHeight));
+		bool hovered = ImGui::IsItemHovered();
+		auto colIdx = selected ? ImGuiCol_ButtonActive : (hovered ? ImGuiCol_ButtonHovered : (clicked ? ImGuiCol_Button : ImGuiCol_Text));
+		if (hovered and ImGui::IsMouseDown(0))
+			colIdx = ImGuiCol_Button;
 
-		float wrapX = ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x;
-		ImGui::PushTextWrapPos(wrapX);
-
-		ImVec2 textPos = ImGui::GetCursorScreenPos();
-		ImVec2 labelSize = ImGui::CalcTextSize(label, nullptr, false, wrapX - textPos.x);
-		labelSize.x += style.FramePadding.x * 2;
-		labelSize.y += style.FramePadding.y * 2;
-		ImRect rect(textPos, textPos + labelSize);
-		bool hovered = ImGui::IsMouseHoveringRect(rect.Min, rect.Max);
-		bool clicked = hovered && ImGui::IsMouseClicked(0);
-		bool held = hovered && ImGui::IsMouseDown(0);
-
-		if (hovered)
-			ImGui::GetWindowDrawList()->AddRectFilled(rect.Min, rect.Max, ImGui::ColorConvertFloat4ToU32(held ? activeColor : hoverColor), 4.f);
-
-		ImGui::RenderTextWrapped(rect.Min + ImVec2(style.FramePadding.x, style.FramePadding.y), label, nullptr, wrapX - textPos.x);
-		ImGui::Dummy(labelSize);
-		ImGui::PopTextWrapPos();
+		ImGui::SameLine();
+		ImGui::SetCursorPos(ImVec2(cursorPos.x + framePadding.x, cursorPos.y + framePadding.y));
+		ImGui::TextColored(ImGui::GetStyleColorVec4(colIdx), icon);
+		ImGui::EndGroup();
+		if (ImGui::IsItemHovered())
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
 		return clicked;
+	}
+
+	void DrawKeyValue(const char* key,
+	    const std::string& value,
+	    bool copyable,
+	    ImVec4 valueColor,
+	    ImKVflags valueDrawFlags,
+	    std::string optionalUrl)
+	{
+		ImGui::TextUnformatted(key);
+		auto valsize = ImGui::CalcTextSize(value.c_str());
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - valsize.x - (copyable ? 40 : 5));
+		ImGui::PushStyleColor(ImGuiCol_Text, valueColor);
+
+		switch (valueDrawFlags)
+		{
+		case KVflagsHyperlink:
+			ImGui::TextLinkOpenURL(value.c_str(), optionalUrl.c_str());
+			break;
+		case KVflagsBullet:
+			ImGui::BulletText(value.c_str());
+			break;
+		default:
+			ImGui::TextUnformatted(value.c_str());
+			break;
+		}
+
+		ImGui::PopStyleColor();
+		if (copyable)
+		{
+			ImGui::SameLine();
+			if (ImGui::SmallButton(ICON_MD_FILE_COPY))
+				ImGui::SetClipboardText(value.c_str());
+			ImGui::ToolTip("Copy");
+		}
+	};
+
+	ImFont* GetScaledFont()
+	{
+		return YLP::Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
 	}
 }

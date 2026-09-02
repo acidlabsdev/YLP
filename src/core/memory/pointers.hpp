@@ -1,4 +1,4 @@
-﻿// YLP Project - GPL-3.0
+// YLP Project - GPL-3.0
 // See LICENSE file or <https://www.gnu.org/licenses/> for details.
 
 

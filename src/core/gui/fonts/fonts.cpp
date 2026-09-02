@@ -1,3 +1,20 @@
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// This file is part of YLP.
+//
+// YLP is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// YLP is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with YLP.  If not, see <https://www.gnu.org/licenses/>.
+
+
 #if defined(__GNUC__) || defined(__clang__)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wnull-character"
@@ -6,7 +23,8 @@
 	#pragma warning(disable : 4820)
 #endif
 
-#include "IconFont.hpp"
+
+#include "mdis_regular.hpp"
 #include "JetBrainsMono.hpp"
 #include "JetBrainsMonoBold.hpp"
 
@@ -15,9 +33,6 @@
 #elif defined(_MSC_VER)
 	#pragma warning(pop)
 #endif
-
-
-#include "fonts.hpp"
 
 
 ImFont* Fonts::Small = nullptr;
@@ -31,12 +46,14 @@ static void MergeIcons(ImGuiIO& io, float size)
 	icon_cfg.MergeMode = true;
 	icon_cfg.PixelSnapH = true;
 	icon_cfg.GlyphMinAdvanceX = 16.0f;
-	icon_cfg.GlyphOffset = ImVec2(0, 2);
-	static const ImWchar icons_range[] = {ICON_MIN, ICON_MAX, 0};
+	icon_cfg.GlyphOffset = ImVec2(0, 3);
+
+	strcpy(icon_cfg.Name, "MaterialDesignIcons");
+	static const ImWchar icons_range[] = {ICON_MIN_MD, ICON_MAX_MD, 0};
 
 	io.Fonts->AddFontFromMemoryCompressedTTF(
-	    icon_font_compressed_data,
-	    icon_font_compressed_size,
+	    mdis_regular_compressed_data,
+	    mdis_regular_compressed_size,
 	    size,
 	    &icon_cfg,
 	    icons_range);
@@ -49,15 +66,26 @@ void Fonts::Load(ImGuiIO& io)
 	cfg.OversampleV = 2;
 	cfg.PixelSnapH = true;
 
-	Small = io.Fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 15.0f, &cfg);
-	MergeIcons(io, 13.0f);
+	auto& fonts = io.Fonts;
+	fonts->Clear();
 
-	Regular = io.Fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 18.0f, &cfg);
-	MergeIcons(io, 17.0f);
+	strcpy(cfg.Name, "JetBrainsMono Default");
+	Regular = fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 19.0f, &cfg);
+	MergeIcons(io, 19.f);
 
-	Bold = io.Fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 18.0f, &cfg);
-	MergeIcons(io, 17.0f);
+	strcpy(cfg.Name, "JetBrainsMono Bold");
+	Bold = fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 19.0f, &cfg);
+	MergeIcons(io, 19.f);
 
-	Title = io.Fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 22.0f, &cfg);
-	MergeIcons(io, 22.0f);
+	strcpy(cfg.Name, "JetBrainsMono Small");
+	Small = fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 15.0f, &cfg);
+	MergeIcons(io, 15.0f);
+
+	strcpy(cfg.Name, "JetBrainsMono Title");
+	Title = fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 25.0f, &cfg);
+	MergeIcons(io, 25.0f);
+
+	io.FontDefault = Regular;
+	fonts->AddFontDefault(&cfg);
+	fonts->Build();
 }

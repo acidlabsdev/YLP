@@ -73,7 +73,7 @@ namespace YLP
 		m_FileStream.open(file, std::ios::out | std::ios::app);
 		if (!m_FileStream.is_open())
 		{
-			std::fprintf(stderr, "Logger failed to open file: %s\n", file.string().c_str());
+			std::fprintf(stderr, "[Logger]: failed to open file: %s\n", file.string().c_str());
 			return;
 		}
 

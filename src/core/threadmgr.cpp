@@ -100,7 +100,6 @@ namespace YLP
 	void ThreadManager::WorkerLoop()
 	{
 		using clock = std::chrono::steady_clock;
-
 		while (true)
 		{
 			std::unique_lock lock(m_Mutex);
@@ -114,7 +113,7 @@ namespace YLP
 			if (m_TaskQueue.empty())
 				continue;
 
-			auto next = m_TaskQueue.top();
+			auto& next = m_TaskQueue.top();
 			auto now = clock::now();
 
 			if (now < next.executeAt)

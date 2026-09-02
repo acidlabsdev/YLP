@@ -1,6 +1,7 @@
 # Third-Party Components and Licenses
 
 This project makes use of the following third-party open-source components.
+
 Each component retains its own copyright and license terms.
 
 ## Dear ImGui
@@ -15,7 +16,7 @@ Each component retains its own copyright and license terms.
 - **License:** [MIT](https://opensource.org/licenses/MIT)
 - **Source:** [https://github.com/nlohmann/json](https://github.com/nlohmann/json)
 
-## stb_image.h
+## stb
 
 - **Author:** Sean Barrett
 - **License:** [Public Domain / MIT](https://opensource.org/licenses/MIT)
@@ -27,13 +28,16 @@ Each component retains its own copyright and license terms.
 - **License:** [MIT](https://opensource.org/licenses/MIT)
 - **Source:** [https://github.com/tfussell/miniz-cpp](https://github.com/tfussell/miniz-cpp)
 
-## Fonts and Symbols
+## IconFontCppHeaders
 
-The custom icon font bundled with this application was generated using [IcoMoon](https://icomoon.io)
+- **Author:** Juliette F.
+- **License:** [Zlib](https://opensource.org/licenses/Zlib)
+- **Source:** [https://github.com/juliettef/IconFontCppHeaders](https://github.com/juliettef/IconFontCppHeaders)
 
-- IcoMoon Free - © Keyamoon, licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
-- FontAwesome Free - © Fonticons Inc., licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/)
-- JetBrains Mono - © JetBrains s.r.o., licensed under the [SIL Open Font License v1.1](https://openfontlicense.org/)
+## Fonts
+
+- **Material Design** - © Google inc., licensed under [Apache-2.0](https://opensource.org/licenses/Apache-2.0)
+- **JetBrains Mono** - © JetBrains s.r.o., licensed under the [SIL Open Font License v1.1](https://openfontlicense.org/)
 
 ___
 

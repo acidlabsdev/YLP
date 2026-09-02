@@ -20,58 +20,34 @@
 
 namespace YLP
 {
-	int MsgBox::Show(const std::wstring& title,
+	int MsgBox::Show(
+	    const std::wstring& title,
 	    const std::wstring& message,
 	    Buttons buttons,
 	    Icon icon)
 	{
-		using TaskDialogIndirect_t = HRESULT(WINAPI*)(
-		    const TASKDIALOGCONFIG*,
-		    int*,
-		    int*,
-		    BOOL*);
+		INITCOMMONCONTROLSEX icce{sizeof(icce), ICC_STANDARD_CLASSES};
+		InitCommonControlsEx(&icce);
 
-		HMODULE hComCtl = LoadLibraryW(L"comctl32.dll");
-		if (hComCtl)
+		TASKDIALOGCONFIG config{};
+		config.cbSize = sizeof(config);
+		config.hwndParent = g_Hwnd;
+		config.hInstance = g_Instance;
+		config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION;
+		config.pszWindowTitle = title.c_str();
+		config.pszMainInstruction = message.c_str();
+		config.pszMainIcon = GetIcon(icon);
+		config.dwCommonButtons = GetButtons(buttons);
+
+		int button = -1;
+		const HRESULT hr = TaskDialogIndirect(&config, &button, nullptr, nullptr);
+		if (!SUCCEEDED(hr))
 		{
-			auto pTaskDialogIndirect = reinterpret_cast<TaskDialogIndirect_t>(GetProcAddress(hComCtl, "TaskDialogIndirect"));
-
-			if (pTaskDialogIndirect)
-			{
-				TASKDIALOGCONFIG config = {sizeof(TASKDIALOGCONFIG)};
-				config.dwFlags = TDF_ALLOW_DIALOG_CANCELLATION | TDF_USE_COMMAND_LINKS;
-				config.pszWindowTitle = title.c_str();
-				config.pszMainInstruction = message.c_str();
-				config.pszMainIcon = GetIcon(icon);
-				config.dwCommonButtons = GetButtons(buttons);
-
-				int buttonPressed = 0;
-				HRESULT hr = pTaskDialogIndirect(&config, &buttonPressed, nullptr, nullptr);
-				FreeLibrary(hComCtl);
-
-				if (SUCCEEDED(hr))
-				{
-					PlaySoundW(GetSoundAlias(icon), nullptr, SND_ALIAS | SND_ASYNC);
-					return buttonPressed;
-				}
-			}
+			LOG_ERROR("[MsgBox]: TaskDialogIndirect failed with HRESULT: 0x{:X}", static_cast<unsigned>(hr));
+			button = -1;
 		}
 
-		UINT flags = GetMsgBoxFlags(buttons) | GetMsgBoxIcon(icon);
-		PlaySoundW(GetSoundAlias(icon), nullptr, SND_ALIAS | SND_ASYNC);
-		return MessageBoxW(g_Hwnd, message.c_str(), title.c_str(), flags);
-	}
-
-	PCWSTR MsgBox::GetIcon(Icon icon)
-	{
-		switch (icon)
-		{
-		case Icon::Info: return TD_INFORMATION_ICON;
-		case Icon::Warning: return TD_WARNING_ICON;
-		case Icon::Error: return TD_ERROR_ICON;
-		case Icon::Question: return TD_SHIELD_ICON;
-		default: return nullptr;
-		}
+		return button;
 	}
 
 	UINT MsgBox::GetButtons(Buttons buttons)
@@ -86,39 +62,15 @@ namespace YLP
 		}
 	}
 
-	UINT MsgBox::GetMsgBoxFlags(Buttons buttons)
-	{
-		switch (buttons)
-		{
-		case Buttons::OK: return MB_OK;
-		case Buttons::OKCancel: return MB_OKCANCEL;
-		case Buttons::YesNo: return MB_YESNO;
-		case Buttons::YesNoCancel: return MB_YESNOCANCEL;
-		default: return MB_OK;
-		}
-	}
-
-	UINT MsgBox::GetMsgBoxIcon(Icon icon)
+	PCWSTR MsgBox::GetIcon(Icon icon)
 	{
 		switch (icon)
 		{
-		case Icon::Info: return MB_ICONINFORMATION;
-		case Icon::Warning: return MB_ICONWARNING;
-		case Icon::Error: return MB_ICONERROR;
-		case Icon::Question: return MB_ICONQUESTION;
-		default: return 0;
-		}
-	}
-
-	PCWSTR MsgBox::GetSoundAlias(Icon icon)
-	{
-		switch (icon)
-		{
-		case Icon::Info: return L"SystemAsterisk";
-		case Icon::Warning: return L"SystemExclamation";
-		case Icon::Error: return L"SystemHand";
-		case Icon::Question: return L"SystemQuestion";
-		default: return L"SystemDefault";
+		case Icon::Info: return TD_INFORMATION_ICON;
+		case Icon::Warning: return TD_WARNING_ICON;
+		case Icon::Error: return TD_ERROR_ICON;
+		case Icon::Question: return TD_SHIELD_ICON;
+		default: return nullptr;
 		}
 	}
 }

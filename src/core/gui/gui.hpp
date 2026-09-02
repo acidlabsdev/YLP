@@ -19,14 +19,15 @@
 
 #include "renderer.hpp"
 #include "fonts/fonts.hpp"
-#include <frontend/main_window.hpp>
-#include <frontend/lua_scripts.hpp>
 #include <frontend/injector.hpp>
+#include <frontend/main_window.hpp>
+#include <frontend/yimmenu_lua.hpp>
+//#include <frontend/lua_scripting.hpp>
 
 
 namespace YLP
 {
-	using GuiCallBack = std::function<void()>;
+	using GuiCallback = std::function<void()>;
 
 	class GUI : public Singleton<GUI>
 	{
@@ -35,26 +36,31 @@ namespace YLP
 	private:
 		GUI() = default;
 		~GUI() noexcept = default;
-
 	public:
 		enum class eTabID : uint8_t
 		{
 			TAB_MAIN,
-			TAB_LUA,
+			TAB_YIMMENU_LUA,
 			TAB_INJECTOR,
+			//TAB_SCRIPTING,
 			TAB_SETTINGS,
 			TAB_INFO,
 			__COUNT,
 		};
 
+	private:
+		struct Tab
+		{
+			const eTabID m_ID;
+			const std::string_view m_Name;
+			const GuiCallback m_Callback;
+			const std::optional<std::string_view> m_Hint;
+		};
+
+	public:
 		static void Init()
 		{
 			GetInstance().InitImpl();
-		}
-
-		static void AddTab(const eTabID& id, const std::string_view& name, GuiCallBack&& callback, std::optional<std::string_view> hint)
-		{
-			GetInstance().AddTabImpl(id, name, std::move(callback), hint);
 		}
 
 		static void Draw()
@@ -62,19 +68,9 @@ namespace YLP
 			GetInstance().DrawImpl();
 		}
 
-		static void DrawTabBar()
-		{
-			GetInstance().DrawTabBarImpl();
-		}
-
 		static void DrawSettings()
 		{
 			GetInstance().DrawSettingsImpl();
-		}
-
-		static void DrawDebugConsole()
-		{
-			GetInstance().DrawDebugConsoleImpl();
 		}
 
 		static void ToggleDisableUI(bool toggle) noexcept
@@ -87,34 +83,37 @@ namespace YLP
 			GetInstance().SetActiveTabImpl(id);
 		}
 
+		static void RefreshCurrentTab()
+		{
+			GetInstance().RefreshCurrentTabImpl();
+		}
+
 		static constexpr size_t TabIDToIndex(eTabID id)
 		{
 			return static_cast<size_t>(id);
 		}
 
 		static void DrawAboutSection();
-		static void SetupStyle();
 
 	private:
 		void InitImpl();
 		void DrawImpl();
-		void DrawTabBarImpl();
+		void DrawTopBarImpl();
+		void DrawSideBarImpl();
 		void DrawDebugConsoleImpl();
 		void DrawSettingsImpl();
-		void AddTabImpl(const eTabID& id, const std::string_view& name, GuiCallBack&& callback, std::optional<std::string_view> hint);
+		void AddTabImpl(const eTabID& id, const std::string_view& name, GuiCallback&& callback, std::optional<std::string_view> hint);
+		void OnTabSwitchImpl();
 		void SetActiveTabImpl(const eTabID& tabID);
-
-		struct Tab
-		{
-			const eTabID m_ID;
-			const std::string_view m_Name;
-			const GuiCallBack m_Callback;
-			const std::optional<std::string_view> m_Hint;
-		};
+		void RefreshCurrentTabImpl();
 
 		bool m_ShouldDisableUI = false;
+		bool m_IsTabSwitchInProgress = false;
+		float m_CallbackChildAlpha = 1.0f;
+		float m_SidebarWidth = 60.0f;
 		Tab* m_ActiveTab = nullptr;
-		ImVec2 m_WindowSize;
+		Tab* m_NextTab = nullptr;
+		ImVec2 m_WindowSize{};
 
 		std::array<std::unique_ptr<Tab>, static_cast<size_t>(eTabID::__COUNT)> m_Tabs;
 	};

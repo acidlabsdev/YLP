@@ -153,9 +153,14 @@ namespace YLP
 			ImGui::OpenPopup("notifierPopup");
 		}
 
-		static bool IsEmpty()
+		static void ToggleSnooze()
 		{
-			return GetInstance().m_Notifications.empty();
+			GetInstance().m_IsSnoozed ^= true;
+		}
+
+		static void ToggleMute()
+		{
+			Config().muteNotifs ^= true;
 		}
 
 		static void ClearRead()
@@ -163,40 +168,55 @@ namespace YLP
 			GetInstance().ClearReadImpl();
 		}
 
-		static bool IsOpen()
+		static const bool IsOpen() noexcept
 		{
 			return GetInstance().m_IsOpen;
 		}
 
-		static bool IsViewed()
+		static const bool IsViewed() noexcept
 		{
 			return GetInstance().m_Viewed;
 		}
 
-		static void GetStyle(eNotificationLevel level, const char*& icon, ImVec4& color)
+		static const bool IsEmpty() noexcept
+		{
+			return GetInstance().m_Notifications.empty();
+		}
+
+		static const bool IsSnoozed() noexcept
+		{
+			return GetInstance().m_IsSnoozed;
+		}
+
+		static const bool IsMuted()
+		{
+			return Config().muteNotifs;
+		}
+
+		static void GetStyle(eNotificationLevel level, const char*& icon, ImVec4& color) noexcept
 		{
 			switch (level)
 			{
 			case Info:
-				icon = ICON_MESSAGE;
+				icon = ICON_MD_MESSAGE;
 				color = {0.02f, 1.f, 0.027f, 1.f};
 				break;
 			case Warning:
-				icon = ICON_WARNING;
+				icon = ICON_MD_WARNING;
 				color = {1.f, 0.76f, 0.027f, 1.f};
 				break;
 			case Error:
-				icon = ICON_ERROR;
+				icon = ICON_MD_ERROR;
 				color = {1.f, 0.0068f, 0.0027f, 1.f};
 				break;
 			default:
-				icon = ICON_MESSAGE;
+				icon = ICON_MD_MESSAGE;
 				color = {0.02f, 1.f, 0.027f, 1.f};
 				break;
 			}
 		}
 
-		static void Close()
+		static void Close() noexcept
 		{
 			GetInstance().m_ShouldClose = true;
 		}
@@ -208,9 +228,12 @@ namespace YLP
 		std::vector<std::shared_ptr<Notification>> m_Notifications{};
 		std::vector<std::shared_ptr<Toast>> m_Toasts{};
 		std::chrono::steady_clock::time_point m_LastAudioQueueTime;
+
 		bool m_IsOpen{false};
 		bool m_ShouldClose{false};
+		bool m_IsSnoozed{false};
 		bool m_Viewed{true};
+
 		ImVec2 m_WindowSize{};
 		ImVec2 m_WindowPos{};
 	};

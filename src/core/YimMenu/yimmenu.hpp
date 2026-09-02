@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -356,6 +356,13 @@ namespace YLP
 				    "https://github.com/Mr-X-GTA/YimMenu",
 				    {L"github.com", L"/Mr-X-GTA/YimMenu/releases/tag/nightly"},
 				    {L"github.com", L"/Mr-X-GTA/YimMenu/releases/download/nightly/YimMenu.dll"});
+
+				m_V2.Init(
+				    YimMenuV2,
+				    g_ProjectPath / "YimMenu",
+				    "https://github.com/YimMenu/YimMenuV2",
+				    {L"github.com", L"/YimMenu/YimMenuV2/releases/tag/nightly"},
+				    {L"github.com", L"/YimMenu/YimMenuV2/releases/download/nightly/YimMenuV2.dll"});
 			}
 
 			// if (Config().autoMonitorFlags & MonitorLegacy) // should be default behavior otherwise what's the point?
@@ -364,24 +371,11 @@ namespace YLP
 			},
 			    2s);
 
-			if (Config().supportsV2)
-			{
-				{
-					std::scoped_lock lock(m_Mutex);
-					m_V2.Init(
-					    YimMenuV2,
-					    g_ProjectPath / "YimMenu",
-					    "https://github.com/YimMenu/YimMenuV2",
-					    {L"github.com", L"/YimMenu/YimMenuV2/releases/tag/nightly"},
-					    {L"github.com", L"/YimMenu/YimMenuV2/releases/download/nightly/YimMenuV2.dll"});
-				}
-
-				// if (Config().autoMonitorFlags & MonitorEnhanced)
-				ThreadManager::RunDelayed([this] {
-					m_V2.CheckForUpdates();
-				},
-				    3s);
-			}
+			// if (Config().autoMonitorFlags & MonitorEnhanced)
+			ThreadManager::RunDelayed([this] {
+				m_V2.CheckForUpdates();
+			},
+				3s);
 
 			m_Initialized = true;
 		}

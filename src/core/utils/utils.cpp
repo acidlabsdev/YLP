@@ -149,8 +149,11 @@ namespace YLP::Utils
 		if (wstr.empty())
 			return {};
 
-		int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), nullptr, 0, nullptr, nullptr);
-		std::string result(sizeNeeded, 0);
+		int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+		if (sizeNeeded <= 0)
+			return {};
+
+		std::string result(sizeNeeded - 1, 0);
 		WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), (int)wstr.size(), result.data(), sizeNeeded, nullptr, nullptr);
 		return result;
 	}
@@ -159,8 +162,14 @@ namespace YLP::Utils
 	{
 		if (str.empty())
 			return L"";
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-		return converter.from_bytes(str);
+
+		int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+		if (sizeNeeded <= 0)
+			return L"";
+
+		std::wstring result(sizeNeeded - 1, 0);
+		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, result.data(), sizeNeeded);
+		return result;
 	}
 
 	std::optional<uint8_t> CharToHex(char const c)

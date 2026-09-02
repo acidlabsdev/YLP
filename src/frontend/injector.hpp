@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -31,21 +31,33 @@ namespace YLP::Frontend
 		InjectorUI() = default;
 		~InjectorUI() noexcept = default;
 
+		static void OnFileSelected(const DllInfo& file, ProcessList& processList)
+		{
+			std::string lastKnown = file.lastKnownProcess;
+			if (lastKnown.empty())
+				return;
+
+			if (!initialized)
+				processList.UpdateProcesses();
+
+			selectedProcess = {}; // is this even necessary? I know my goofy ass once injected YimLuaAPI into spotify because it was the last selected process
+			auto snapshot = processList.GetSnapshot();
+			for (auto& p : snapshot)
+			{
+				if (p.m_Name == lastKnown)
+					selectedProcess = p;
+			}
+		}
+
 		static void Draw()
 		{
 			auto processes = processList.GetSnapshot();
-			ImVec2 windowSize = ImGui::GetWindowSize();
-			float regioinWidth = windowSize.x / 1.4f;
-			float regionHeight = windowSize.y / 1.4f;
-			float centerX = (ImGui::GetContentRegionAvail().x - regioinWidth) / 2;
-
-			ImGui::SetCursorPosX(centerX);
-			ImGui::SetNextItemWidth(regioinWidth);
-			if (ImGui::BeginCombo("##processList",
-			        std::format("{} {}",
-			            ICON_PROCESS,
-			            selectedProcess.m_Name.empty() ? "Process List" : selectedProcess.m_Name)
-			            .c_str()))
+			auto childRegion = ImGui::GetContentRegionAvail();
+			auto& savedDLLs = Config().savedDlls;
+			std::string preview = selectedProcess.m_Name.empty() ? "Process List" : selectedProcess.m_Name;
+			ImGui::Spacing();
+			ImGui::SetNextItemWidth(-1);
+			if (ImGui::BeginCombo("##processList", std::format("{} {}", ICON_MD_MEMORY, preview).c_str()))
 			{
 				if (!initialized)
 				{
@@ -53,11 +65,11 @@ namespace YLP::Frontend
 					initialized = true;
 				}
 
-				ImGui::SetNextItemWidth(regioinWidth);
-				ImGui::InputTextWithHint("##SearchBox", ICON_SEARCH, searchBuffer, sizeof(searchBuffer));
+				ImGui::SetNextItemWidth(-1);
+				ImGui::InputTextWithHint("##SearchBox", ICON_MD_SEARCH, searchBuffer, sizeof(searchBuffer));
 				ImGui::Separator();
 
-				ImGui::BeginChild("##processList", ImVec2(0, 165));
+				ImGui::BeginChild("##processList", ImVec2(0, 165), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
 				ImGui::Spacing();
 				for (int i = 0; i < processes.size(); ++i)
 				{
@@ -65,17 +77,21 @@ namespace YLP::Frontend
 					if (p.m_Name.empty())
 						continue;
 
-					if (searchBuffer[0] != '\0' && Utils::StringToLower(p.m_Name).find(Utils::StringToLower(std::string(searchBuffer))) == std::string::npos)
+					auto nameLower = Utils::StringToLower(p.m_Name);
+					if (searchBuffer[0] != '\0' && nameLower.find(Utils::StringToLower(std::string(searchBuffer))) == std::string::npos)
 						continue;
 
-					if (Utils::StringToLower(p.m_Name).find("system") != std::string::npos)
+					if (nameLower.find("system") != std::string::npos)
 						continue;
 
 					ImGui::PushID(p.m_Pid);
-					if (ImGui::Selectable(std::format("{}", p.m_Name).c_str(), p.m_Pid == selectedProcess.m_Pid))
+					ImGui::Selectable(p.m_Name.c_str(), p.m_Pid == selectedProcess.m_Pid);
+					if (ImGui::IsItemClicked())
 					{
 						selectedProcess = p;
+						ImGui::CloseCurrentPopup();
 					}
+
 					ImGui::PopID();
 
 					ImGui::SameLine(ImGui::GetContentRegionAvail().x - 62.0f);
@@ -90,97 +106,156 @@ namespace YLP::Frontend
 				initialized = false;
 			}
 
-			ImGui::Dummy(ImVec2(0, 10));
-			ImGui::SetCursorPosX(centerX);
-			ImGui::BeginChild("##injectorstuff",
-			    ImVec2(regioinWidth, ImGui::GetContentRegionAvail().y - 50.f),
-			    ImGuiChildFlags_Border,
-			    ImGuiWindowFlags_NoScrollbar);
+			ImGui::Dummy(ImVec2(0, 30));
+			float dllListChildW = childRegion.x * 0.45f;
+			ImGui::BeginChild("##dllList", ImVec2(dllListChildW, 0), ImGuiChildFlags_Borders);
+			ImGui::Text(ICON_MD_LIST " Your Files");
+			
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
 
+			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
+			ImGui::Selectable(ICON_MD_ADD, false);
+			ImGui::PopStyleVar();
+			ImGui::ToolTip("Add a new file.");
+			if (ImGui::IsItemClicked(0))
 			{
-				ImGui::SeparatorText(std::format("{} DLL List", ICON_COGS).c_str());
-				ImGui::Spacing();
-				for (auto& dll : Config().savedDlls)
-				{
-					if (!dll.filepath.empty())
+				ThreadManager::RunDetached([&] {
+					DllInfo newdll = PsUtils::AddDLL();
+					if (newdll.filepath.empty())
+						return;
+
+					if (!newdll.ok && newdll.error != "Canceled by user")
 					{
-						if (ImGui::Selectable(std::format("{} [{}]",
-						                          dll.filepath.filename().string(),
-						                          dll.checksum.substr(0, 8))
-						                          .c_str(),
-						        selectedDLL.filepath == dll.filepath))
-							selectedDLL = dll;
+						LOG_ERROR("Failed to add DLL file: {}", newdll.error);
+						return;
 					}
+
+					std::erase_if(savedDLLs, [&](const DllInfo& d) {
+						return d.filepath == newdll.filepath || d.checksum == newdll.checksum;
+					});
+
+					savedDLLs.push_back(newdll);
+				});
+			}
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+
+			for (auto& dll : savedDLLs)
+			{
+				if (dll.filepath.empty())
+					continue;
+
+				auto short_sha = dll.checksum.substr(0, 8);
+				auto label = std::format("[{}] {}", short_sha, dll.filepath.filename().string());
+
+				ImGui::PushFont(Fonts::Small);
+				if (ImGui::ColoredButton(std::format("{}##{}", ICON_MD_DELETE, short_sha).c_str(), ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 4.0f))
+				{
+					std::scoped_lock lock(m_Mutex);
+					std::erase_if(savedDLLs, [&](auto& d) {
+						return d.filepath == dll.filepath;
+					});
+
+					if (dll.checksum == selectedDLL.checksum)
+						selectedDLL = {};
 				}
+				ImGui::PopFont();
+				ImGui::ToolTip("Delete");
+				ImGui::SameLine();
+
+				ImGui::Selectable(label.c_str(), dll.filepath == selectedDLL.filepath);
+				if (ImGui::IsItemClicked(0))
+				{
+					selectedDLL = dll;
+					OnFileSelected(dll, processList);
+				}
+
+				if (ImGui::GetItemRectMax().x > (ImGui::GetContentRegionAvail().x - 1.f))
+					ImGui::ToolTip(dll.name.c_str());
 			}
 			ImGui::EndChild();
 
 			ImGui::SameLine();
-			ImGui::BeginChild("##buttons", ImVec2(0, ImGui::GetContentRegionAvail().y - 50.f), ImGuiChildFlags_None);
-			ImGui::Dummy(ImVec2(0, 40));
-			ImGui::PushFont(Fonts::Title);
-			if (ImGui::ColoredButton(ICON_ADD, ImVec4(0.20f, 0.95f, 0.20f, 0.69f), 2.0f))
-			{
-				ThreadManager::RunDetached([] {
-					DllInfo newdll = PsUtils::AddDLL();
-					if (newdll.filepath.empty()) // canceled??
-						return;
-
-					for (auto& dll : Config().savedDlls)
-					{
-						if (dll.filepath == newdll.filepath)
-						{
-							LOG_WARN("File already exists!");
-							newdll.ok = false;
-							return;
-						}
-					}
-
-					if (newdll.ok)
-						Config().savedDlls.push_back(newdll);
-					else
-						LOG_ERROR("Failed to add DLL file: {}", newdll.error);
-				});
-			}
-			ImGui::ToolTip("Add a new DLL");
-
-			ImGui::BeginDisabled(selectedDLL.filepath.empty());
-			if (ImGui::ColoredButton(ICON_REMOVE, ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 3.0f))
-			{
-				std::scoped_lock lock(m_Mutex);
-				std::erase_if(Config().savedDlls, [](auto& dll) {
-					return dll.filepath == selectedDLL.filepath;
-				});
-			}
-			ImGui::EndDisabled();
-
+			ImGui::BeginChild("##dllInfo", ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
 			if (!selectedDLL.name.empty())
-				ImGui::ToolTip(std::format("Remove {}", selectedDLL.name).c_str());
-			ImGui::PopFont();
-			ImGui::EndChild();
+			{
+				ImGui::TextCentered(selectedDLL.name.c_str(), Fonts::Title);
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+				ImGui::PushFont(Fonts::Small);
+				ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x);
+				ImGui::Bullet();
+				ImGui::SameLine();
+				ImGui::Text("Architecture: %s", selectedDLL.is64bit ? "x64" : "x86-64");
 
-			float buttonCenterX = (ImGui::GetContentRegionAvail().x - 150) * 0.5f;
-			ImGui::SetCursorPosX(buttonCenterX);
-			ImGui::PushFont(Fonts::Title);
-			ImGui::BeginDisabled(!selectedProcess.m_Pid || selectedDLL.filepath.empty());
-			if (ImGui::Button(ICON_INJECT " Inject", ImVec2(150, 37)))
-				ThreadManager::RunDetached([] {
-					try
-					{
-						auto result = PsUtils::Inject(selectedProcess.m_Name, selectedDLL.filepath);
-						if (!result.success)
+				ImGui::Bullet();
+				ImGui::SameLine();
+				std::string exportsText = selectedDLL.hasExports ? "Yes" : "No";
+				ImGui::Text("Has Exports: %s", exportsText.c_str());
+
+				ImGui::Bullet();
+				ImGui::SameLine();
+				ImGui::Text("File Path: %s", selectedDLL.filepath.string().c_str());
+				
+				ImGui::Bullet();
+				ImGui::SameLine();
+				ImGui::Text("SHA256 Hash: %s", selectedDLL.checksum.c_str());
+				
+				ImGui::Bullet();
+				ImGui::SameLine();
+				std::string lastProcessText = selectedDLL.lastKnownProcess.empty() ? "None" : selectedDLL.lastKnownProcess;
+				ImGui::Text("Last Known Process: %s", lastProcessText.c_str());
+				ImGui::PopTextWrapPos();
+				ImGui::PopFont();
+
+				ImGui::Spacing();
+				ImGui::Separator();
+				ImGui::Spacing();
+
+				ImGui::SameLine();
+				bool injectBtnDisabled = !selectedProcess.m_Pid;
+				ImGui::BeginDisabled(injectBtnDisabled);
+				if (ImGui::Button("Inject", ImVec2(-1, 40)))
+				{
+					const std::string processName = selectedProcess.m_Name;
+					const DllInfo dll = selectedDLL;
+					ThreadManager::RunDetached([dll, processName] {
+						try
 						{
-							LOG_ERROR("{}", result.message);
-							MsgBox::Error("Error", result.message.c_str());
+							auto result = PsUtils::Inject(processName, dll.filepath);
+							if (!result.success)
+							{
+								LOG_ERROR(result.message);
+								MsgBox::Error("Error", result.message.c_str());
+								return;
+							}
+
+							std::scoped_lock lock(m_Mutex);
+							auto it = std::ranges::find_if(
+							    Config().savedDlls,
+							    [&](const DllInfo& d) {
+								    return d.filepath == dll.filepath;
+							    });
+
+							if (it != Config().savedDlls.end())
+								it->lastKnownProcess = processName;
 						}
-					}
-					catch (const std::exception& e)
-					{
-						LOG_ERROR("Failed to inject DLL! {}", e.what());
-					}
-				});
-			ImGui::EndDisabled();
-			ImGui::PopFont();
+						catch (const std::exception& e)
+						{
+							LOG_ERROR("Failed to inject DLL! {}", e.what());
+						}
+					});
+				}
+				ImGui::EndDisabled();
+				if (injectBtnDisabled)
+					ImGui::ToolTip("Please choose a target process from the list above.");
+			}
+			ImGui::EndChild();
 		}
 
 	private:

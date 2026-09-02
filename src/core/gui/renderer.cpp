@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
 // This file is part of YLP.
 //
 // YLP is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 
 #include "renderer.hpp"
 #include "gui.hpp"
+#include "window_bg_state.hpp"
 
 
 namespace YLP
@@ -80,7 +81,6 @@ namespace YLP
 			return false;
 		}
 
-
 		auto& cfg = Settings::Get();
 		m_Width = cfg.windowWidth;
 		m_Height = cfg.windowHeight;
@@ -118,7 +118,6 @@ namespace YLP
 			LOG_ERROR("CreateWindowW failed with error code {}", err);
 			return false;
 		}
-
 		g_Hwnd = m_HWND;
 
 		HICON hIcon = static_cast<HICON>(LoadImageW(
@@ -137,7 +136,7 @@ namespace YLP
 		else
 			LOG_WARN("Failed to load window icon!");
 
-
+		SetBackgroundAccentState(m_HWND, ACCENT_ENABLE_ACRYLICBLURBEHIND);
 		ShowWindow(m_HWND, Config().fullscreenWindow ? SW_SHOWMAXIMIZED : SW_SHOWDEFAULT);
 		UpdateWindow(m_HWND);
 
@@ -191,7 +190,6 @@ namespace YLP
 
 		ImGui_ImplWin32_Init(m_HWND);
 		ImGui_ImplOpenGL3_Init("#version 130");
-
 		LoadPendingTextures();
 		GUI::Init();
 
