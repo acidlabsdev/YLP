@@ -1,5 +1,3 @@
-**/__pycache__
-**/.venv
 **/out
 **/build
 *.py
@@ -8,8 +6,6 @@
 *.log
 *.vs
 *.ini
-*.json
-*.lua
 *.aps
 *.obj
 *.pdb
