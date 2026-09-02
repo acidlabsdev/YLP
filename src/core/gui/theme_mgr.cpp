@@ -44,7 +44,7 @@ namespace YLP::Frontend
 			if (!f.is_open())
 				return;
 
-			f << "Visit https://github.com/xesdoog/YLP/blob/main/docs/themes/readme.md to read more about custom themes.";
+			f << "Visit https://github.com/xesdoog/YLP/tree/main/docs/themes to read more about custom themes.";
 			return;
 		}
 
