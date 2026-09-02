@@ -265,9 +265,13 @@ namespace YLP::Frontend
 			ImGui::BeginDisabled(m_AttemptedGameLaunch || isRunning);
 			if (ImGui::Button(playBtnLabel, ImVec2(144, 35)))
 			{
-				ThreadManager::RunDetached([&menu, &monitor] {
-					LaunchGame(m_LauncherIndex, menu, monitor);
-				});
+				int launcherIdx = Config().launcherIndex;
+				if (launcherIdx < 0)
+					ImGui::OpenPopup("##launcherPopup");
+				else
+					ThreadManager::RunDetached([&menu, &monitor, &launcherIdx] {
+						LaunchGame(launcherIdx, menu, monitor);
+					});
 			}
 			ImGui::EndDisabled();
 
@@ -285,16 +289,18 @@ namespace YLP::Frontend
 				ImGui::Separator();
 				const size_t numLaunchers = m_Launchers.size();
 				bool hasExePath = !menu.m_ExePath.empty();
+				int* launcherIdx = &Config().launcherIndex;
 				for (size_t i = 0; i < numLaunchers; i++)
 				{
 					const auto& launcher = m_Launchers[i];
-					bool isSelected = (m_LauncherIndex == i);
+					bool selected = (*launcherIdx == i);
 
-					ImGui::Selectable(launcher, isSelected);
+					ImGui::Selectable(launcher, selected);
 					if (ImGui::IsItemClicked(0))
 					{
-						m_LauncherIndex = static_cast<int>(i);
-						if (m_LauncherIndex == 3 && !hasExePath)
+						int v = static_cast<int>(i);
+						*launcherIdx = v;
+						if (v == 3 && !hasExePath)
 						{
 							const std::vector<COMDLG_FILTERSPEC> filters = {{L"EXE (*.exe)", L"*.exe"}};
 							std::filesystem::path selected = IO::BrowseFile(filters, L"Select GTA V Executable");
@@ -465,7 +471,6 @@ namespace YLP::Frontend
 		static inline ImVec4 ImGreen = ImVec4(0, 1, 0, 1);
 		static inline ImVec4 ImBlue = ImVec4(0, 0, 1, 1);
 		static inline ImVec2 ButtonBig = ImVec2(-1, 37);
-		static inline int m_LauncherIndex = 0;
 		static inline bool m_AttemptedGameLaunch = false;
 
 		static inline std::array hourglassIcons{

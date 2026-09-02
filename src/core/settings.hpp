@@ -68,6 +68,7 @@ namespace YLP
 			int windowHeight = 770;
 			int windowX = -1;
 			int windowY = -1;
+			int launcherIndex = -1;
 			int mainWindowIndex = 0;
 			uint8_t luaRepoSortMode = eLuaRepoSortMode::COMMIT;
 
@@ -130,6 +131,7 @@ namespace YLP
 			json j;
 			j["auto_monitor_flags"] = m_Config.autoMonitorFlags;
 			j["lua_repo_sort_mode"] = m_Config.luaRepoSortMode;
+			j["launcher_idx"] = m_Config.launcherIndex;
 			j["main_window_index"] = m_Config.mainWindowIndex;
 			j["last_tab_index"] = m_Config.lastTabIndex;
 			j["internal_console"] = m_Config.internalConsole;
@@ -187,6 +189,7 @@ namespace YLP
 			m_Config.autoMonitorFlags = j.value("auto_monitor_flags", MonitorNone);
 			m_Config.luaRepoSortMode = j.value("lua_repo_sort_mode", eLuaRepoSortMode::COMMIT);
 			m_Config.lastTabIndex = j.value("last_tab_index", 0);
+			m_Config.launcherIndex = j.value("launcher_idx", -1);
 			m_Config.mainWindowIndex = j.value("main_window_index", 0);
 			m_Config.internalConsole = j.value("internal_console", true);
 			m_Config.externalConsole = j.value("external_console", false);
