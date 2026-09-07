@@ -136,7 +136,7 @@ namespace YLP::Frontend
 			ImVec2 region = ImGui::GetContentRegionAvail();
 			ImGui::BeginChild("##enabledPlugins", ImVec2(region.x * 0.5, 0), ImGuiChildFlags_Borders);
 			ImGui::BeginDisabled(modules.empty());
-			if (ImGui::Button(ICON_MD_REFRESH))
+			if (ImGui::SmallButton(ICON_MD_REFRESH))
 				LuaManager::ReloadAllModules();
 			ImGui::ToolTip("Reload All");
 			ImGui::EndDisabled();
@@ -162,7 +162,10 @@ namespace YLP::Frontend
 					ImGui::ToolTip("Right click to open the context menu or drag to move to the disabled list.");
 
 					if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+					{
+						selectedModule = m;
 						ImGui::OpenPopup(pathName.c_str());
+					}
 
 					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{
@@ -221,7 +224,10 @@ namespace YLP::Frontend
 					ImGui::ToolTip("Right click to open the context menu or drag to move to the enabled modules list.");
 
 					if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+					{
+						selectedDisabledPath = pathName;
 						ImGui::OpenPopup(pathName.c_str());
+					}
 
 					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{

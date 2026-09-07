@@ -47,14 +47,6 @@ namespace YLP::LuaJIT
 
 			// clang-format on
 
-			ptrUsertype["__eq"] = sol::overload(
-			    [](Pointer& self, Pointer& rh) {
-				    return self.GetAddress() == rh.GetAddress();
-			    },
-			    [](Pointer& self, uintptr_t& rh) {
-				    return self.GetAddress() == rh;
-			    });
-
 			ptrUsertype["IsNull"] = [](Pointer& self) {
 				return self.GetAddress() == 0;
 			};

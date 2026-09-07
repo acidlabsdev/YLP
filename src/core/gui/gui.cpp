@@ -115,8 +115,7 @@ namespace YLP
 
 		const float consoleChildHeight = std::min(m_WindowSize.y * 0.3f, 240.0f);
 		float mainChildHeight = Config().internalConsole ? m_WindowSize.y - consoleChildHeight : ImGui::GetContentRegionAvail().y;
-		ImGui::SetNextWindowBgAlpha(0.175f);
-		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, .1f);
+		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, .11f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(8.0f, 8.0f));
@@ -129,7 +128,7 @@ namespace YLP
 		ImGui::PopStyleVar(4);
 
 		ImGui::SameLine();
-		ImGui::BeginChild("##main", ImVec2(0, mainChildHeight), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
+		ImGui::BeginChild("##main", ImVec2(0, mainChildHeight), 0, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBackground);
 		DrawTopBarImpl();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, m_CallbackChildAlpha);

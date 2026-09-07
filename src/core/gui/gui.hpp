@@ -95,6 +95,6 @@ namespace YLP
 		GuiTab* m_NextTab = nullptr;
 		ImVec2 m_WindowSize{};
 
-		std::array<GuiTab*, static_cast<size_t>(eTabID::__COUNT)> m_Tabs;
+		std::array<GuiTab*, static_cast<size_t>(eTabID::__COUNT)> m_Tabs{};
 	};
 }
