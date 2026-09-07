@@ -492,6 +492,7 @@ namespace YLP::Frontend::DefaultThemes
 		    {"TextDisabled", ImVec4(0.55, 0.52, 0.65, 1.00)},
 		    {"PlotHistogram", ImVec4(0.60, 0.15, 0.90, 0.85)},
 		    {"PlotHistogramHovered", ImVec4(0.75, 0.25, 1.00, 1.00)},
+		    {"DragDropTarget", ImVec4(1.0f, 0.54117f, 0.8196f, 1.0f)}
 		};
 
 		return theme;
@@ -549,6 +550,7 @@ namespace YLP::Frontend::DefaultThemes
 		    {"PlotHistogramHovered", ImVec4(0.85, 0.72, 0.35, 1.00)},
 		    {"Text", ImVec4(0.92, 0.90, 0.86, 1.00)},
 		    {"TextDisabled", ImVec4(0.45, 0.44, 0.42, 1.00)},
+		    {"DragDropTarget", ImVec4(0.90588f, 0.7176f, 0.541176f, 1.00)},
 		};
 
 		return theme;

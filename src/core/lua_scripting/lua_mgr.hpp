@@ -20,6 +20,7 @@
 #pragma once
 
 #include <sol/sol.hpp>
+
 #include "lua_module.hpp"
 #include "lua_library.hpp"
 
@@ -39,9 +40,12 @@ namespace YLP::LuaJIT
 		LuaManager& operator=(const LuaManager&) = delete;
 		LuaManager& operator=(LuaManager&&) = delete;
 
-		void LoadModuleImpl(fs::path path);
-		void LoadDisabledModuleImpl(fs::path path);
+		void LoadModuleImpl(const fs::path& path);
+		void LoadDisabledModuleImpl(const fs::path& path);
+		void LoadDisabledModulesImpl(const fs::path& path);
+		void EnableModuleImpl(const fs::path& path);
 		void LoadModulesImpl();
+		void ReloadAllModulesImpl();
 		void RegisterLibraryImpl(LuaLibrary* library);
 		void RegisterLibrariesImpl(sol::state& L);
 		void UpdateImpl();
@@ -53,9 +57,9 @@ namespace YLP::LuaJIT
 			fs::path m_Path;
 		};
 
-		static void Init(const fs::path& pluginsPath)
+		static void Init(const fs::path& projectRoot)
 		{
-			GetInstance().InitImpl(pluginsPath);
+			GetInstance().InitImpl(projectRoot);
 		}
 
 		static void Destroy()
@@ -78,19 +82,24 @@ namespace YLP::LuaJIT
 			GetInstance().RegisterLibrariesImpl(L);
 		}
 
-		static void LoadModule(fs::path path)
+		static void ExecuteCode(const std::string& code)
 		{
-			GetInstance().LoadModuleImpl(path);
+			GetInstance().ExecuteCodeImpl(code);
 		}
 
-		static void LoadDisabledModule(fs::path path)
+		static void LoadModule(const fs::path& modulePath)
 		{
-			GetInstance().LoadDisabledModuleImpl(path);
+			GetInstance().LoadModuleImpl(modulePath);
 		}
 
-		static void LoadModules()
+		static void EnableModule(const fs::path& modulePath)
 		{
-			GetInstance().LoadModulesImpl();
+			GetInstance().EnableModuleImpl(modulePath);
+		}
+
+		static void ReloadAllModules()
+		{
+			GetInstance().ReloadAllModulesImpl();
 		}
 
 		static std::vector<std::shared_ptr<LuaModule>>& GetModules()
@@ -102,32 +111,20 @@ namespace YLP::LuaJIT
 		{
 			return GetInstance().m_DisabledModules;
 		}
-
-		static void ExecuteCode(const std::string& code)
-		{
-			if (!Config().enableScripting)
-				return;
-
-			auto& executor = GetInstance().m_CodeExecutor;
-			if (!executor)
-			{
-				LOG_ERROR("CodeExecutor has not been initialized!");
-				return;
-			}
-			executor->RunScript(code);
-		}
 	private:
 		void InitImpl(const fs::path& pluginsPath);
+		void ExecuteCodeImpl(const std::string& code);
 		void DestroyImpl();
 
-		std::mutex m_Mutex{};
+		fs::path m_PluginsDir{};
+
+		std::atomic_bool m_Initialized{false};
+		std::mutex m_LoadedModulesMutex{};
+		std::mutex m_DisabledModulesMutex{};
 		std::vector<std::shared_ptr<LuaModule>> m_Modules{};
 		std::queue<fs::path> m_LoadQueue{};
 		std::vector<DisabledModule> m_DisabledModules{};
 		std::vector<LuaLibrary*> m_Libraries{};
-
-		fs::path m_PluginsDir{};
-
 		std::unique_ptr<LuaModule> m_CodeExecutor{nullptr};
 	};
 }

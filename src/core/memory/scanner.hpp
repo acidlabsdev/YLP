@@ -17,40 +17,45 @@ namespace YLP
 	class ProcessScanner
 	{
 	public:
-		explicit ProcessScanner(const std::string& processName = "");
+		explicit ProcessScanner(const std::string& processName);
 		~ProcessScanner();
 
-		bool FindProcess(const std::string& processName);
+		bool FindProcess();
 		bool IsProcessRunning() const;
 		bool IsModuleLoaded(const std::string& moduleName);
-
-		HANDLE GetProcessHandle() const 
-		{
-			return m_ProcessHandle;
-		}
-
-		DWORD GetProcessID() const
-		{
-			return m_Pid;
-		}
-
-		uintptr_t GetBaseAddress() const;
-		size_t GetModuleSize() const;
 
 		std::vector<uint8_t> ReadMemory(uintptr_t address, size_t size) const;
 		bool IsMemoryReadable(uintptr_t address) const;
 		bool IsAddressValid(uintptr_t address) const;
 		void RefreshModules();
 
-		uint64_t ScanPattern(std::vector<std::optional<uint8_t>> bytes, std::vector<uint8_t> mem);
 		Pointer FindPattern(const std::string& pattern, const std::string& name = "", size_t chunkSize = 4096);
 
+		HANDLE GetProcessHandle() const noexcept
+		{
+			return m_ProcessHandle;
+		}
+
+		DWORD GetProcessID() const noexcept
+		{
+			return m_Pid;
+		}
+
+		const std::string GetProcessName() const noexcept
+		{
+			return m_ProcessName;
+		}
+
+		uintptr_t GetBaseAddress() const;
+		size_t GetModuleSize() const;
+
 	private:
-		std::optional<DWORD> GetProcessIdByName(const std::string& processName) const;
 		static std::vector<std::optional<uint8_t>> ParsePattern(const std::string& sig);
+		uint64_t ScanPattern(std::vector<std::optional<uint8_t>> bytes, std::vector<uint8_t> mem);
 
 		HANDLE m_ProcessHandle;
 		DWORD m_Pid;
+
 		mutable uintptr_t m_BaseAddress;
 
 		std::string m_ProcessName;

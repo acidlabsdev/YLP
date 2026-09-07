@@ -15,6 +15,8 @@
 // along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
 
+#pragma once
+
 #include "../lua_library.hpp"
 #include "../lua_module.hpp"
 
@@ -40,7 +42,7 @@ namespace YLP::LuaJIT
 				sol::protected_function_result r = tostring(arg);
 				output += r.valid() ? r.get<std::string>() : "";
 			}
-			return "[LuaModule(" + moduleName + ")] " + output;
+			return "[" + moduleName + "/main.lua]: " + output;
 		}
 
 	public:

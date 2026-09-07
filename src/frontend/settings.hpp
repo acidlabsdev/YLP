@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "core/gui/gui_tab.hpp"
 #include "core/lua_scripting/lua_mgr.hpp"
 #include "core/gui/theme_mgr.hpp"
 
@@ -24,14 +25,17 @@
 namespace YLP::Frontend
 {
 	using namespace YLP;
+	using LuaManager = YLP::LuaJIT::LuaManager;
 
-	class SettingsUI
+	class SettingsTab final : public GuiTab
 	{
 	public:
-		SettingsUI() = default;
-		~SettingsUI() noexcept = default;
+		SettingsTab() :
+		    GuiTab(eTabID::TAB_SETTINGS, ICON_MD_SETTINGS, "Settings")
+		{
+		}
 
-		static void DrawGeneral()
+		static inline void DrawGeneral()
 		{
 			auto& cfg = Config();
 			auto updateState = YLPUpdater.GetState();
@@ -83,23 +87,9 @@ namespace YLP::Frontend
 			ImGui::Checkbox("Auto-Exit", &cfg.autoExit);
 			ImGui::HelpMarker("Automatically exit after injecting a dll. This only works if Auto-Inject is enabled for either YimMenu Legacy or V2 or both; does nothing otherwise.");
 			ImGui::EndDisabled();
-
-			if (ImGui::Checkbox("Enable LuaJIT Scripting", &cfg.enableScripting))
-			{
-				if (cfg.enableScripting)
-				{
-					if (cfg.enableScripting = MsgBox::Confirm("YLP", "This will allow YLP to run Lua scripts. Are you sure you would like to enable this feature?"); cfg.enableScripting)
-						Notifier::Add(
-						    "Scripting",
-						    "Warning! This feature can be harmless if not handled properly. Please make sure to only execute Lua code from trusted sources.",
-						    Notifier::Warning);
-				}
-				else
-					LuaManager::Destroy();
-			}
 		}
 
-		static void DrawThemes()
+		static inline void DrawThemes()
 		{
 			ImVec2 previewSize(200, 220);
 			Theme* currentTheme = ThemeManager::GetCurrentTheme();
@@ -116,88 +106,156 @@ namespace YLP::Frontend
 			}
 		}
 
-		static void DrawPlugins()
+		static inline void DrawPlugins()
 		{
-			if (!Config().enableScripting)
+			auto& cfg = Config();
+
+			if (ImGui::Checkbox("Enable Lua Scripting", &cfg.enableScripting))
 			{
-				ImGui::TextCentered("Currently Unavailable", Fonts::Title);
-				ImGui::Dummy(ImVec2(0, 20));
-				ImGui::Text("The scripting feature is disabled. You can enable it in the General Settings tab.");
-				return;
+				if (!cfg.enableScripting)
+				{
+					LuaManager::Destroy();
+				}
+				else if (cfg.enableScripting = MsgBox::Confirm("YLP", "This will allow YLP to run Lua scripts. Are you sure you would like to enable this feature?"); cfg.enableScripting)
+				{
+					Notifier::Add(
+					    "Scripting",
+					    "Warning! This feature can be harmless if not handled properly. Please make sure to only execute Lua code from trusted sources.",
+					    Notifier::Warning);
+					LuaManager::Init(g_ProjectPath);
+				}
 			}
 
+			if (!cfg.enableScripting)
+				return;
+
+			ImGui::Dummy(ImVec2(0, 5));
+
+			auto& modules = LuaManager::GetModules();
+			auto& disabledModules = LuaManager::GetDisabledModules();
 			ImVec2 region = ImGui::GetContentRegionAvail();
-			auto& modules = LuaJIT::LuaManager::GetModules();
-			auto& disabledModules = LuaJIT::LuaManager::GetDisabledModules();
-			float listboxHeight = region.y - (ImGui::GetFrameHeight() * 2) - (ImGui::GetStyle().ItemSpacing.y * 7);
-			ImGui::BeginChild("##Enabled Plugins", ImVec2(region.x * 0.5, 0), ImGuiChildFlags_Borders);
+			ImGui::BeginChild("##enabledPlugins", ImVec2(region.x * 0.5, 0), ImGuiChildFlags_Borders);
+			ImGui::BeginDisabled(modules.empty());
+			if (ImGui::Button(ICON_MD_REFRESH))
+				LuaManager::ReloadAllModules();
+			ImGui::ToolTip("Reload All");
+			ImGui::EndDisabled();
+
+			ImGui::SameLine();
 			ImGui::TextCentered("Enabled Plugins");
 			ImGui::Separator();
-			ImGui::SetNextWindowBgAlpha(0.0f);
-			if (ImGui::BeginListBox("##enabledList", ImVec2(-1, listboxHeight)))
+
+			if (modules.empty())
+				ImGui::TextDisabled("Wow! Such Empty!");
+			else
 			{
-				if (modules.empty())
-					ImGui::TextDisabled("Wow! Such Empty!");
-				else
+				for (auto& m : modules)
 				{
-					for (auto& m : modules)
+					auto pathName = m->GetRoot().string();
+
+					ImGui::PushID(&m);
+					ImGui::BeginDisabled(m == dragSourcePtr);
+					if (ImGui::Selectable(m->GetName().data(), m == selectedModule))
+						selectedModule = m;
+					ImGui::EndDisabled();
+					ImGui::PopID();
+					ImGui::ToolTip("Right click to open the context menu or drag to move to the disabled list.");
+
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+						ImGui::OpenPopup(pathName.c_str());
+
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{
-						if (ImGui::Selectable(m->GetName().data(), m == selectedModule))
-							selectedModule = m;
+						dragSourcePtr = m;
+						ImGui::SetDragDropPayload("ENABLED_MODULE", &m, sizeof(m));
+						ImGui::Selectable(m->GetName().data(), true);
+						ImGui::EndDragDropSource();
+					}
+					else
+						dragSourcePtr = nullptr;
+
+					if (ImGui::BeginPopup(pathName.c_str()))
+					{
+						if (ImGui::MenuItem(ICON_MD_REFRESH " Reload"))
+							m->Reload();
+
+						if (ImGui::MenuItem(ICON_MD_ARROW_RIGHT " Disable"))
+							m->Unload();
+
+						ImGui::EndPopup();
 					}
 				}
-				ImGui::EndListBox();
-			}
-
-			ImGui::Separator();
-			for (int i = 0; i < 3; i++)
-			{
-				ImGui::BeginDisabled();
-				ImGui::PushID(i);
-				ImGui::Button("Test");
-				ImGui::PopID();
-				ImGui::EndDisabled();
-				if (i < 3)
-					ImGui::SameLine();
 			}
 			ImGui::EndChild();
 
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DISABLED_MODULE"))
+				{
+					const char* droppedPath = static_cast<const char*>(payload->Data);
+					LuaManager::EnableModule(droppedPath);
+					dragSourceStr = "";
+				}
+				ImGui::EndDragDropTarget();
+			}
+
 			ImGui::SameLine();
-			ImGui::BeginChild("##Disabled Plugins", ImVec2(0, 0), ImGuiChildFlags_Borders);
+			ImGui::BeginChild("##disabledPlugins", ImVec2(0, 0), ImGuiChildFlags_Borders);
 			ImGui::TextCentered("Disabled Plugins");
 			ImGui::Separator();
 			ImGui::SetNextWindowBgAlpha(0.0f);
-			if (ImGui::BeginListBox("##enabledList", ImVec2(-1, listboxHeight)))
+			if (disabledModules.empty())
+				ImGui::TextDisabled("Wow! Such Empty!");
+			else
 			{
-				if (disabledModules.empty())
-					ImGui::TextDisabled("Wow! Such Empty!");
-				else
+				for (auto& m : disabledModules)
 				{
-					for (auto& m : disabledModules)
+					auto pathName = m.m_Path.string();
+
+					ImGui::PushID(&m);
+					ImGui::BeginDisabled(pathName == dragSourceStr);
+					if (ImGui::Selectable(m.m_Name.c_str(), pathName == selectedDisabledPath))
+						selectedDisabledPath = pathName;
+					ImGui::EndDisabled();
+					ImGui::PopID();
+					ImGui::ToolTip("Right click to open the context menu or drag to move to the enabled modules list.");
+
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Right))
+						ImGui::OpenPopup(pathName.c_str());
+
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{
-						std::string pathName = m.m_Path.string();
-						if (ImGui::Selectable(pathName.c_str(), pathName == selectedDisabledModule))
-							selectedDisabledModule = pathName;
+						dragSourceStr = pathName;
+						ImGui::SetDragDropPayload("DISABLED_MODULE", pathName.c_str(), pathName.size() + 1);
+						ImGui::Selectable(m.m_Name.c_str(), true);
+						ImGui::EndDragDropSource();
+					}
+					else
+						dragSourceStr = "";
+
+					if (ImGui::BeginPopup(pathName.c_str()))
+					{
+						if (ImGui::MenuItem(ICON_MD_ARROW_LEFT " Enable"))
+							LuaManager::EnableModule(pathName);
+
+						ImGui::EndPopup();
 					}
 				}
-				ImGui::EndListBox();
-			}
-
-			ImGui::Separator();
-			for (int i = 0; i < 3; i++)
-			{
-				ImGui::BeginDisabled();
-				ImGui::PushID(i);
-				ImGui::Button("Test");
-				ImGui::PopID();
-				ImGui::EndDisabled();
-				if (i < 3)
-					ImGui::SameLine();
 			}
 			ImGui::EndChild();
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENABLED_MODULE"))
+				{
+					LuaJIT::LuaModule* droppedModule = *static_cast<LuaJIT::LuaModule**>(payload->Data);
+					droppedModule->Unload();
+					dragSourcePtr = nullptr;
+				}
+				ImGui::EndDragDropTarget();
+			}
 		}
 
-		static void Draw()
+		void Draw() override
 		{
 			auto& style = ImGui::GetStyle();
 			float totalWidth = 0.0f;
@@ -209,7 +267,7 @@ namespace YLP::Frontend
 			float startX = (regionWidth - totalWidth) * 0.5f;
 			ImGui::SetCursorPosX(startX > 0.0f ? ImGui::GetCursorPosX() + startX : 0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_TabBarBorderSize, 0.0f);
-			if (ImGui::BeginTabBar("CenteredTabBar"));
+			if (ImGui::BeginTabBar("##SettingsTabBar"));
 			{
 				if (ImGui::BeginTabItem(tabs[0]))
 				{
@@ -245,8 +303,12 @@ namespace YLP::Frontend
 
 	private:
 		static inline std::shared_ptr<LuaJIT::LuaModule> selectedModule{nullptr};
-		static inline std::string selectedDisabledModule{};
+		static inline std::shared_ptr<LuaJIT::LuaModule> dragSourcePtr{nullptr};
+		static inline std::string selectedDisabledPath{};
+		static inline std::string dragSourceStr{};
 		static inline const char* tabs[] = {ICON_MD_TUNE " General", ICON_MD_PALETTE " Themes", ICON_MD_CODE " Scripting"};
 		static inline const int tabCount = 3;
 	};
+
+	inline SettingsTab _SettingsTab;
 }

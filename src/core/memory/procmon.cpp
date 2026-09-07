@@ -309,7 +309,7 @@ namespace YLP
 						m_Scanner = std::make_unique<ProcessScanner>(m_ProcessName);
 					}
 
-					if (!m_Found && m_Scanner && m_Scanner->FindProcess(m_ProcessName))
+					if (!m_Found && m_Scanner && m_Scanner->FindProcess())
 					{
 						m_Found = true;
 						LOG_INFO("[ProcMon]: Found process '{}'", m_ProcessName);

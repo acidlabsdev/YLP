@@ -144,7 +144,7 @@ namespace YLP
 		{
 			Notifier::Add("Lua", "Updates are available for some of your installed scripts.", Notifier::Info, [this] {
 				SetSortMode(eLuaRepoSortMode::INSTALLED);
-				GUI::SetActiveTab(GUI::eTabID::TAB_YIMMENU_LUA);
+				GUI::SetActiveTab(eTabID::TAB_YIMMENU_LUA);
 			});
 		}
 

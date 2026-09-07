@@ -29,13 +29,6 @@ namespace YLP
 		Fonts::Load(ImGui::GetIO());
 		ThemeManager::Init();
 
-		InititializeTabImpl(eTabID::TAB_MAIN, ICON_MD_HOME, &YimMenuUI::Draw, "Dashboard");
-		InititializeTabImpl(eTabID::TAB_YIMMENU_LUA, ICON_MD_EXTENSION, &LuaScriptsUI::Draw, "YimMenu-Lua");
-		InititializeTabImpl(eTabID::TAB_INJECTOR, ICON_MD_STORAGE, &InjectorUI::Draw, "Standalone Injector");
-		InititializeTabImpl(eTabID::TAB_SCRIPTING, ICON_MD_CODE, &PluginsUI::Draw, "Scripting");
-		InititializeTabImpl(eTabID::TAB_SETTINGS, ICON_MD_SETTINGS, &SettingsUI::Draw, "Settings");
-		InititializeTabImpl(eTabID::TAB_INFO, ICON_MD_INFO, DrawAboutSection, "About");
-
 		eTabID lastTabIdx = eTabID::TAB_MAIN;
 		if (Config().restoreLastTab)
 		{
@@ -43,23 +36,7 @@ namespace YLP
 			if (lastTabIdx >= eTabID::__COUNT || lastTabIdx < eTabID::TAB_MAIN)
 				lastTabIdx = eTabID::TAB_MAIN;
 		}
-		m_ActiveTab = m_Tabs[TabIDToIndex(lastTabIdx)].get();
-	}
-
-	void GUI::InititializeTabImpl(const eTabID& id, const std::string_view& name, GuiCallback&& callback, std::optional<std::string_view> hint)
-	{
-		size_t idx = TabIDToIndex(id);
-		if (idx >= m_Tabs.size())
-			return;
-
-		if (m_Tabs[idx] != nullptr)
-			LOG_ERROR("[GUI]: Duplicate tab ID {}", static_cast<int>(id));
-
-		for (auto& t : m_Tabs)
-			if (t && t->m_Name == name)
-				LOG_ERROR("[GUI]: Duplicate tab name {}", name);
-
-		m_Tabs[idx] = std::make_unique<Tab>(Tab{ id, name, std::move(callback), hint });
+		m_ActiveTab = m_Tabs[TabIDToIndex(lastTabIdx)];
 	}
 
 	void GUI::OnTabSwitchImpl()
@@ -99,10 +76,10 @@ namespace YLP
 		if (id < eTabID::TAB_MAIN || id >= eTabID::__COUNT)
 			return;
 
-		if (m_ActiveTab && m_ActiveTab->m_ID == id)
+		if (m_ActiveTab && m_ActiveTab->GetID() == id)
 			return;
 
-		auto* tab = m_Tabs[TabIDToIndex(id)].get();
+		auto tab = m_Tabs[TabIDToIndex(id)];
 		if (tab)
 		{
 			m_IsTabSwitchInProgress = true;
@@ -157,8 +134,8 @@ namespace YLP
 
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, m_CallbackChildAlpha);
 		ImGui::BeginChild("##main_scroll_region", ImVec2(0, 0), 0, ImGuiWindowFlags_NoBackground);
-		if (m_ActiveTab && m_ActiveTab->m_Callback)
-			m_ActiveTab->m_Callback();
+		if (m_ActiveTab)
+			m_ActiveTab->Draw();
 		ImGui::EndChild();
 		ImGui::PopStyleVar();
 
@@ -218,16 +195,21 @@ namespace YLP
 		float offsetX = (ImGui::GetContentRegionAvail().x - iconWidth) * 0.5f;
 		for (size_t i = 0; i < tabCount; i++)
 		{
-			auto& tab = *m_Tabs[i];
-			bool selected = (m_ActiveTab == &tab || m_NextTab == &tab);
+			auto tab = m_Tabs[i];
+			if (!tab)
+				continue;
+
+			bool selected = (m_ActiveTab == tab || m_NextTab == tab);
+			std::string_view name = tab->GetName();
 			ImGui::SetCursorPosX(offsetX);
-			if (ImGui::SelectableLabel(tab.m_Name.data(), selected))
+			if (ImGui::SelectableLabel(name.data(), selected))
 			{
 				m_IsTabSwitchInProgress = true;
-				m_NextTab = &tab;
+				m_NextTab = tab;
 				Config().lastTabIndex = i;
 			}
-			auto tooltip = tab.m_Hint ? *tab.m_Hint : tab.m_Name;
+			auto hint = tab->GetHint();
+			auto tooltip = hint ? hint.value_or(name) : name;
 			ImGui::ToolTip(tooltip.data());
 
 			if (selected)
@@ -303,8 +285,8 @@ namespace YLP
 					ImGui::PopStyleColor();
 					ImGui::Spacing();
 
-					ImGui::ToolTip("Right click to copy"); // was left click. gaslighting much?
-					if (ImGui::IsItemHovered() && ImGui::IsItemClicked(ImGuiMouseButton_Right))
+					ImGui::ToolTip("Left click to copy");
+					if (ImGui::IsItemHovered() && ImGui::IsItemClicked(ImGuiMouseButton_Left))
 						ImGui::SetClipboardText(text.c_str());
 				}
 
@@ -319,69 +301,5 @@ namespace YLP
 			ImGui::PopFont();
 		}
 		ImGui::EndChild();
-	}
-
-	const char* style_names[] = {"Dark", "Light", "Classic"};
-	const char* autoModes[] = {"None", "Legacy Only", "Enhanced Only", "Legacy & Enhanced"};
-
-	static void SetTheme(int index)
-	{
-		switch (index)
-		{
-		case 0: ImGui::StyleColorsDark(); break;
-		case 1: ImGui::StyleColorsLight(); break;
-		case 2: ImGui::StyleColorsClassic(); break;
-		default: ImGui::StyleColorsClassic();
-		}	
-	}
-
-	static void DrawHeaderAndText(const char* header, const char* text, std::initializer_list<const char*> bullets = {})
-	{
-		ImGui::PushFont(Fonts::Title);
-		ImGui::Text(header);
-		ImGui::PopFont();
-		ImGui::Separator();
-		ImGui::TextWrapped(text);
-		if (bullets.size() > 0)
-		{
-			for (auto& c : bullets)
-			{
-				ImGui::Bullet();
-				ImGui::TextWrapped(c);
-			}
-		}
-		ImGui::Spacing();
-	}
-
-	void GUI::DrawAboutSection()
-	{
-		DrawHeaderAndText("About",
-		    R"(
-YLP (formerly YimLaunchpad) is a free and open-source companion application created by a member of the community, for the community.
-
-The software and author are not affiliated, associated, or endorsed by any mod menu or third-party commercial tool.
-
-YLP exists solely to enhance the player's experience through transparency and convenience.
-)");
-
-		ImGui::InfoCallout(ImGui::ImCalloutType::Important,
-		    R"(YLP is provided "as is", without any warranty of any kind, express or implied.
-The author shall not be held liable for any damages, data loss, or issues arising from the use or misuse of this software.
-)");
-		DrawHeaderAndText("Licenses and Acknowledgements",
-		    R"(
-YLP makes use of several open-source libraries and assets that are licensed under their respective terms.
-
-Full license texts and credits are available in the Third-Party Licenses document in the source repository.
-)");
-
-		////////////////////////////////////////////////////////
-
-		ImGui::NewLine();
-		ImGui::TitleText("Useful Links", true);
-		ImGui::Spacing();
-		ImGui::TextLinkOpenURL("Source Code " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/YLP");
-		ImGui::TextLinkOpenURL("Report a Bug " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/ylp/issues/new/choose");
-		ImGui::TextLinkOpenURL("Start a Discussion " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/YLP/discussions/new/choose");
 	}
 }

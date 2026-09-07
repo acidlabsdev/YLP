@@ -21,6 +21,9 @@
 
 #include <sol/sol.hpp>
 
+#include "core/directory_watcher.hpp"
+#include "../memory/scanner.hpp"
+
 
 namespace YLP::LuaJIT
 {
@@ -28,9 +31,9 @@ namespace YLP::LuaJIT
 	{
 	public:
 		LuaModule(fs::path root);
-		~LuaModule() = default;
+		~LuaModule();
 
-		enum eLuaModuleState : uint8_t
+		enum eLuaLoadState : uint8_t
 		{
 			NONE,
 			RUNNING,
@@ -40,40 +43,76 @@ namespace YLP::LuaJIT
 		};
 
 		bool Load();
+		void Reload();
+		void Unload();
+		void Execute(const std::string& code);
+		void RegisterTask(sol::protected_function func, std::chrono::milliseconds delayMs = 0ms);
+		void RegisterProcessWatcher(const std::string& processName, sol::protected_function callback, std::chrono::milliseconds delayMs);
+		void DispatchProcessWatchers(const std::chrono::steady_clock::time_point& tickStart);
+		void RegisterShutdownCallback(sol::protected_function callback);
+		void Tick();
 
-		void RunScript(const std::string& code);
+		const bool IsSafeToUnload() const noexcept;
+		const bool IsRunningTasks() const noexcept;
 
-		lua_State* GetLuaState()
-		{
-			return m_SolState.lua_state();
-		}
+		const eLuaLoadState GetLoadState() const noexcept;
 
-		const eLuaModuleState GetRunningState() const noexcept
-		{
-			return m_LoadState;
-		}
+		lua_State* GetLuaState();
 
-		std::string_view GetName() const
-		{
-			return m_Name;
-		}
+		std::string_view GetName() const noexcept;
 
-		fs::path GetRoot()
-		{
-			return m_Root;
-		}
+		fs::path GetRoot() const noexcept;
 
 	private:
+
+		struct LuaTask
+		{
+			sol::thread m_Thread;
+			sol::coroutine m_Coroutine;
+			std::chrono::steady_clock::time_point m_NextRun;
+
+		};
+
+		struct LuaProcessWatcher
+		{
+			std::string m_ProcessName;
+			sol::protected_function m_Callback;
+			std::chrono::milliseconds m_CallbackDelayMs = 0ms;
+		};
+
 		std::string m_Name;
 		fs::path m_Root;
-
-		const std::chrono::time_point<std::chrono::file_clock> last_write_time() const;
-
-		sol::state m_SolState;
 		fs::path m_Entry;
 
-		eLuaModuleState m_LoadState{NONE};
+		sol::state m_LuaState;
 
-		std::mutex m_CallbackLock{};
+		eLuaLoadState m_LoadState{NONE};
+
+		std::shared_mutex m_TaskMutex{};
+		std::vector<LuaTask> m_Tasks;
+		std::atomic_bool m_IsRunningTasks{false};
+
+		std::vector<sol::protected_function> m_ShutdownCallbacks{};
+		std::vector<LuaProcessWatcher> m_ProcessWatchers{}; // was named m_ProcessHandlers but it looked a lot like m_ProcessHandles
+		std::chrono::time_point<std::chrono::steady_clock> m_LastProcessPollTime;
+
+		DirectoryWatcher m_DirectoryWatcher; // was initially part of LuaManager
+	};
+
+	inline LuaModule* GetModuleFromLuaState(lua_State* L, std::optional<std::string_view> errorMsg = std::nullopt)
+	{
+		auto sv = sol::state_view(L);
+		auto ptr = sv["this*"];
+		if (!ptr.is<void*>())
+		{
+			if (errorMsg.has_value())
+				sv.safe_script(errorMsg.value().data());
+			else
+				LOG_ERROR("Module pointer is null!");
+
+			return nullptr;
+		}
+
+		return static_cast<LuaModule*>(ptr.get<void*>());
 	};
 }

@@ -17,14 +17,15 @@
 
 #pragma once
 
-#include <core/gui/fonts/fonts.hpp>
-#include <core/gui/msgbox.hpp>
-#include <core/YimMenu/yimmenu.hpp>
-#include <core/memory/pointers.hpp>
-#include <core/memory/procmon.hpp>
 
-#include "game_icons/gtav.hpp"
-#include "game_icons/gtave.hpp"
+#include "../core/gui/gui_tab.hpp"
+#include "../core/gui/fonts/fonts.hpp"
+#include "../core/gui/msgbox.hpp"
+#include "../core/YimMenu/yimmenu.hpp"
+#include "../core/memory/pointers.hpp"
+#include "../core/memory/procmon.hpp"
+#include "../resources/logos/gtav.hpp"
+#include "../resources/logos/gtave.hpp"
 
 
 namespace YLP::Frontend
@@ -34,13 +35,15 @@ namespace YLP::Frontend
 	I'll try to make it look better in the future.
 	For now it does the job and that's it.
 	*/
-	class YimMenuUI
+	class MainTab final : public GuiTab
 	{
 	public:
-		YimMenuUI() = default;
-		~YimMenuUI() noexcept = default;
+		MainTab() :
+		    GuiTab(eTabID::TAB_MAIN, ICON_MD_HOME, "Home")
+		{
+		}
 
-		static void Draw()
+		void Draw() override
 		{
 			ImVec2 cursorPos = ImGui::GetCursorPos();
 			ImVec2 childSize = ImGui::GetWindowSize();
@@ -61,12 +64,12 @@ namespace YLP::Frontend
 		}
 
 	private:
-		//static inline ImFont* GetScaledFont() noexcept
+		//static inline ImFont* GetScaledFont()
 		//{
 		//	return Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
 		//}
 
-		static void LaunchGame(int launcherIndex, YimMenu& menu, std::shared_ptr<ProcessMonitor>& monitor)
+		static inline void LaunchGame(int launcherIndex, YimMenu& menu, std::shared_ptr<ProcessMonitor>& monitor)
 		{
 			m_AttemptedGameLaunch = true;
 			std::string cmd;
@@ -113,7 +116,7 @@ namespace YLP::Frontend
 				}
 
 				const std::vector<COMDLG_FILTERSPEC> filters = {{L"Executable", L"*.exe"}};
-				std::filesystem::path selected = IO::BrowseFile(filters, L"Select GTA V Executable");
+				std::filesystem::path selected = IO::OpenFileDialog(filters, L"Select GTA V Executable");
 				if (selected.empty())
 					break;
 
@@ -151,7 +154,7 @@ namespace YLP::Frontend
 			m_AttemptedGameLaunch = false;
 		}
 
-		static void DrawMenuDownload(YimMenu& menu)
+		static inline void DrawMenuDownload(YimMenu& menu)
 		{
 			if (menu || menu.GetState() == YimMenu::eMenuViewState::Downloading)
 				return;
@@ -165,7 +168,7 @@ namespace YLP::Frontend
 			}
 		}
 
-		static void DrawMenuControls(YimMenu& menu)
+		static inline void DrawMenuControls(YimMenu& menu)
 		{
 			auto state = menu.GetState();
 			if (state == YimMenu::eMenuViewState::Downloading)
@@ -215,7 +218,7 @@ namespace YLP::Frontend
 			}
 		}
 
-		static void DrawInjectButton(YimMenu& menu, bool running, bool injected)
+		static inline void DrawInjectButton(YimMenu& menu, bool running, bool injected)
 		{
 			if (!menu || menu.GetState() == YimMenu::eMenuViewState::Downloading)
 				return;
@@ -242,7 +245,7 @@ namespace YLP::Frontend
 				ImGui::ToolTip("Currently unavailable.\n\nMake sure the game is running, auto-inject is off, and the menu isn't already injected.");
 		}
 
-		static void DrawMenuUI(YimMenu& menu,
+		static inline void DrawMenuUI(YimMenu& menu,
 		    ImTextureID iconTexture,
 		    std::shared_ptr<ProcessMonitor>& monitor,
 		    GTAPointers pointers)
@@ -303,7 +306,7 @@ namespace YLP::Frontend
 						if (v == 3 && !hasExePath)
 						{
 							const std::vector<COMDLG_FILTERSPEC> filters = {{L"EXE (*.exe)", L"*.exe"}};
-							std::filesystem::path selected = IO::BrowseFile(filters, L"Select GTA V Executable");
+							std::filesystem::path selected = IO::OpenFileDialog(filters, L"Select GTA V Executable");
 							if (selected.empty())
 								break;
 
@@ -422,14 +425,14 @@ namespace YLP::Frontend
 			ImGui::EndChild();
 		}
 
-		static void DrawLegacy()
+		static inline void DrawLegacy()
 		{
 			if (!IconGTAV) // this is redundant because renderer loads once anyway but it would bebetter to make it lazy-load instead. i'm too lazy to do it
 				IconGTAV = Renderer::LoadTextureFromMemory(gta_legacy_data, gta_legacy_size, "IconGTAV");
 			DrawMenuUI(g_YimV1, IconGTAV, g_ProcLegacy, g_Pointers.Legacy);
 		}
 
-		static void DrawEnhanced()
+		static inline void DrawEnhanced()
 		{
 			if (!IconGTAVE)
 				IconGTAVE = Renderer::LoadTextureFromMemory(gta_enhanced_data, gta_enhanced_size, "IconGTAVE");
@@ -437,7 +440,7 @@ namespace YLP::Frontend
 			DrawMenuUI(g_YimV2, IconGTAVE, g_ProcEnhanced, g_Pointers.Enhanced);
 		}
 
-		static void SwitchMonitorMode()
+		static inline void SwitchMonitorMode()
 		{
 			switch (Config().autoMonitorFlags)
 			{
@@ -463,15 +466,12 @@ namespace YLP::Frontend
 		}
 
 	private:
-		static inline ImTextureID IconGTAV = NULL;
-		static inline ImTextureID IconGTAVE = NULL;
-		static inline ImTextureID LegacyWallpaper = NULL;
-		static inline ImTextureID EnhancedWallpaper = NULL;
-		static inline ImVec4 ImRed = ImVec4(1, 0, 0, 1);
-		static inline ImVec4 ImGreen = ImVec4(0, 1, 0, 1);
-		static inline ImVec4 ImBlue = ImVec4(0, 0, 1, 1);
-		static inline ImVec2 ButtonBig = ImVec2(-1, 37);
-		static inline bool m_AttemptedGameLaunch = false;
+		static inline ImTextureID IconGTAV{0};
+		static inline ImTextureID IconGTAVE{0};
+		static inline ImVec4 ImRed{1, 0, 0, 1};
+		static inline ImVec4 ImGreen{0, 1, 0, 1};
+		static inline ImVec2 ButtonBig{-1, 37};
+		static inline bool m_AttemptedGameLaunch{false};
 
 		static inline std::array hourglassIcons{
 			ICON_MD_HOURGLASS_EMPTY, 
@@ -484,7 +484,9 @@ namespace YLP::Frontend
 		    "Steam",
 		    "Rockstar Games Launcher",
 		    "Epic Games Launcher",
-		    "Manual",
+		    "Executable Path",
 		};
 	};
+
+	inline MainTab _MainTab;
 }

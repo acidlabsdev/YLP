@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "core/gui/gui_tab.hpp"
 #include <core/github/gitmgr.hpp>
 #include <core/gui/renderer.hpp>
 #include <core/gui/fonts/fonts.hpp>
@@ -24,11 +25,13 @@
 
 namespace YLP::Frontend
 {
-	class LuaScriptsUI
+	class YimLuaTab final : public GuiTab
 	{
 	public:
-		LuaScriptsUI() = default;
-		~LuaScriptsUI() {};
+		YimLuaTab() :
+		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MD_EXTENSION, "YimMenu-Lua repositories")
+		{
+		}
 		
 		static inline char searchBuffer[64];
 
@@ -56,7 +59,7 @@ namespace YLP::Frontend
 			}
 		}
 
-		static void DrawInstalledRepo(const Repository* repo)
+		static inline void DrawInstalledRepo(const Repository* repo)
 		{
 			if (ImGui::ColoredButton(ICON_MD_DELETE, ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 3.0f))
 				GitHubManager::RemoveRepository(repo->name);
@@ -108,7 +111,7 @@ namespace YLP::Frontend
 			ImGui::ToolTip("Open folder");
 		}
 
-		static void DrawRepoCard(const Repository* repo)
+		static inline void DrawRepoCard(const Repository* repo)
 		{
 			ImGui::BeginChild(repo->htmlUrl.c_str(), 
 				ImVec2(0, 0), 
@@ -186,7 +189,7 @@ namespace YLP::Frontend
 			ImGui::EndChild();
 		}
 
-		static void Draw()
+		void Draw() override
 		{
 			auto sortmode = GitHubManager::GetSortMode();
 			auto state = GitHubManager::GetState();
@@ -289,4 +292,6 @@ namespace YLP::Frontend
 		static inline const ImVec2 m_CtrlBtnSize = ImVec2(120, 25);
 		static inline bool m_SortPopupOpen = false;
 	};
+
+	inline YimLuaTab _YimLuaTab;
 }

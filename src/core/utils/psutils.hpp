@@ -125,7 +125,7 @@ namespace YLP::PsUtils
 		}
 	};
 
-	int GetProcessId(std::string_view name);
+	std::optional<DWORD> GetProcessId(std::string_view name);
 	const bool IsSameArch(HANDLE hTargetProcess);
 	const bool IsServiceRunning(const std::wstring& serviceName);
 	DllInfo AddDLL();

@@ -50,9 +50,9 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	if (!std::filesystem::exists(g_ProjectPath))
 		std::filesystem::create_directory(g_ProjectPath);
 
+	ThreadManager::Init();
 	Settings::Init(g_ProjectPath / "settings.json");
 	Logger::Init(g_ProjectPath / "cout.log", Config().externalConsole);
-	ThreadManager::Init(4);
 
 	if (!std::filesystem::exists(g_YimPath))
 		LOG_INFO("User does not seem to have used YimMenu before, or at least not recently.");
@@ -70,14 +70,17 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 	GitHubManager::Init();
 	YimMenuHandler::Init();
+
 	g_Pointers.Init();
-	LuaJIT::LuaManager::Init(g_ProjectPath / "Plugins");
+
+	LuaJIT::LuaManager::Init(g_ProjectPath);
 
 	ThreadManager::RunDelayed([] {
 		YLPUpdater.Check();
 	}, 5s);
 
-	g_Running = true;	
+	g_Running = true;
+
 	MSG msg = {};	
 	while (msg.message != WM_QUIT)
 	{
@@ -94,6 +97,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	g_Running = false;
 	Renderer::Destroy();
 	Logger::Destroy();
+	LuaJIT::LuaManager::Destroy();
 	ThreadManager::Shutdown();
 	Settings::Destroy();
 

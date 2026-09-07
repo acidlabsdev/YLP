@@ -97,10 +97,10 @@ namespace YLP
 			std::string timestamp = oss.str();
 
 			auto rotatedDir = g_ProjectPath / "Logs";
-			if (!fs::create_directories(rotatedDir, ec))
-				return;
+			if (!fs::exists(rotatedDir))
+				fs::create_directory(rotatedDir, ec);
 
-			auto rotatedFile = rotatedDir / (m_FilePath.filename().string() + "_" + timestamp + ".log");
+			auto rotatedFile = rotatedDir / (m_FilePath.stem().string() + "_" + timestamp + ".log");
 			try
 			{
 				fs::rename(m_FilePath, rotatedFile);
@@ -114,10 +114,10 @@ namespace YLP
 			std::deque<fs::path> backups;
 			for (auto& f : fs::directory_iterator(rotatedDir))
 			{
-				if (!f.is_regular_file() || f.path().extension() != ".log")
-					fs::remove(f);
-
-				backups.push_back(f.path());
+				if (!f.is_regular_file(ec) || f.path().extension() != ".log")
+					fs::remove(f, ec);
+				else
+					backups.push_back(f.path());
 			}
 
 			size_t backupSize = backups.size();
@@ -128,16 +128,9 @@ namespace YLP
 				});
 
 				for (size_t i = 5; i < backupSize; ++i)
-					fs::remove(backups[i]);
+					fs::remove(backups[i], ec);
 			}
 			backups.clear();
-
-			m_FileStream.open(m_FilePath, std::ios::out | std::ios::trunc);
-			if (!m_FileStream.is_open())
-			{
-				std::fprintf(stderr, "[Logger] Failed to re-open log after rotation!\n");
-				return;
-			}
 		}
 
 		fs::path m_FilePath;

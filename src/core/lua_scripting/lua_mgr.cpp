@@ -24,29 +24,44 @@
 
 namespace YLP::LuaJIT
 {
-	void LuaManager::InitImpl(const fs::path& pluginsPath)
+	void LuaManager::InitImpl(const fs::path& projectRoot)
 	{
+		if (m_Initialized)
+			return;
+
 		if (!Config().enableScripting)
 			return;
 
-		m_PluginsDir = pluginsPath;
-		std::error_code ec{};
-		if (!fs::exists(m_PluginsDir))
-			fs::create_directory(m_PluginsDir, ec);
+		if (!IO::Exists(projectRoot))
+			return;
 
-		if (!fs::exists(m_PluginsDir / "shared"))
-			fs::create_directory(m_PluginsDir / "shared", ec);
+		m_PluginsDir = projectRoot / "Plugins";
 
-		if (!fs::exists(m_PluginsDir / "disabled"))
-			fs::create_directory(m_PluginsDir / "disabled", ec);
+		if (!IO::Exists(m_PluginsDir))
+			IO::CreateFolder(m_PluginsDir);
+
+		if (!IO::Exists(m_PluginsDir / "shared"))
+			IO::CreateFolder(m_PluginsDir / "shared");
+
+		if (!IO::Exists(m_PluginsDir / "disabled"))
+			IO::CreateFolder(m_PluginsDir / "disabled");
 
 		LoadModulesImpl();
+		m_Initialized.store(true);
 		LOG_INFO("Lua manager initialized.");
+
+		ThreadManager::RunDelayed([this] {
+			Update();
+		}, 1s);
 	}
 
 	void LuaManager::DestroyImpl()
 	{
-		std::lock_guard lock(m_Mutex);
+		if (!m_Initialized)
+			return;
+
+		m_Initialized.store(false);
+		std::unique_lock lock(m_LoadedModulesMutex);
 		m_Modules.clear();
 		m_DisabledModules.clear();
 		LOG_DEBUG("LuaManager destroyed.");
@@ -67,32 +82,45 @@ namespace YLP::LuaJIT
 		}
 	}
 
-	void LuaManager::LoadModuleImpl(fs::path path)
+	void LuaManager::LoadModuleImpl(const fs::path& root)
 	{
-		if (!fs::exists(path) || !fs::is_directory(path))
+		if (!IO::Exists(root) || !IO::IsDir(root))
 			return;
 
-		for (auto& entry : fs::directory_iterator(path))
+		for (auto& entry : fs::directory_iterator(root))
 		{
-			if (!fs::is_regular_file(entry))
+			if (!IO::IsFile(entry))
 				continue;
 
-			if (entry.path().filename().string() == "main.lua")
+			if (Utils::StringToLower(entry.path().filename().string()) == "main.lua")
 			{
-				m_LoadQueue.push(path);
+				m_LoadQueue.push(root);
 				break;
 			}
 		}
 	}
 
-	void LuaManager::LoadDisabledModuleImpl(fs::path path)
+	void LuaManager::EnableModuleImpl(const fs::path& root)
 	{
-		if (!fs::exists(path) || !fs::is_directory(path) || path.filename().string() != "disabled")
+		std::scoped_lock lock(m_DisabledModulesMutex);
+		std::erase_if(m_DisabledModules, [this, root](const DisabledModule& m) {
+			if (m.m_Path == root)
+			{
+				LoadModuleImpl(root);
+				return true;
+			}
+			return false;
+		});
+	}
+
+	void LuaManager::LoadDisabledModulesImpl(const fs::path& root)
+	{
+		if (!IO::Exists(root) || !IO::IsDir(root))
 			return;
 
-		for (auto& entry : fs::directory_iterator(path))
+		for (auto& entry : fs::directory_iterator(root))
 		{
-			if (!fs::is_directory(entry))
+			if (!IO::IsDir(entry))
 				continue;
 
 			auto rootname = entry.path().filename().string();
@@ -103,17 +131,22 @@ namespace YLP::LuaJIT
 		}
 	}
 
+	void LuaManager::LoadDisabledModuleImpl(const fs::path& root)
+	{
+		std::scoped_lock lock(m_DisabledModulesMutex);
+		m_DisabledModules.push_back({root.filename().string(), root});
+	}
+
 	void LuaManager::LoadModulesImpl()
 	{
 		m_CodeExecutor = std::make_unique<LuaModule>("/CodeExecutor");
 
-		std::error_code ec{};
-		if (!fs::exists(m_PluginsDir, ec) || !fs::is_directory(m_PluginsDir, ec) || fs::is_empty(m_PluginsDir, ec))
+		if (!IO::Exists(m_PluginsDir) || !IO::IsDir(m_PluginsDir) || IO::IsEmpty(m_PluginsDir))
 			return;
 
 		for (auto& entry : fs::directory_iterator(m_PluginsDir))
 		{
-			if (!fs::is_directory(entry))
+			if (!IO::IsDir(entry))
 				continue;
 
 			auto rootname = entry.path().filename().string();
@@ -121,43 +154,78 @@ namespace YLP::LuaJIT
 				continue;
 
 			if (rootname == "disabled")
-				LoadDisabledModule(entry.path());
+				LoadDisabledModulesImpl(entry.path());
 			else
-				LoadModule(entry.path());
-		}
-
-		std::lock_guard lock(m_Mutex);
-		while (!m_LoadQueue.empty())
-		{
-			auto m = std::make_shared<LuaModule>(m_LoadQueue.front());
-			if (m->Load())
-				m_Modules.push_back(m);
-			else
-				m_DisabledModules.push_back({m->GetName().data(), m->GetRoot()});
-
-			m_LoadQueue.pop();
+				LoadModuleImpl(entry.path());
 		}
 	}
 
-	void LuaManager::UpdateImpl() // TODO
+	// enabled modules only
+	void LuaManager::ReloadAllModulesImpl()
 	{
-		//std::scoped_lock lock(m_Mutex);
-		//for (auto& module : m_Modules)
-		//{
-		//	switch (module->GetRunningState())
-		//	{
-		//	case LuaModule::WANTS_RELOAD:
-		//		break;
+		std::scoped_lock lock(m_LoadedModulesMutex);
+		for (auto& m : m_Modules)
+			m->Reload();
+	}
 
-		//	case LuaModule::WANTS_UNLOAD:
-		//		break;
+	void LuaManager::ExecuteCodeImpl(const std::string& code)
+	{
+		if (!m_Initialized || !Config().enableScripting || code.empty())
+			return;
 
-		//	case LuaModule::BROKEN:
-		//		break;
+		auto& executor = m_CodeExecutor;
+		if (!executor)
+		{
+			LOG_ERROR("CodeExecutor has not been initialized!");
+			return;
+		}
+		executor->Execute(code);
+	}
 
-		//	default:
-		//		break;
-		//	}
-		//}
+	void LuaManager::UpdateImpl()
+	{
+		while (m_Initialized && Config().enableScripting && g_Running)
+		{
+			m_CodeExecutor->Tick();
+
+			std::scoped_lock lock(m_LoadedModulesMutex);
+			while (!m_LoadQueue.empty())
+			{
+				auto m = std::make_shared<LuaModule>(m_LoadQueue.front());
+				if (m->Load())
+					m_Modules.push_back(m);
+				else
+					m_DisabledModules.push_back({m->GetName().data(), m->GetRoot()});
+
+				m_LoadQueue.pop();
+			}
+
+			std::erase_if(m_Modules, [this](auto& m) {
+				if (!m->IsSafeToUnload())
+					return false;
+
+				auto state = m->GetLoadState();
+				if (state == LuaModule::WANTS_UNLOAD)
+				{
+					LoadDisabledModuleImpl(m->GetRoot());
+					return true;
+				}
+				else if (state == LuaModule::WANTS_RELOAD)
+				{
+					m_LoadQueue.push(m->GetRoot());
+					return true;
+				}
+
+				return false;
+			});
+
+			for (auto& m : m_Modules)
+			{
+				if (m->GetLoadState() == LuaModule::RUNNING)
+					m->Tick();
+			}
+
+			std::this_thread::sleep_for(1ms);
+		}
 	}
 }

@@ -19,7 +19,7 @@
 #pragma comment(lib, "winmm.lib")
 
 #include <playsoundapi.h>
-#include <frontend/audio/notif_sfx.hpp>
+#include "../../resources/audio/notif_sfx.hpp"
 
 
 namespace YLP

@@ -212,7 +212,7 @@ namespace YLP::PsUtils
 	DllInfo AddDLL()
 	{
 		const std::vector<COMDLG_FILTERSPEC> filters = {{L"DLL (*.dll)", L"*.dll"}};
-		std::filesystem::path dllPath = IO::BrowseFile(filters, L"Select a DLL");
+		std::filesystem::path dllPath = IO::OpenFileDialog(filters, L"Select a DLL");
 		if (dllPath.empty())
 		{
 			DllInfo info{};
@@ -227,14 +227,14 @@ namespace YLP::PsUtils
 		return info;
 	}
 
-	int GetProcessId(std::string_view name)
+	std::optional<DWORD> GetProcessId(std::string_view name)
 	{
 		if (name.empty())
-			return -1;
+			return std::nullopt;
 
 		int req = MultiByteToWideChar(CP_UTF8, 0, name.data(), static_cast<int>(name.size()), nullptr, 0);
 		if (req <= 0)
-			return -1;
+			return std::nullopt;
 
 		std::vector<wchar_t> wbuf(req + 1);
 		MultiByteToWideChar(CP_UTF8, 0, name.data(), static_cast<int>(name.size()), wbuf.data(), req);
@@ -242,13 +242,13 @@ namespace YLP::PsUtils
 
 		ScopedHandle snap(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
 		if (!snap)
-			return -1;
+			return std::nullopt;
 
 		PROCESSENTRY32W pe{};
 		pe.dwSize = sizeof(pe);
 
 		if (!Process32FirstW(snap.Get(), &pe))
-			return -1;
+			return std::nullopt;
 
 		do
 		{
@@ -256,7 +256,7 @@ namespace YLP::PsUtils
 				return static_cast<int>(pe.th32ProcessID);
 		} while (Process32NextW(snap.Get(), &pe));
 
-		return -1;
+		return std::nullopt;
 	}
 
 	const bool IsSameArch(HANDLE hTargetProcess)
@@ -294,12 +294,13 @@ namespace YLP::PsUtils
 		if (!dllPath.is_absolute())
 			dllPath = std::filesystem::absolute(dllPath);
 
-		const int pid = GetProcessId(processName);
-		if (pid == -1)
+		auto maybepid = GetProcessId(processName);
+		if (!maybepid.has_value())
 			return InjectResult::Err(std::string("Process not found: ") + std::string(processName));
 
+		DWORD pid = maybepid.value();
 		const DWORD desiredAccess = PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE;
-		ScopedHandle hProcess(OpenProcess(desiredAccess, FALSE, static_cast<DWORD>(pid)));
+		ScopedHandle hProcess(OpenProcess(desiredAccess, FALSE, pid));
 		if (!hProcess)
 			return InjectResult::Err("OpenProcess failed", GetLastError());
 

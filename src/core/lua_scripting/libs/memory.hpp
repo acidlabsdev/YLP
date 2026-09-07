@@ -15,14 +15,17 @@
 // along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
 
+#pragma once
+
 #include "../lua_library.hpp"
 #include "../lua_module.hpp"
-#include "core/memory/scanner.hpp"
-#include "core/memory/pointer.hpp"
+#include "../../memory/scanner.hpp"
+#include "../../memory/pointer.hpp"
 
 
 namespace YLP::LuaJIT
 {
+	// TODO
 	class LuaMemLib : public LuaLibrary
 	{
 		using LuaLibrary::LuaLibrary;
@@ -30,12 +33,28 @@ namespace YLP::LuaJIT
 	public:
 		void Register(sol::state& L) override
 		{
-			auto ptrUsertype = L.new_usertype<Pointer>("Pointer", sol::no_constructor);
-			ptrUsertype["Add"] = &Pointer::Add;
-			ptrUsertype["Sub"] = &Pointer::Sub;
-			ptrUsertype["Rip"] = &Pointer::Rip;
-			ptrUsertype["Dereference"] = &Pointer::Dereference;
-			ptrUsertype["GetAddress"] = &Pointer::GetAddress;
+			// clang-format off
+
+			auto ptrUsertype = L.new_usertype<Pointer>("Pointer", sol::no_constructor,
+				sol::meta_function::addition, &Pointer::Add,
+				sol::meta_function::subtraction, &Pointer::Sub,
+				"Add", &Pointer::Add,
+				"Sub", &Pointer::Sub,
+				"Rip", &Pointer::Rip,
+				"Dereference", &Pointer::Dereference,
+				"GetAddress", &Pointer::GetAddress
+			);
+
+			// clang-format on
+
+			ptrUsertype["__eq"] = sol::overload(
+			    [](Pointer& self, Pointer& rh) {
+				    return self.GetAddress() == rh.GetAddress();
+			    },
+			    [](Pointer& self, uintptr_t& rh) {
+				    return self.GetAddress() == rh;
+			    });
+
 			ptrUsertype["IsNull"] = [](Pointer& self) {
 				return self.GetAddress() == 0;
 			};
@@ -108,25 +127,6 @@ namespace YLP::LuaJIT
 			};
 			ptrUsertype["WriteDouble"] = [](Pointer& self, double arg) {
 				self.Write<double>(arg);
-			};
-
-			auto scannerUsertype = L.new_usertype<ProcessScanner>("ProcessScanner",
-			    sol::constructors<ProcessScanner(std::string)>(),
-			    "FindProcess", &ProcessScanner::FindProcess,
-			    "IsProcessRunning", &ProcessScanner::IsProcessRunning,
-			    "IsModuleLoaded", &ProcessScanner::IsModuleLoaded,
-			    "GetModuleSize", &ProcessScanner::GetModuleSize,
-				"GetModuleBase", &ProcessScanner::GetBaseAddress
-			);
-
-			scannerUsertype["FindPattern"] = [](ProcessScanner& self,
-			                                     const std::string& pattern,
-			                                     sol::optional<std::string>
-			                                         name,
-			                                     sol::optional<size_t>
-			                                         chunkSize)
-			{
-				return self.FindPattern(pattern, name.value_or(""), chunkSize.value_or(4096));
 			};
 		}
 	};
