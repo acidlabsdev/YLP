@@ -24,7 +24,8 @@ namespace YLP::PsUtils
 	{
 		InjectResult r;
 		r.success = true;
-		r.message = "OK";
+		r.message = "Success";
+		r.win_error = 0;
 		return r;
 	}
 
@@ -43,7 +44,6 @@ namespace YLP::PsUtils
 			return;
 
 		m_Running = true;
-
 		ThreadManager::RunDetached([this]() {
 			while (m_Running)
 			{
@@ -136,12 +136,8 @@ namespace YLP::PsUtils
 
 	DllInfo ValidateDLL(const std::filesystem::path& file)
 	{
-		DllInfo info{};
-		if (!std::filesystem::exists(file))
-		{
-			info.error = "File not found";
-			return info;
-		}
+		if (!IO::Exists(file))
+			return {.error = "File not found"};
 
 		HANDLE hFile = CreateFileW(file.wstring().c_str(),
 		    GENERIC_READ,
@@ -154,55 +150,48 @@ namespace YLP::PsUtils
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
 			CloseHandle(hFile);
-			info.error = "CreateFile failed";
-			return info;
+			return {.error = "CreateFile failed"};
 		}
 
 		HANDLE hMap = CreateFileMappingW(hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
 		if (!hMap)
 		{
 			CloseHandle(hFile);
-			info.error = "CreateFileMapping failed";
-			return info;
+			return {.error = "CreateFileMapping failed"};
 		}
 
 		LPVOID base = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
 		if (!base)
 		{
-			info.error = "MapViewOfFile failed";
 			CloseHandle(hMap);
 			CloseHandle(hFile);
-			return info;
+			return {.error = "MapViewOfFile failed"};
 		}
 
 		auto dos = reinterpret_cast<IMAGE_DOS_HEADER*>(base);
 		if (dos->e_magic != IMAGE_DOS_SIGNATURE)
 		{
-			info.error = "Invalid DOS signature";
 			UnmapViewOfFile(base);
 			CloseHandle(hMap);
 			CloseHandle(hFile);
-			return info;
+			return {.error = "Invalid DOS signature"};
 		}
 
 		auto nt = reinterpret_cast<IMAGE_NT_HEADERS*>((BYTE*)base + dos->e_lfanew);
 		if (nt->Signature != IMAGE_NT_SIGNATURE)
 		{
-			info.error = "Invalid NT signature";
 			UnmapViewOfFile(base);
 			CloseHandle(hMap);
 			CloseHandle(hFile);
-			return info;
+			return {.error = "Invalid NT signature"};
 		}
 
-		info.is64bit = (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64);
-		const auto& opt = nt->OptionalHeader;
-		if (opt.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size > 0 && opt.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress != 0)
-		{
-			info.hasExports = true;
-		}
+		DllInfo info{};
+		info.is64bit	= (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64);
+		auto entryExport = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+		info.hasExports  = entryExport.Size > 0 && entryExport.VirtualAddress != 0;
+		info.ok			= true;
 
-		info.ok = true;
 		UnmapViewOfFile(base);
 		CloseHandle(hMap);
 		CloseHandle(hFile);
@@ -211,14 +200,9 @@ namespace YLP::PsUtils
 
 	DllInfo AddDLL()
 	{
-		const std::vector<COMDLG_FILTERSPEC> filters = {{L"DLL (*.dll)", L"*.dll"}};
-		std::filesystem::path dllPath = IO::OpenFileDialog(filters, L"Select a DLL");
+		auto dllPath = IO::OpenFileDialog({{L"Dynamic Link Library", L"*.dll"}}, L"Select a DLL");
 		if (dllPath.empty())
-		{
-			DllInfo info{};
-			info.error = "Canceled by user";
-			return info;
-		}
+			return {.error = "Canceled by user"};
 
 		DllInfo info = ValidateDLL(dllPath);
 		info.checksum = Utils::CalcSha256(dllPath);
@@ -285,7 +269,7 @@ namespace YLP::PsUtils
 		return CreateRemoteThread(hProcess, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(proc), lpRemoteWstr, 0, nullptr);
 	}
 
-	InjectResult Inject(std::string_view processName, std::filesystem::path dllPath)
+	InjectResult Inject(std::string_view processName, std::filesystem::path dllPath, bool manualMap)
 	{
 		auto dllInfo = ValidateDLL(dllPath);
 		if (!dllInfo.ok)
@@ -299,15 +283,17 @@ namespace YLP::PsUtils
 			return InjectResult::Err(std::string("Process not found: ") + std::string(processName));
 
 		DWORD pid = maybepid.value();
-		const DWORD desiredAccess = PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE;
-		ScopedHandle hProcess(OpenProcess(desiredAccess, FALSE, pid));
+		const DWORD acc = PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE;
+		ScopedHandle hProcess(OpenProcess(acc, FALSE, pid));
 		if (!hProcess)
 			return InjectResult::Err("OpenProcess failed", GetLastError());
 
 		if (!IsSameArch(hProcess.Get()))
-			return InjectResult::Err("Process bitness mismatch (injector and target must be same architecture).");
+			return InjectResult::Err("Process mismatch (YLP and target process must be the same architecture).");
 
-		std::wstring dllW = dllPath.wstring();
+		//return manualMap ? ManualMapInject(hProcess, dllPath) : NativeInject(hProcess, dllPath);
+
+		std::wstring dllW  = dllPath.wstring();
 		const SIZE_T bytes = (dllW.size() + 1) * sizeof(wchar_t);
 
 		LPVOID remoteMem = VirtualAllocEx(hProcess.Get(), nullptr, bytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);

@@ -169,12 +169,12 @@ namespace YLP::LuaJIT
 		return m_IsRunningTasks;
 	}
 
-	void LuaModule::Execute(const std::string& code)
+	void LuaModule::Execute(const std::string_view& code)
 	{
 		if (!Config().enableScripting)
 			return;
 
-		if (auto result = m_LuaState.safe_script(code, &sol::script_pass_on_error); !result.valid())
+		if (auto result = m_LuaState.safe_script(code.data(), &sol::script_pass_on_error); !result.valid())
 		{
 			sol::error error = result;
 			LOG_ERROR(error.what());
@@ -220,40 +220,41 @@ namespace YLP::LuaJIT
 	void LuaModule::Tick()
 	{
 		m_IsRunningTasks.store(true);
-		std::shared_lock lock(m_TaskMutex);
-
 		const auto now = std::chrono::steady_clock::now();
 		DispatchProcessWatchers(now);
 
-		for (auto it = m_Tasks.begin(); it != m_Tasks.end();)
 		{
-			if (m_LoadState != RUNNING || !g_Running)
-				break;
-
-			if (now < it->m_NextRun)
+			std::scoped_lock lock(m_TaskMutex);
+			for (auto it = m_Tasks.begin(); it != m_Tasks.end();)
 			{
+				if (!g_Running)
+					break;
+
+				if (now < it->m_NextRun)
+				{
+					++it;
+					continue;
+				}
+
+				auto result = it->m_Coroutine();
+				if (!result.valid())
+				{
+					sol::error error = result;
+					LOG_ERROR("[{}]: {}", m_Name, error.what());
+					it = m_Tasks.erase(it);
+					continue;
+				}
+
+				if (!it->m_Coroutine.runnable())
+				{
+					it = m_Tasks.erase(it);
+					continue;
+				}
+
+				const auto delay = result.return_count() > 0 ? result[0] : 0;
+				it->m_NextRun = now + std::chrono::milliseconds(delay);
 				++it;
-				continue;
 			}
-
-			auto result = it->m_Coroutine();
-			if (!result.valid())
-			{
-				sol::error error = result;
-				LOG_ERROR("[{}]: {}", m_Name, error.what());
-				it = m_Tasks.erase(it);
-				continue;
-			}
-
-			if (!it->m_Coroutine.runnable())
-			{
-				it = m_Tasks.erase(it);
-				continue;
-			}
-
-			const auto delay = result.return_count() > 0 ? result[0] : 0;
-			it->m_NextRun = now + std::chrono::milliseconds(delay);
-			++it;
 		}
 
 		m_DirectoryWatcher.PollOnce([this](const fs::path& _unused, DirectoryWatcher::ePathStatus status) {

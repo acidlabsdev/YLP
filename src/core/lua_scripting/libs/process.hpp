@@ -31,6 +31,34 @@ namespace YLP::LuaJIT
 	public:
 		void Register(sol::state& L) override
 		{
+			/* @ylp.class Process
+			* description
+				A process abstraction providing basic process interactions.
+
+			* constructor __call
+			* param processName<string>
+
+			* method IsRunning
+			* return boolean
+			
+			* method IsModuleLoaded
+			* param moduleName<string> Name of the module. Example: `"kernelbase.dll"`
+			* return boolean
+
+			* method GetModuleSize
+			* return integer
+
+			* method GetModuleBase
+			* return integer -- The module's base address
+
+			* method Update Updates the process object's internal state. This is useful because the `Process` class does not poll for status on its own.
+
+			* method FindPattern
+			* param pattern<string> IDA-style byte signature. Example: `"8B 88 C0 ?? ?? ?? 89 8F"`
+			* param name<string?> Optional name of the pattern to scan. Purely for logging purposes.
+			* param chunkSize<integer?> Optional memory chunk size. Defaults to 4096
+			* return Pointer A pointer at the found address or a null pointer if the scan fails. This is guaranteed to always return a Pointer object.
+			@*/
 			auto processUsertype = L.new_usertype<ProcessScanner>("Process",
 			    sol::call_constructor, sol::constructors<ProcessScanner(std::string)>(),
 			    "IsRunning", &ProcessScanner::IsProcessRunning,

@@ -20,7 +20,6 @@
 #include <condition_variable>
 #include <system_error>
 #include <thread>
-
 #include <shellapi.h>
 #include <TlHelp32.h>
 
@@ -131,7 +130,7 @@ namespace YLP::PsUtils
 	DllInfo AddDLL();
 	DllInfo ValidateDLL(const std::filesystem::path& file);
 	HANDLE RemoteLoadLibraryW(HANDLE hProcess, LPVOID lpRemoteWstr);
-	InjectResult Inject(std::string_view processName, std::filesystem::path dllPath);
+	InjectResult Inject(std::string_view processName, std::filesystem::path dllPath, bool manualMap = false);
 	std::string TranslateError(DWORD exitCode);
 	std::optional<DWORD> WaitForProcessExit(HANDLE hProc, DWORD timeoutMs);
 	BOOL CALLBACK EnumProcessWindows(HWND hWnd, LPARAM lParam);

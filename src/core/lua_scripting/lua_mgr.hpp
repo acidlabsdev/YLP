@@ -99,7 +99,7 @@ namespace YLP::LuaJIT
 
 		static void ReloadAllModules()
 		{
-			GetInstance().ReloadAllModulesImpl();
+			GetInstance().m_ShouldReload.store(true);
 		}
 
 		static std::vector<std::shared_ptr<LuaModule>>& GetModules()
@@ -119,6 +119,7 @@ namespace YLP::LuaJIT
 		fs::path m_PluginsDir{};
 
 		std::atomic_bool m_Initialized{false};
+		std::atomic_bool m_ShouldReload{false};
 		std::mutex m_LoadedModulesMutex{};
 		std::mutex m_DisabledModulesMutex{};
 		std::vector<std::shared_ptr<LuaModule>> m_Modules{};

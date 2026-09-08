@@ -117,8 +117,7 @@ namespace YLP::Frontend
 			}
 
 			ImGui::Dummy(ImVec2(0, 30));
-			float dllListChildW = childRegion.x * 0.45f;
-			ImGui::BeginChild("##dllList", ImVec2(dllListChildW, 0), ImGuiChildFlags_Borders);
+			ImGui::BeginChild("##dllList", ImVec2(childRegion.x * 0.5, 0), ImGuiChildFlags_Borders);
 			ImGui::Text(ICON_MD_LIST " Your Files");
 			
 			ImGui::Spacing();
@@ -226,7 +225,7 @@ namespace YLP::Frontend
 			ImGui::EndChild();
 
 			ImGui::SameLine();
-			ImGui::BeginChild("##dllInfo", ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
+			ImGui::BeginChild("##dllInfo", ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBackground);
 			if (!selectedDLL.name.empty())
 			{
 				ImGui::TextCentered(selectedDLL.name.c_str(), Fonts::Title);

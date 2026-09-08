@@ -171,9 +171,6 @@ namespace YLP::Frontend
 		static inline void DrawMenuControls(YimMenu& menu)
 		{
 			auto state = menu.GetState();
-			if (state == YimMenu::eMenuViewState::Downloading)
-				ImGui::ProgressBar(menu.m_DownloadProgress, ButtonBig);
-
 			switch (state)
 			{
 				case YimMenu::eMenuViewState::PendingUpdate:
@@ -202,20 +199,33 @@ namespace YLP::Frontend
 					}
 					ImGui::SameLine();
 					ImGui::Text("Check For Updates");
-				    ImGui::Spacing();
-
-				    const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
-				    bool wantsAutoInject = (Config().autoMonitorFlags & monitorTarget) != 0;
-				    if (ImGui::Checkbox("Auto-Inject", &wantsAutoInject))
-				    {
-					    Config().autoMonitorFlags ^= monitorTarget;
-					    SwitchMonitorMode();
-				    }
-				    ImGui::Spacing();
 				    break;
 				}
 			    default: break;
 			}
+
+			ImGui::Spacing();
+			ImGui::BeginDisabled(state != YimMenu::eMenuViewState::Idle);
+
+			const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
+			bool wantsAutoInject        = (Config().autoMonitorFlags & monitorTarget) != 0;
+			bool wantsAutoUpdate        = (Config().menuAutoUpdateFlags & monitorTarget) != 0;
+			if (ImGui::Checkbox("Auto-Inject", &wantsAutoInject))
+			{
+				Config().autoMonitorFlags ^= monitorTarget;
+				SwitchMonitorMode();
+			}
+
+			if (ImGui::Checkbox("Auto-Update", &wantsAutoUpdate))
+			{
+				Config().menuAutoUpdateFlags ^= monitorTarget;
+				SwitchMonitorMode();
+			}
+			ImGui::EndDisabled();
+
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - ButtonBig.y - (ImGui::GetStyle().FramePadding.y * 2));
+			if (state == YimMenu::eMenuViewState::Downloading)
+				ImGui::ProgressBar(menu.m_DownloadProgress, ButtonBig);
 		}
 
 		static inline void DrawInjectButton(YimMenu& menu, bool running, bool injected)
@@ -286,27 +296,47 @@ namespace YLP::Frontend
 			if (ImGui::IsPopupOpen("##launcherPopup"))
 				ImGui::SetNextWindowPos(ImVec2(launcherPopupPos.x, launcherPopupPos.y), ImGuiCond_Always);
 
+			ImGui::Spacing();
+			ImGui::PushFont(Fonts::Small);
+			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK, false, isRunning ? ImGreen : ImRed);
+
+			auto gv = pointers.GameVersion ? pointers.GameVersion.Read<std::string>() : "";
+			auto ov = pointers.OnlineVersion ? pointers.OnlineVersion.Read<std::string>() : "";
+			ImGui::DrawKeyValue("Version:", std::format("{} (Online: {})", gv.empty() ? "?" : gv, ov.empty() ? "?" : ov));
+
+			auto runtime = (isRunning && pointers.GameTime) ? pointers.GameTime.Read<int32_t>() : 0;
+			if (runtime > 0)
+				ImGui::DrawKeyValue("Play Time:", Utils::Int32ToTime(runtime / 1000));
+
+			auto baseAddress = monitor->GetBaseAddress();
+			ImGui::DrawKeyValue("Module Base:", std::format("0x{:X}", baseAddress), baseAddress != 0);
+
+			bool heWatchin = monitor->IsHeWatchin();
+			ImGui::DrawKeyValue("BattlEye:", heWatchin ? "Running!" : "Disabled", false, heWatchin ? ImRed : ImGreen);
+			ImGui::PopFont();
+			ImGui::EndChild();
+
 			if (ImGui::BeginPopup("##launcherPopup"))
 			{
 				ImGui::TextCentered("Select Launcher");
 				ImGui::Separator();
 				const size_t numLaunchers = m_Launchers.size();
-				bool hasExePath = !menu.m_ExePath.empty();
-				int* launcherIdx = &Config().launcherIndex;
+				bool hasExePath           = !menu.m_ExePath.empty();
+				int* launcherIdx          = &Config().launcherIndex;
 				for (size_t i = 0; i < numLaunchers; i++)
 				{
 					const auto& launcher = m_Launchers[i];
-					bool selected = (*launcherIdx == i);
+					bool selected        = (*launcherIdx == i);
 
 					ImGui::Selectable(launcher, selected);
 					if (ImGui::IsItemClicked(0))
 					{
-						int v = static_cast<int>(i);
+						int v        = static_cast<int>(i);
 						*launcherIdx = v;
 						if (v == 3 && !hasExePath)
 						{
 							const std::vector<COMDLG_FILTERSPEC> filters = {{L"EXE (*.exe)", L"*.exe"}};
-							std::filesystem::path selected = IO::OpenFileDialog(filters, L"Select GTA V Executable");
+							std::filesystem::path selected               = IO::OpenFileDialog(filters, L"Select GTA V Executable");
 							if (selected.empty())
 								break;
 
@@ -317,7 +347,7 @@ namespace YLP::Frontend
 								MsgBox::Error("Invalid file", "Selected file does not appear to be a GTA V executable.");
 								break;
 							}
-							menu.m_ExePath = selected;
+							menu.m_ExePath                             = selected;
 							Config().gtaExePaths[menu.m_TargetProcess] = selected;
 						}
 					}
@@ -344,49 +374,32 @@ namespace YLP::Frontend
 				ImGui::EndPopup();
 			}
 
-			ImGui::Spacing();
-			ImGui::PushFont(Fonts::Small);
-			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK, false, isRunning ? ImGreen : ImRed);
-
-			auto gv = pointers.GameVersion ? pointers.GameVersion.Read<std::string>() : "";
-			auto ov = pointers.OnlineVersion ? pointers.OnlineVersion.Read<std::string>() : "";
-			ImGui::DrawKeyValue("Version:", std::format("{} (Online: {})", gv.empty() ? "?" : gv, ov.empty() ? "?" : ov));
-
-			auto runtime = (isRunning && pointers.GameTime) ? pointers.GameTime.Read<int32_t>() : 0;
-			if (runtime > 0)
-				ImGui::DrawKeyValue("Play Time:", Utils::Int32ToTime(runtime / 1000));
-
-			auto baseAddress = monitor->GetBaseAddress();
-			ImGui::DrawKeyValue("Module Base:", std::format("0x{:X}", baseAddress), baseAddress != 0);
-
-			bool heWatchin = monitor->IsHeWatchin();
-			ImGui::DrawKeyValue("BattlEye:", heWatchin ? "Running!" : "Disabled", false, heWatchin ? ImRed : ImGreen);
-			ImGui::PopFont();
-			ImGui::EndChild();
-
 			ImGui::Dummy(ImVec2(0, 20));
 			ImGui::SetNextWindowBgAlpha(0.f);
-			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.4f);
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.8f);
 			ImGui::BeginChild("##menu", ImVec2(0, 0), ImGuiChildFlags_Borders);
 			ImGui::PopStyleVar();
-			ImGui::TextCentered(menu.m_Name.c_str(), Fonts::Title);
-			ImGui::Spacing();
-			ImGui::Separator();
-			ImGui::Spacing();
+			//ImGui::TextCentered(menu.m_Name.c_str(), Fonts::Title);
+			//ImGui::Spacing();
+			//ImGui::Separator();
+			//ImGui::Spacing();
+
+			float menuChildWidth = std::min(420.0f, ImGui::GetContentRegionAvail().x * 0.5f);
+			bool injected        = monitor->IsModuleLoaded(menu.m_DllName);
 
 			ImGui::SetNextWindowBgAlpha(0.f);
-			ImGui::BeginChild("##controls", ImVec2(ImGui::GetContentRegionAvail().x * 0.5, 0), 0,
-				ImGuiWindowFlags_AlwaysUseWindowPadding);
-			bool injected = monitor->IsModuleLoaded(menu.m_DllName);
-			DrawMenuDownload(menu);
+			ImGui::BeginChild("##controls", ImVec2(menuChildWidth, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
 			DrawMenuControls(menu);
+
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - ButtonBig.y - (ImGui::GetStyle().FramePadding.y * 2));
+			DrawMenuDownload(menu);
 			DrawInjectButton(menu, isRunning, injected);
 			ImGui::EndChild();
 
 			ImGui::SameLine();
 			ImGui::SetNextWindowBgAlpha(0.f);
-			ImGui::BeginChild("##stats", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
-			ImGui::TextCentered("Stats For Nerds");
+			ImGui::BeginChild("##stats", ImVec2(0, 0));
+			ImGui::TextCentered("Stats");
 			ImGui::Separator();
 			ImGui::BeginGroup();
 			ImGui::PushFont(ImGui::GetScaledFont());

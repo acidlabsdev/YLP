@@ -84,7 +84,7 @@ namespace YLP::LuaJIT
 
 	void LuaManager::LoadModuleImpl(const fs::path& root)
 	{
-		if (!IO::Exists(root) || !IO::IsDir(root))
+		if (!IO::IsDir(root))
 			return;
 
 		for (auto& entry : fs::directory_iterator(root))
@@ -106,6 +106,16 @@ namespace YLP::LuaJIT
 		std::erase_if(m_DisabledModules, [this, root](const DisabledModule& m) {
 			if (m.m_Path == root)
 			{
+				if (root.parent_path().filename().string() == "disabled")
+				{
+					auto newRoot = m_PluginsDir / root.filename().string();
+					if (!IO::Rename(root, newRoot))
+						return false;
+					
+					LoadModuleImpl(newRoot);
+					return true;
+				}
+
 				LoadModuleImpl(root);
 				return true;
 			}
@@ -133,13 +143,18 @@ namespace YLP::LuaJIT
 
 	void LuaManager::LoadDisabledModuleImpl(const fs::path& root)
 	{
-		std::scoped_lock lock(m_DisabledModulesMutex);
-		m_DisabledModules.push_back({root.filename().string(), root});
+		auto newRoot = m_PluginsDir / "disabled" / root.filename().string();
+		if (IO::Rename(root, newRoot))
+		{
+			std::scoped_lock lock(m_DisabledModulesMutex);
+			m_DisabledModules.push_back({newRoot.filename().string(), newRoot});
+		}
 	}
 
 	void LuaManager::LoadModulesImpl()
 	{
-		m_CodeExecutor = std::make_unique<LuaModule>("/CodeExecutor");
+		if (!m_CodeExecutor)
+			m_CodeExecutor = std::make_unique<LuaModule>("/CodeExecutor");
 
 		if (!IO::Exists(m_PluginsDir) || !IO::IsDir(m_PluginsDir) || IO::IsEmpty(m_PluginsDir))
 			return;
@@ -163,9 +178,13 @@ namespace YLP::LuaJIT
 	// enabled modules only
 	void LuaManager::ReloadAllModulesImpl()
 	{
-		std::scoped_lock lock(m_LoadedModulesMutex);
-		for (auto& m : m_Modules)
-			m->Reload();
+		{
+			std::scoped_lock lock1(m_LoadedModulesMutex);
+			std::scoped_lock lock2(m_DisabledModulesMutex);
+			m_Modules.clear();
+			m_DisabledModules.clear();
+		}
+		LoadModulesImpl();
 	}
 
 	void LuaManager::ExecuteCodeImpl(const std::string& code)
@@ -179,7 +198,7 @@ namespace YLP::LuaJIT
 			LOG_ERROR("CodeExecutor has not been initialized!");
 			return;
 		}
-		executor->Execute(code);
+		m_CodeExecutor->Execute(code);
 	}
 
 	void LuaManager::UpdateImpl()
@@ -188,44 +207,55 @@ namespace YLP::LuaJIT
 		{
 			m_CodeExecutor->Tick();
 
-			std::scoped_lock lock(m_LoadedModulesMutex);
-			while (!m_LoadQueue.empty())
 			{
-				auto m = std::make_shared<LuaModule>(m_LoadQueue.front());
-				if (m->Load())
-					m_Modules.push_back(m);
-				else
-					m_DisabledModules.push_back({m->GetName().data(), m->GetRoot()});
+				std::scoped_lock lock(m_LoadedModulesMutex);
+				while (!m_LoadQueue.empty())
+				{
+					auto m = std::make_shared<LuaModule>(m_LoadQueue.front());
+					if (m->Load())
+						m_Modules.push_back(m);
+					else
+						m_DisabledModules.push_back({m->GetName().data(), m->GetRoot()});
 
-				m_LoadQueue.pop();
-			}
+					m_LoadQueue.pop();
+				}
 
-			std::erase_if(m_Modules, [this](auto& m) {
-				if (!m->IsSafeToUnload())
+				std::erase_if(m_Modules, [this](auto& m) {
+					if (!m->IsSafeToUnload())
+						return false;
+
+					if (m_ShouldReload)
+						return true;
+
+					auto state = m->GetLoadState();
+					if (state == LuaModule::WANTS_UNLOAD)
+					{
+						LoadDisabledModuleImpl(m->GetRoot());
+						return true;
+					}
+					else if (state == LuaModule::WANTS_RELOAD)
+					{
+						m_LoadQueue.push(m->GetRoot());
+						return true;
+					}
+
 					return false;
+				});
 
-				auto state = m->GetLoadState();
-				if (state == LuaModule::WANTS_UNLOAD)
+				for (auto& m : m_Modules)
 				{
-					LoadDisabledModuleImpl(m->GetRoot());
-					return true;
+					if (m->GetLoadState() == LuaModule::RUNNING)
+						m->Tick();
 				}
-				else if (state == LuaModule::WANTS_RELOAD)
-				{
-					m_LoadQueue.push(m->GetRoot());
-					return true;
-				}
-
-				return false;
-			});
-
-			for (auto& m : m_Modules)
-			{
-				if (m->GetLoadState() == LuaModule::RUNNING)
-					m->Tick();
 			}
 
 			std::this_thread::sleep_for(1ms);
+
+			if (m_ShouldReload && m_Modules.empty())
+			{ // TODO: throttle this to prevent UI spam
+				m_ShouldReload = false;
+				ReloadAllModulesImpl();
+			}
 		}
 	}
 }

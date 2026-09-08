@@ -251,52 +251,21 @@ namespace YLP
 			auto& entries = imguiSink.GetEntries();
 			ImGui::PushFont(Fonts::Small);
 			ImGui::BeginDisabled(entries.empty());
+
 			if (ImGui::Button(ICON_MD_CONTENT_COPY))
-			{
-				std::string text;
-				for (const auto& e : entries)
-					text += imguiSink.FormatEntry(e);
-				ImGui::SetClipboardText(text.c_str());
-			}
+				ImGui::SetClipboardText(imguiSink.GetText().c_str());
 			ImGui::ToolTip("Copy all log entries");
 
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MD_DELETE))
 				imguiSink.Clear();
 			ImGui::ToolTip("Clear all log entries");
+
 			ImGui::EndDisabled();
 			ImGui::Spacing();
 
-			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.01f, 0.01f, 0.01f, 1.0f));
-			if (ImGui::BeginChild("##internal_console", ImVec2(0, 0), 0))
-			{
-				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
-				ImGui::PushTextWrapPos(0.0f);
+			imguiSink.Draw();
 
-				for (const auto& e : entries)
-				{
-					auto text = imguiSink.FormatEntry(e);
-					ImVec4 color = imguiSink.GetLevelColor(e);
-					ImGui::PushStyleColor(ImGuiCol_Text, color);
-					ImGui::PushID(&e);
-					ImGui::WrappedSelectable(text.c_str());
-					ImGui::PopID();
-					ImGui::PopStyleColor();
-					ImGui::Spacing();
-
-					ImGui::ToolTip("Left click to copy");
-					if (ImGui::IsItemHovered() && ImGui::IsItemClicked(ImGuiMouseButton_Left))
-						ImGui::SetClipboardText(text.c_str());
-				}
-
-				ImGui::PopTextWrapPos();
-				ImGui::PopStyleVar();
-
-				if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-					ImGui::SetScrollHereY(1.0f);
-			}
-			ImGui::EndChild();
-			ImGui::PopStyleColor();
 			ImGui::PopFont();
 		}
 		ImGui::EndChild();

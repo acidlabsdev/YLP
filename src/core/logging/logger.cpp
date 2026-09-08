@@ -64,6 +64,7 @@ namespace YLP
 	{
 		m_ConsoleSink.Init(enableConsole);
 		m_FileSink.Init(file, maxFileSize);
+		m_ImGuiSink.Init();
 
 		m_Sinks.emplace_back(&m_ConsoleSink);
 		m_Sinks.emplace_back(&m_FileSink);

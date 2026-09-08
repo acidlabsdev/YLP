@@ -89,15 +89,17 @@ namespace YLP::IO
 		return res;
 	}
 
-	void Rename(const fs::path& src, const fs::path& dest)
+	bool Rename(const fs::path& src, const fs::path& dest)
 	{
 		try
 		{
 			fs::rename(src, dest);
+			return true;
 		}
 		catch (const fs::filesystem_error& e)
 		{
 			LOG_ERROR("Error moving folder: {}", e.what());
+			return false;
 		}
 	}
 

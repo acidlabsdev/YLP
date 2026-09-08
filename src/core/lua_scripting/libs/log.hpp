@@ -52,19 +52,36 @@ namespace YLP::LuaJIT
 				LOG_INFO(tostr(L, args));
 			};
 
+			/* @ylp.table log
+			* description
+				Provides functions to output text to console and log file.
+			@*/
 			auto log = L["log"].get_or_create<sol::table>();
+
+			/* @ylp.function log.info Logs an information message.
+			* param ...<any> Any number of arguments of any type.
+			@*/
 			log["info"] = [&](sol::variadic_args args) {
 				LOG_INFO(tostr(L, args));
 			};
 
+			/* @ylp.function log.warning Logs a warning message.
+			* param ...<any> Any number of arguments of any type.
+			@*/
 			log["warning"] = [&](sol::variadic_args args) {
 				LOG_WARN(tostr(L, args));
 			};
 
+			/* @ylp.function log.debug Logs a debug message.
+			* param ...<any> Any number of arguments of any type.
+			@*/
 			log["debug"] = [&](sol::variadic_args args) {
 				LOG_DEBUG(tostr(L, args));
 			};
 
+			/* @ylp.function log.error Logs an error message.
+			* param ...<any> Any number of arguments of any type.
+			@*/
 			log["error"] = [&](sol::variadic_args args) {
 				LOG_ERROR(tostr(L, args));
 			};

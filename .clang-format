@@ -1,7 +1,6 @@
 BasedOnStyle: Microsoft
 AccessModifierOffset: '-4'
 AlignAfterOpenBracket: DontAlign
-AlignConsecutiveAssignments: 'false'
 AlignEscapedNewlines: Left
 AlignOperands: 'false'
 AlignTrailingComments: 'true'
@@ -70,5 +69,12 @@ BreakBeforeBraces: Custom
 BraceWrapping:
     BeforeLambdaBody: 'false'
     AfterCaseLabel: 'true'
+
+AlignConsecutiveAssignments:
+  Enabled: 'true'
+  AcrossEmptyLines: 'false'
+  AcrossComments: 'true'
+  AlignCompound: 'true'
+  PadOperators: 'true'
 
 PackConstructorInitializers: Never

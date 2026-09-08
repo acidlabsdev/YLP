@@ -41,6 +41,24 @@ namespace YLP::LuaJIT
 	public:
 		void Register(sol::state& L) override
 		{
+			/* @ylp.table Task
+			* description
+				Provides functions to run tasks in YLP's thread.
+
+			* function Run
+			* param callback<function> The callback to execute
+
+			* function RunDelayed Execute a callback after a delay
+			* param delay<integer> Delay in milliseconds
+			* param callback<function> The function to execute
+			
+			* function Sleep
+			* param ms<integer> Sleep time in milliseconds
+			
+			* function Yield
+			* param ms<integer?> Optional yield time in milliseconds
+			@*/
+
 			auto taskTable = L["Task"].get_or_create<sol::table>();
 			taskTable["Run"] = [](sol::protected_function func, sol::this_state state) {
 				RegisterTask(func, 0, state);

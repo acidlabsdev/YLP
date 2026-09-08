@@ -30,7 +30,7 @@ namespace YLP::IO
 
 	void Open(const std::string& path);
 	void OpenW(const std::wstring& path);
-	void Rename(const fs::path& src, const fs::path& dest);
+	bool Rename(const fs::path& src, const fs::path& dest);
 
 	std::wstring ReadRegistryKey(HKEY rootPath, const wchar_t* subkeyPath, const wchar_t* subkeyValue);
 

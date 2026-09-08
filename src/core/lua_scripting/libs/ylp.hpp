@@ -20,6 +20,7 @@
 #include "../lua_library.hpp"
 #include "../lua_module.hpp"
 #include "../../memory/scanner.hpp"
+#include "../../utils/psutils.hpp"
 
 
 namespace YLP::LuaJIT
@@ -31,17 +32,36 @@ namespace YLP::LuaJIT
 	public:
 		void Register(sol::state& L) override
 		{
+			/* @ylp.table YLP
+			* description
+				### YLP namespace
+
+			* function RegisterProcessWatcher Registers a callback to be executed once when a process is first seen.~~You can call `Task.Yield` and `Task.Sleep` in your callback function.
+			* param processName<string> The name of the process
+			* param callback<function> The function to execute
+			* param delay<integer?> Optional delay in milliseconds
+			* return boolean success Whether the registration was successful or not.
+
+			* function InjectDll Injects a dynamic link library into a target process.
+			* param dllPath<string> Path to the DLL file.
+			* param processName<string> Name of the target process.
+			* return boolean status Success or failure.
+			* return string? failReason Optional error message if injection fails.
+
+			* function OnShutdown Registers a function to be executed when YLP is shutting down.
+			* param callback<function> The function to execute
+			@*/
 			auto ylpTable = L["YLP"].get_or_create<sol::table>();
 
-			ylpTable["RegisterProcessWatcher"] = [&](std::string_view processName, sol::protected_function callback, sol::optional<int> delayMs) {
+			ylpTable["RegisterProcessWatcher"] = [&](const std::string& processName, sol::protected_function callback, sol::optional<int> delayMs) {
 				auto module = GetModuleFromLuaState(L);
 				if (!module)
 					return false;
 
 				int ms = std::max(0, delayMs.value_or(0));
 				module->RegisterProcessWatcher(
-					processName.data(),
-				    callback,
+					processName,
+				    std::move(callback),
 				    static_cast<std::chrono::milliseconds>(ms)
 				);
 
@@ -51,9 +71,14 @@ namespace YLP::LuaJIT
 			ylpTable["OnShutdown"] = [&](sol::protected_function callback) {
 				auto module = GetModuleFromLuaState(L);
 				if (!module)
-					return false;
+					return;
 
 				module->RegisterShutdownCallback(callback);
+			};
+
+			ylpTable["InjectDll"] = [&](const fs::path& dllPath, const std::string& processName) {
+				InjectResult res = PsUtils::Inject(processName, dllPath);
+				return std::make_tuple(res.success, res.message);
 			};
 		}
 	};

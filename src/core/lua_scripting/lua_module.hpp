@@ -45,7 +45,7 @@ namespace YLP::LuaJIT
 		bool Load();
 		void Reload();
 		void Unload();
-		void Execute(const std::string& code);
+		void Execute(const std::string_view& code);
 		void RegisterTask(sol::protected_function func, std::chrono::milliseconds delayMs = 0ms);
 		void RegisterProcessWatcher(const std::string& processName, sol::protected_function callback, std::chrono::milliseconds delayMs);
 		void DispatchProcessWatchers(const std::chrono::steady_clock::time_point& tickStart);
@@ -88,11 +88,13 @@ namespace YLP::LuaJIT
 
 		eLuaLoadState m_LoadState{NONE};
 
-		std::shared_mutex m_TaskMutex{};
+		std::mutex m_ProcessWatcherMutex;
+		std::mutex m_TaskMutex{};
 		std::vector<LuaTask> m_Tasks;
 		std::atomic_bool m_IsRunningTasks{false};
 
 		std::vector<sol::protected_function> m_ShutdownCallbacks{};
+		std::vector<LuaProcessWatcher> m_PendingProcessWatchers;
 		std::vector<LuaProcessWatcher> m_ProcessWatchers{}; // was named m_ProcessHandlers but it looked a lot like m_ProcessHandles
 		std::chrono::time_point<std::chrono::steady_clock> m_LastProcessPollTime;
 

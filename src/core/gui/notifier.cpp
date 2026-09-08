@@ -202,13 +202,13 @@ namespace YLP
 		ImGui::SameLine();
 		if (ImGui::SelectableLabel(m_IsSnoozed ? ICON_MD_NOTIFICATIONS_PAUSED : ICON_MD_NOTIFICATIONS_ACTIVE, false))
 			ToggleSnooze();
-		ImGui::ToolTip(m_IsSnoozed ? "Enable toast notifications." : "Snooze toasts notifications.");
+		ImGui::ToolTip(m_IsSnoozed ? "Enable toast notifications." : "Snooze toast notifications.");
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(empty);
 		if (ImGui::SelectableLabel(ICON_MD_CLEAR_ALL, false))
 			m_ShouldFlush = true;
-		ImGui::ToolTip("Clear All Notifications");
+		ImGui::ToolTip("Clear all notifications");
 		ImGui::EndDisabled();
 
 		ImGui::Separator();
