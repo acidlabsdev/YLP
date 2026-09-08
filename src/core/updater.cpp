@@ -166,7 +166,7 @@ namespace YLP
 				    std::format("Version {} is available! Download it from the settings tab.", remote.ToString()),
 				    Notifier::Info,
 				    [] {
-					    GUI::SetActiveTab(GUI::eTabID::TAB_SETTINGS);
+					    GUI::SetActiveTab(eTabID::TAB_SETTINGS);
 				    });
 				m_State = Pending;
 				return;

@@ -68,7 +68,7 @@ namespace YLP
 			Notifier::Add(title, msg, level);
 			
 			if (log)
-				Logger::Log(static_cast<Logger::eLogLevel>(level), title + ": " + msg);
+				Logger::Log(static_cast<eLogLevel>(level), title + ": " + msg);
 		}
 
 		bool SanityCheck()
@@ -89,28 +89,27 @@ namespace YLP
 		    const std::pair<std::wstring, std::wstring>& releaseUrl,
 		    const std::pair<std::wstring, std::wstring>& downloadUrl)
 		{
-			m_Version = version;
-			m_BasePath = path;
-			m_Url = url;
-			m_ReleaseUrl = releaseUrl;
-			m_DownloadUrl = downloadUrl;
-			m_Name = version == YimMenuV1 ? "YimMenu" : "YimMenuV2";
-			m_DllName = m_Name + ".dll";
-			m_TargetProcess = version == YimMenuV1 ? "GTA5.exe" : "GTA5_Enhanced.exe";
-			m_DllPath = path / m_DllName;
-			m_Exists = IO::Exists(m_DllPath);
-			m_ChecksumPath = path / (m_Name + ".sha256");
-			m_SupportedVersionPath = path / (m_Name + ".version");
+			m_Version				= version;
+			m_BasePath				= path;
+			m_Url					= url;
+			m_ReleaseUrl			= releaseUrl;
+			m_DownloadUrl			= downloadUrl;
+			m_Name					= version == YimMenuV1 ? "YimMenu" : "YimMenuV2";
+			m_DllName				= m_Name + ".dll";
+			m_TargetProcess			= version == YimMenuV1 ? "GTA5.exe" : "GTA5_Enhanced.exe";
+			m_DllPath				= path / m_DllName;
+			m_Exists				= IO::Exists(m_DllPath);
+			m_ChecksumPath			= path / (m_Name + ".sha256");
+			m_SupportedVersionPath	= path / (m_Name + ".version");
 
 			ReadSupportedGameVersion();
 
-			if (Config().gtaExePaths.contains(m_TargetProcess))
-				m_ExePath = Config().gtaExePaths[m_TargetProcess];
+			auto& exePaths = Config().gtaExePaths;
+			if (exePaths.contains(m_TargetProcess))
+				m_ExePath = exePaths[m_TargetProcess];
 
 			if (m_Exists && !ReadChecksum())
-				ThreadManager::Run([this]() {
-					UpdateChecksum();
-				});
+				ThreadManager::Run([this]() { UpdateChecksum(); });
 		}
 
 		bool ReadChecksum()
@@ -216,7 +215,8 @@ namespace YLP
 
 		void Download()
 		{
-			std::scoped_lock lock(m_Mutex);
+			if (m_State == Downloading)
+				return;
 
 			if (!IO::Exists(g_ProjectPath))
 				return;
@@ -226,8 +226,10 @@ namespace YLP
 
 			try
 			{
-				LOG_INFO("{}: Downloading latest Nightly release...", m_Name);
+				std::scoped_lock lock(m_Mutex);
 				m_State = Downloading;
+				LOG_INFO("{}: Downloading latest Nightly release...", m_Name);
+
 				auto response = Utils::HttpRequest(m_DownloadUrl.first, m_DownloadUrl.second, {}, &m_DllPath, &m_DownloadProgress);
 				if (!response.success)
 				{
@@ -245,12 +247,15 @@ namespace YLP
 			}
 			catch (const std::exception& e)
 			{
-				LOG_ERROR("An exception has occured: {}", e.what());
+				LOG_ERROR("An error has occured: {}", e.what());
 			}
 		}
 
 		void CheckForUpdates()
 		{
+			if (m_State == Checking)
+				return;
+
 			std::scoped_lock lock(m_Mutex);
 			m_State = Checking;
 
@@ -280,11 +285,18 @@ namespace YLP
 				if (!pendingUpdate)
 				{
 					LOG_INFO("[{}]: No new releases found.", m_Name);
-					UpdateSupportedGameVersion(); // sometimes the supported version changes without a new release
+					UpdateSupportedGameVersion();
 					m_State = Idle;
 				}
 				else
 				{
+					const uint8_t flag = (m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
+					if ((Config().menuAutoUpdateFlags & flag))
+					{
+						Download();
+						return;
+					}
+
 					Notify("A new release is out!", Notifier::Info, true);
 					m_State = PendingUpdate;
 				}
@@ -300,8 +312,11 @@ namespace YLP
 
 		PsUtils::InjectResult Inject()
 		{
+			if (!m_State != Idle)
+				return PsUtils::InjectResult::Err("Busy", ERROR_ACCESS_DENIED);
+
 			if (!SanityCheck())
-				return PsUtils::InjectResult::Err("File not found!", 2);
+				return PsUtils::InjectResult::Err("File not found!", ERROR_FILE_NOT_FOUND);
 
 			const auto result = PsUtils::Inject(m_TargetProcess, m_DllPath);
 			m_IsInjected = result.success;
@@ -365,13 +380,11 @@ namespace YLP
 				    {L"github.com", L"/YimMenu/YimMenuV2/releases/download/nightly/YimMenuV2.dll"});
 			}
 
-			// if (Config().autoMonitorFlags & MonitorLegacy) // should be default behavior otherwise what's the point?
 			ThreadManager::RunDelayed([this] {
 				m_V1.CheckForUpdates();
 			},
 			    2s);
 
-			// if (Config().autoMonitorFlags & MonitorEnhanced)
 			ThreadManager::RunDelayed([this] {
 				m_V2.CheckForUpdates();
 			},

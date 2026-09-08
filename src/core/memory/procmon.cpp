@@ -121,9 +121,6 @@ namespace YLP
 
 	bool ProcessMonitor::AutoInject()
 	{
-		if (!(Config().autoMonitorFlags & m_MonitorMode))
-			return false;
-
 		if (!m_Scanner || !m_Menu)
 			return false;
 
@@ -212,6 +209,9 @@ namespace YLP
 				}
 
 				std::this_thread::sleep_for(3s);
+				if (!(Config().autoMonitorFlags & m_MonitorMode))
+					return false;
+
 				m_Menu->Inject();
 				attempted_inject = true;
 			}
@@ -279,9 +279,6 @@ namespace YLP
 
 	void ProcessMonitor::MonitorLoop()
 	{
-		if (!(Config().autoMonitorFlags & m_MonitorMode))
-			return;
-
 		if (IsBattlEyeRunning())
 		{
 			LOG_WARN("[ProcMon]: Standing down until the all-seeing Bastian looks away. (BattlEye detected!)");
@@ -309,7 +306,7 @@ namespace YLP
 						m_Scanner = std::make_unique<ProcessScanner>(m_ProcessName);
 					}
 
-					if (!m_Found && m_Scanner && m_Scanner->FindProcess(m_ProcessName))
+					if (!m_Found && m_Scanner && m_Scanner->FindProcess())
 					{
 						m_Found = true;
 						LOG_INFO("[ProcMon]: Found process '{}'", m_ProcessName);
@@ -318,7 +315,7 @@ namespace YLP
 						{
 							try
 							{
-								WaitForGameReady(20000);
+								WaitForGameReady(30000);
 								m_OnFound(*m_Scanner);
 
 								if (Config().autoMonitorFlags & m_MonitorMode)

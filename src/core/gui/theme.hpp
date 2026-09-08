@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
+
 #pragma once
 
 #include <variant>
@@ -427,11 +428,8 @@ namespace YLP::Frontend
 		{
 			for (const auto& [k, v] : styleVarsJson.items())
 			{
-				auto it = StyleResolvers.find(k);
-				if (it == StyleResolvers.end())
-					continue;
-
-				styleVars[k] = it->second.FromJson(v);
+				if (auto it = StyleResolvers.find(k); it != StyleResolvers.end())
+					styleVars[k] = it->second.FromJson(v);
 			}
 		}
 
@@ -441,8 +439,7 @@ namespace YLP::Frontend
 		{
 			for (const auto& [k, v] : styleColsJson.items())
 			{
-				auto it = ImColMap.find(k);
-				if (it == ImColMap.end())
+				if (auto it = ImColMap.find(k); it == ImColMap.end())
 					continue;
 
 				styleColors[k] = NLOHMANN_JSON_DESERIALIZE_VEC4(v);
@@ -459,9 +456,7 @@ namespace YLP::Frontend
 		auto& StyleResolvers = Theme::StyleResolvers;
 		for (auto& [k, v] : styleVars)
 		{
-			LOG_DEBUG("{}",  k);
-			auto it = StyleResolvers.find(k);
-			if (it == StyleResolvers.end())
+			if (auto it = StyleResolvers.find(k); it == StyleResolvers.end())
 				continue;
 
 			j["style_vars"][k] = t.SerializeStyle(v);
@@ -469,11 +464,8 @@ namespace YLP::Frontend
 
 		for (auto& [k, v] : Theme::ImColMap)
 		{
-			auto it = colors.find(k);
-			if (it == colors.end())
-				continue;
-
-			j["style_colors"][k] = NLOHMANN_JSON_SERIALIZE_VEC4(it->second);
+			if (auto it = colors.find(k); it != colors.end())
+				j["style_colors"][k] = NLOHMANN_JSON_SERIALIZE_VEC4(it->second);
 		}
 	}
 }

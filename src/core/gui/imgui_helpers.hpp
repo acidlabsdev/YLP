@@ -66,12 +66,12 @@ namespace ImGui
 	    bool delayed = true,
 	    float textWrapWidth = -1.0f);
 
+	bool SelectableLabel(const char* label, bool selected);
 	void HelpMarker(const char* text, ImFont* font = nullptr);
 	void WarningMessage(const char* text);
 	void TitleText(const char* text, bool separator = false);
 	void TextCentered(const char* text, ImFont* font = nullptr, float availWidth = 0.0f);
 	void SameLineIfAvail(float itemwidth, float region = -1.0f);
-	bool SelectableLabel(const char* label, bool selected);
 	void DrawKeyValue(const char* key,
 	    const std::string& value,
 	    bool copyable = false,

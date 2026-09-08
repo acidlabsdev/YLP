@@ -17,23 +17,29 @@
 
 #pragma once
 
-#include <core/gui/fonts/fonts.hpp>
-#include <core/gui/msgbox.hpp>
+#include "../core/gui/gui_tab.hpp"
+#include "../core/gui/fonts/fonts.hpp"
+#include "../core/gui/msgbox.hpp"
 
 
 namespace YLP::Frontend
 {
 	using namespace PsUtils;
 
-	class InjectorUI
+	class InjectorTab final : public GuiTab
 	{
 	public:
-		InjectorUI() = default;
-		~InjectorUI() noexcept = default;
+		InjectorTab() :
+		    GuiTab(eTabID::TAB_INJECTOR, ICON_MD_STORAGE, "Standalone injector & custom DLLs")
+		{
+		}
 
-		static void OnFileSelected(const DllInfo& file, ProcessList& processList)
+		static inline void OnFileSelected(const DllInfo& file, ProcessList& processList)
 		{
 			std::string lastKnown = file.lastKnownProcess;
+			if (file.checksum == lastSelectedDLL || selectedProcess.m_Name == lastKnown)
+				return;
+
 			if (lastKnown.empty())
 				return;
 
@@ -45,11 +51,15 @@ namespace YLP::Frontend
 			for (auto& p : snapshot)
 			{
 				if (p.m_Name == lastKnown)
+				{
 					selectedProcess = p;
+					lastSelectedDLL = file.checksum;
+					break;
+				}
 			}
 		}
 
-		static void Draw()
+		void Draw() override
 		{
 			auto processes = processList.GetSnapshot();
 			auto childRegion = ImGui::GetContentRegionAvail();
@@ -107,8 +117,7 @@ namespace YLP::Frontend
 			}
 
 			ImGui::Dummy(ImVec2(0, 30));
-			float dllListChildW = childRegion.x * 0.45f;
-			ImGui::BeginChild("##dllList", ImVec2(dllListChildW, 0), ImGuiChildFlags_Borders);
+			ImGui::BeginChild("##dllList", ImVec2(childRegion.x * 0.5, 0), ImGuiChildFlags_Borders);
 			ImGui::Text(ICON_MD_LIST " Your Files");
 			
 			ImGui::Spacing();
@@ -132,11 +141,14 @@ namespace YLP::Frontend
 						return;
 					}
 
-					std::erase_if(savedDLLs, [&](const DllInfo& d) {
-						return d.filepath == newdll.filepath || d.checksum == newdll.checksum;
-					});
+					{
+						std::scoped_lock lock(m_Mutex);
+						std::erase_if(savedDLLs, [&](const DllInfo& d) {
+							return d.filepath == newdll.filepath || d.checksum == newdll.checksum;
+						});
 
-					savedDLLs.push_back(newdll);
+						savedDLLs.push_back(newdll);
+					}
 				});
 			}
 
@@ -144,8 +156,9 @@ namespace YLP::Frontend
 			ImGui::Separator();
 			ImGui::Spacing();
 
-			for (auto& dll : savedDLLs)
+			for (int i = 0; i < savedDLLs.size(); i++)
 			{
+				auto& dll = savedDLLs[i];
 				if (dll.filepath.empty())
 					continue;
 
@@ -157,30 +170,62 @@ namespace YLP::Frontend
 				{
 					std::scoped_lock lock(m_Mutex);
 					std::erase_if(savedDLLs, [&](auto& d) {
-						return d.filepath == dll.filepath;
+						if (d.filepath == dll.filepath)
+						{
+							if (dll.checksum == selectedDLL.checksum)
+								selectedDLL = {};
+							return true;
+						}
+						return false;
 					});
-
-					if (dll.checksum == selectedDLL.checksum)
-						selectedDLL = {};
 				}
+				float buttonWidth = ImGui::GetItemRectMax().x;
 				ImGui::PopFont();
 				ImGui::ToolTip("Delete");
 				ImGui::SameLine();
 
+				ImGui::BeginDisabled(dndTarget == dll.checksum);
 				ImGui::Selectable(label.c_str(), dll.filepath == selectedDLL.filepath);
+				ImGui::EndDisabled();
+				if (dndTarget != dll.checksum)
+					ImGui::ToolTip("Drag to reorder");
+
 				if (ImGui::IsItemClicked(0))
 				{
 					selectedDLL = dll;
 					OnFileSelected(dll, processList);
 				}
 
-				if (ImGui::GetItemRectMax().x > (ImGui::GetContentRegionAvail().x - 1.f))
-					ImGui::ToolTip(dll.name.c_str());
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+				{
+					dndTarget = dll.checksum;
+					ImGui::SetDragDropPayload("DLLINFO_INDEX", &i, sizeof(int));
+					ImGui::Selectable((label).c_str(), true);
+					ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+					ImGui::EndDragDropSource();
+				}
+				else
+					dndTarget = "";
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DLLINFO_INDEX"))
+					{
+						if (const int src = *(const int*)payload->Data; src != i)
+						{
+							std::scoped_lock lock(m_Mutex);
+							DllInfo cpy = savedDLLs[src];
+							savedDLLs.erase(savedDLLs.begin() + src);
+							savedDLLs.insert(savedDLLs.begin() + i, std::move(cpy));
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
 			}
 			ImGui::EndChild();
 
 			ImGui::SameLine();
-			ImGui::BeginChild("##dllInfo", ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
+			ImGui::BeginChild("##dllInfo", ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBackground);
 			if (!selectedDLL.name.empty())
 			{
 				ImGui::TextCentered(selectedDLL.name.c_str(), Fonts::Title);
@@ -235,7 +280,6 @@ namespace YLP::Frontend
 								return;
 							}
 
-							std::scoped_lock lock(m_Mutex);
 							auto it = std::ranges::find_if(
 							    Config().savedDlls,
 							    [&](const DllInfo& d) {
@@ -265,5 +309,9 @@ namespace YLP::Frontend
 		static inline bool initialized = false;
 		static inline char searchBuffer[256];
 		static inline std::mutex m_Mutex;
+		static inline std::string lastSelectedDLL{};
+		static inline std::string dndTarget{};
 	};
+
+	inline InjectorTab _InjectorTab;
 }

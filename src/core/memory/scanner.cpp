@@ -26,8 +26,7 @@ namespace YLP
 	    m_BaseAddress(0),
 	    m_ProcessName(processName)
 	{
-		if (!processName.empty())
-			FindProcess(processName);
+		FindProcess(); // just to immediately update the scanner in case the process is already running
 	}
 
 	ProcessScanner::~ProcessScanner()
@@ -36,19 +35,13 @@ namespace YLP
 			CloseHandle(m_ProcessHandle);
 	}
 
-	std::optional<DWORD> ProcessScanner::GetProcessIdByName(const std::string& processName) const
+	bool ProcessScanner::FindProcess()
 	{
-		return PsUtils::GetProcessId(processName);
-	}
-
-	bool ProcessScanner::FindProcess(const std::string& processName)
-	{
-		auto pidOpt = GetProcessIdByName(processName);
-		if (!pidOpt.has_value())
+		auto maybepid = PsUtils::GetProcessId(m_ProcessName);
+		if (!maybepid.has_value())
 			return false;
 
-		m_Pid = pidOpt.value();
-		m_ProcessName = processName;
+		m_Pid = maybepid.value();
 		m_ProcessHandle = OpenProcess(SYNCHRONIZE | PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, m_Pid);
 
 		if (!m_ProcessHandle)
@@ -113,7 +106,6 @@ namespace YLP
 		}
 		return false;
 	}
-
 
 	uintptr_t ProcessScanner::GetBaseAddress() const
 	{

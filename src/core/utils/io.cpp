@@ -22,15 +22,84 @@
 
 namespace YLP::IO
 {
-	void Rename(const fs::path& src, const fs::path& dest)
+	void HandleFsErr(const std::error_code& ec)
+	{
+		if (ec)
+			LOG_ERROR("I/O Error: [{}]: {}", ec.category().name(), ec.message());
+	}
+
+	fs::path Path(const fs::path& _path)
+	{
+		return fs::path(_path);
+	}
+
+	bool Exists(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::exists(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool IsDir(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::is_directory(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool IsFile(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::is_regular_file(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool IsEmpty(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::is_empty(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool CreateFolder(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::create_directory(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool CreateFolders(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::create_directories(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool Remove(const fs::path& _path)
+	{
+		std::error_code ec{};
+		bool res = fs::remove(_path, ec);
+		HandleFsErr(ec);
+		return res;
+	}
+
+	bool Rename(const fs::path& src, const fs::path& dest)
 	{
 		try
 		{
 			fs::rename(src, dest);
+			return true;
 		}
 		catch (const fs::filesystem_error& e)
 		{
 			LOG_ERROR("Error moving folder: {}", e.what());
+			return false;
 		}
 	}
 
@@ -71,7 +140,8 @@ namespace YLP::IO
 
 	bool HasLuaFiles(const fs::path& root)
 	{
-		if (!fs::exists(root) || !fs::is_directory(root))
+		std::error_code ec{};
+		if (!fs::exists(root, ec) || !fs::is_directory(root, ec))
 			return false;
 
 		for (auto& entry : fs::recursive_directory_iterator(root))
@@ -84,7 +154,7 @@ namespace YLP::IO
 
 	bool FilterLuaFiles(const fs::path& root)
 	{
-		if (!fs::exists(root))
+		if (!Exists(root))
 			return false;
 
 		try
@@ -93,13 +163,13 @@ namespace YLP::IO
 			{
 				const auto& path = it->path();
 
+				if (path.empty())
+					fs::remove(path);
+
 				if (it->is_directory())
 					continue;
 				else if (it->is_regular_file() && path.extension() != ".lua")
-				{
-					if (!fs::remove(path))
-						return false;
-				}
+					fs::remove(path);
 			}
 			return true;
 		}
@@ -119,7 +189,6 @@ namespace YLP::IO
 	{
 #pragma warning(suppress : 4311)
 		auto result = reinterpret_cast<int>(ShellExecuteW(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
-
 		if (result <= 32)
 		{
 			std::string_view msg = "";
@@ -146,10 +215,13 @@ namespace YLP::IO
 	}
 
 	// https://learn.microsoft.com/en-us/windows/win32/shell/common-file-dialog#ifiledialog-ifileopendialog-and-ifilesavedialog
-	fs::path BrowseFile(
+	fs::path _OpenFileDialog(
 	    const std::vector<COMDLG_FILTERSPEC>& filters,
 	    const wchar_t* title,
-	    const fs::path& defaultFolder)
+	    FILEOPENDIALOGOPTIONS flags,
+	    const fs::path& defaultFolder,
+	    const wchar_t* defaultName,
+	    const wchar_t* defaultExtension)
 	{
 		HRESULT hInitResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		IFileOpenDialog* pFileOpen = nullptr;
@@ -174,7 +246,7 @@ namespace YLP::IO
 			return {};
 		}
 
-		hr = pFileOpen->SetOptions(dwFlags | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST);
+		hr = pFileOpen->SetOptions(dwFlags | flags | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
@@ -194,21 +266,19 @@ namespace YLP::IO
 		}
 
 		if (title)
-		{
-			hr = pFileOpen->SetTitle(title);
-			if (FAILED(hr))
-			{
-				pFileOpen->Release();
-				CoUninitialize();
-				return {};
-			}
-		}
+			pFileOpen->SetTitle(title);
 
-		if (!defaultFolder.empty() && std::filesystem::exists(defaultFolder))
+		if (defaultName)
+			pFileOpen->SetFileName(defaultName);
+
+		if (defaultExtension)
+			pFileOpen->SetDefaultExtension(defaultExtension);
+
+		if (Exists(defaultFolder))
 		{
 			IShellItem* pFolderItem = nullptr;
-			hr = SHCreateItemFromParsingName(defaultFolder.c_str(), nullptr, IID_PPV_ARGS(&pFolderItem));
-			if (SUCCEEDED(hr))
+			HRESULT res = SHCreateItemFromParsingName(defaultFolder.c_str(), nullptr, IID_PPV_ARGS(&pFolderItem));
+			if (SUCCEEDED(res))
 			{
 				pFileOpen->SetFolder(pFolderItem);
 				pFolderItem->Release();
@@ -248,6 +318,44 @@ namespace YLP::IO
 		pFileOpen->Release();
 		CoUninitialize();
 		return ret;
+	}
+
+	fs::path OpenFileDialog(
+		const std::vector<COMDLG_FILTERSPEC>& filters,
+		const wchar_t* title,
+		bool multiselect,
+		const fs::path& defaultFolder)
+	{
+		DWORD flags = FOS_STRICTFILETYPES | FOS_FILEMUSTEXIST;
+		if (multiselect)
+			flags |= FOS_ALLOWMULTISELECT;
+
+		return _OpenFileDialog(filters, title, flags, defaultFolder);
+	}
+
+	fs::path OpenFolderDialog(const wchar_t* title, bool multiselect, const fs::path& defaultFolder)
+	{
+		DWORD flags = FOS_PICKFOLDERS;
+		if (multiselect)
+			flags |= FOS_ALLOWMULTISELECT;
+
+		return _OpenFileDialog({}, title, flags, defaultFolder);
+	}
+
+	fs::path SaveFileDialog(
+		const std::vector<COMDLG_FILTERSPEC>& filters,
+		const wchar_t* title,
+	    const wchar_t* defaultName,
+	    const wchar_t* defaultExtension,
+		const fs::path& defaultFolder)
+	{
+		return _OpenFileDialog(
+			filters,
+			title,
+			FOS_OVERWRITEPROMPT | FOS_STRICTFILETYPES,
+			defaultFolder,
+			defaultName,
+			defaultExtension);
 	}
 
 	std::wstring ReadRegistryKey(HKEY rootPath, const wchar_t* subkeyPath, const wchar_t* subkeyValue)
