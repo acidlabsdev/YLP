@@ -1,8 +1,5 @@
 **/out
 **/build
-*.py
-*.pyc
-*.pyi
 *.log
 *.vs
 *.ini
