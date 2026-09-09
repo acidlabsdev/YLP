@@ -37,10 +37,17 @@ jobs:
               head: "HEAD"
             });
 
-            core.setOutput(
-              "has_changes",
-              compare.data.total_commits > 0 ? "true" : "false"
+            if (compare.data.total_commits === 0) {
+              core.setOutput("has_changes", "false");
+              return;
+            }
+
+            const files = compare.data.files || [];
+            const hasSrcChanges = files.some(file =>
+              file.filename.startsWith("src/")
             );
+
+            core.setOutput("has_changes", hasSrcChanges ? "true" : "false");
 
   build:
     needs: check_changes
