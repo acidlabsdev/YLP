@@ -75,7 +75,7 @@ A huge thanks to the open source community and their immense contributions. You 
     <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
         <img height="256" width="256" alt="Settings" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">&nbsp;&nbsp;
     </a>
-    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">
         <img height="512" width="512" alt="Code Executor" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">&nbsp;&nbsp;
     </a>
 </div>

@@ -251,7 +251,6 @@ def gen_luals_defs(model: ApiModel, docs_path: Path):
 	if not libs:
 		return
 
-	clear_dir(docs_path)
 	for lib in libs:
 		parse_lua(lib, docs_path)
 
@@ -435,7 +434,6 @@ def gen_markdown_docs(model: ApiModel, docs_path: Path):
     if not model.libraries:
         return
 
-    clear_dir(docs_path)
     for lib in model.libraries:
         parse_markdown(lib, docs_path)
 
@@ -463,6 +461,9 @@ if __name__ == "__main__":
 		except Exception as e:
 			print(f"Failed to create markdown docs folder: {e}")
 			exit(1)
+
+	clear_dir(luals_root)
+	clear_dir(md_root)
 
 	for p in headers.iterdir():
 		if p.suffix != ".hpp":
