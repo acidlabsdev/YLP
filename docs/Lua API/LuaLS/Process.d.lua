@@ -2,17 +2,17 @@
 
 -- A process abstraction providing basic process interactions.
 ---@class Process
----@overload fun(processName): Process
+---@overload fun(processName: string): Process
 Process = {}
 
----@return boolean 
+---@return boolean
 function Process:IsRunning() end
 
 ---@param moduleName string Name of the module. Example: `"kernelbase.dll"`
----@return boolean 
+---@return boolean
 function Process:IsModuleLoaded(moduleName) end
 
----@return integer 
+---@return integer
 function Process:GetModuleSize() end
 
 ---@return integer -- The module's base address
@@ -26,4 +26,3 @@ function Process:Update() end
 ---@param chunkSize integer? Optional memory chunk size. Defaults to 4096
 ---@return Pointer A pointer at the found address or a null pointer if the scan fails. This is guaranteed to always return a Pointer object.
 function Process:FindPattern(pattern, name, chunkSize) end
-
