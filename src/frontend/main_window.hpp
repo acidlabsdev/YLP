@@ -296,26 +296,6 @@ namespace YLP::Frontend
 			if (ImGui::IsPopupOpen("##launcherPopup"))
 				ImGui::SetNextWindowPos(ImVec2(launcherPopupPos.x, launcherPopupPos.y), ImGuiCond_Always);
 
-			ImGui::Spacing();
-			ImGui::PushFont(Fonts::Small);
-			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK, false, isRunning ? ImGreen : ImRed);
-
-			auto gv = pointers.GameVersion ? pointers.GameVersion.Read<std::string>() : "";
-			auto ov = pointers.OnlineVersion ? pointers.OnlineVersion.Read<std::string>() : "";
-			ImGui::DrawKeyValue("Version:", std::format("{} (Online: {})", gv.empty() ? "?" : gv, ov.empty() ? "?" : ov));
-
-			auto runtime = (isRunning && pointers.GameTime) ? pointers.GameTime.Read<int32_t>() : 0;
-			if (runtime > 0)
-				ImGui::DrawKeyValue("Play Time:", Utils::Int32ToTime(runtime / 1000));
-
-			auto baseAddress = monitor->GetBaseAddress();
-			ImGui::DrawKeyValue("Module Base:", std::format("0x{:X}", baseAddress), baseAddress != 0);
-
-			bool heWatchin = monitor->IsHeWatchin();
-			ImGui::DrawKeyValue("BattlEye:", heWatchin ? "Running!" : "Disabled", false, heWatchin ? ImRed : ImGreen);
-			ImGui::PopFont();
-			ImGui::EndChild();
-
 			if (ImGui::BeginPopup("##launcherPopup"))
 			{
 				ImGui::TextCentered("Select Launcher");
@@ -373,6 +353,26 @@ namespace YLP::Frontend
 				}
 				ImGui::EndPopup();
 			}
+
+			ImGui::Spacing();
+			ImGui::PushFont(Fonts::Small);
+			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK, false, isRunning ? ImGreen : ImRed);
+
+			auto gv = pointers.GameVersion ? pointers.GameVersion.Read<std::string>() : "";
+			auto ov = pointers.OnlineVersion ? pointers.OnlineVersion.Read<std::string>() : "";
+			ImGui::DrawKeyValue("Version:", std::format("{} (Online: {})", gv.empty() ? "?" : gv, ov.empty() ? "?" : ov));
+
+			auto runtime = (isRunning && pointers.GameTime) ? pointers.GameTime.Read<int32_t>() : 0;
+			if (runtime > 0)
+				ImGui::DrawKeyValue("Play Time:", Utils::Int32ToTime(runtime / 1000));
+
+			auto baseAddress = monitor->GetBaseAddress();
+			ImGui::DrawKeyValue("Module Base:", std::format("0x{:X}", baseAddress), baseAddress != 0);
+
+			bool heWatchin = monitor->IsHeWatchin();
+			ImGui::DrawKeyValue("BattlEye:", heWatchin ? "Running!" : "Disabled", false, heWatchin ? ImRed : ImGreen);
+			ImGui::PopFont();
+			ImGui::EndChild();
 
 			ImGui::Dummy(ImVec2(0, 20));
 			ImGui::SetNextWindowBgAlpha(0.f);

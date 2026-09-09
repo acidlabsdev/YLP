@@ -8,12 +8,13 @@ jobs:
 
   check_changes:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[noci]')"
     outputs:
       has_changes: ${{ steps.changes.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: changes
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             if (context.eventName === "workflow_dispatch") {
@@ -56,22 +57,22 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Get Version Number
         id: get_version
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const tags = await github.rest.repos.listTags({ owner, repo });
-            
+
             let newTag;
             let oldTag;
             let ffiTag;
             let latestTag = tags.data.length ? tags.data[0].name : "2.0.0.0";
-            
+
             const versionParts = latestTag.split('.').map(Number);
             if (versionParts[0] < 2) {
                 versionParts[0] = 2;
@@ -97,7 +98,7 @@ jobs:
             newTag = versionParts.join('.');
             oldTag = latestTag;
             ffiTag = newTag.replaceAll(".", ",");
-            
+
             core.setOutput("new_tag", newTag);
             core.setOutput("ffi_tag", ffiTag);
             core.setOutput("old_tag", oldTag);
@@ -156,7 +157,7 @@ jobs:
         run: cmake --build ./build --config Release --target YLP
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: binary
           path: build/YLP.exe
@@ -174,11 +175,11 @@ jobs:
     needs: build
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Generate Changelog
         id: changelog
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -192,39 +193,62 @@ jobs:
             });
 
             let changelog = "";
+
+            const commitHashes = new Set();
             const mergedPRs = pulls.filter(pr => pr.merged_at && new Date(pr.merged_at) > lastTagDate);
 
             if (mergedPRs.length > 0) {
               for (const pr of mergedPRs) {
-                changelog += `## PR #${pr.number}: ${pr.title}\n`;
-                const body = pr.body || "";
-                changelog += `${body.trim()}\n\n`;
+                changelog += `### PR #${pr.number}: ${pr.title}\n`;
+                const body = pr.body;
+                if (body) {
+                  changelog += `${body.trim()}\n\n`;
+                }
+                const prCommits = await github.paginate(
+                  github.rest.pulls.listCommits,
+                  {
+                    owner,
+                    repo,
+                    pull_number: pr.number,
+                    per_page: 100
+                  }
+                );
+
+                for (const prCommit of prCommits) {
+                  commitHashes.add(prCommit.sha);
+                }
               }
-            } else {
-              const compared = await github.rest.repos.compareCommits({
-                owner,
-                repo,
-                base: lastTag,
-                head: "main"
-              });
+            }
 
-              const commits = compared.data.commits;
-              for (const commit of commits) {
-                const msg = commit.commit.message;
-                const body = commit.commit.body;
-                if (msg.toLowerCase().startsWith("merge pull"))
-                  continue;
+            const compared = await github.rest.repos.compareCommits({
+              owner,
+              repo,
+              base: lastTag,
+              head: "main"
+            });
+            const commits = compared.data.commits;
 
-                changelog += `## ${msg}\n\n`;
-                if (body)
-                  changelog += `${body}\n\n`;
+            for (const commit of commits) {
+              if (commitHashes.has(commit.sha)) {
+                continue;
+              }
+
+              const msg = commit.commit.message || "";
+              const body = commit.commit.body;
+              const msgLower = msg.toLowerCase();
+              if (msgLower.startsWith("merge ") || msgLower.startsWith("[noci]"))
+                continue;
+
+              changelog += `## ${msg}\n\n`;
+              if (body) {
+                changelog += `${body.trim()}\n\n`;
               }
             }
 
             core.setOutput("changelog", changelog);
 
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: binary
 
@@ -246,10 +270,8 @@ jobs:
               >| [Link to build](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
               >| ------------- |
 
-              ### Build SHA256:
-                    ${{ steps.build_sha.outputs.build_sha }}
-              
               # Changelog
+
               ${{ steps.changelog.outputs.changelog }}
           files: |
             YLP.exe
