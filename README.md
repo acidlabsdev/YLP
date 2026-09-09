@@ -5,7 +5,7 @@
 <div align="center">
   <a href="#">
     <img height="512" width="512"  alt="logo" src="https://github.com/xesdoog/YLP/blob/main/docs/img/logo.png">
-  </a>
+  </a><br><br>
 </div>
 
 A launchpad for YimMenu Legacy and YimMenuV2 with opt-in automatic injection and Lua scripting.
@@ -56,29 +56,29 @@ Visit the [themes section](./docs/themes/Readme.md) to read more about UI themes
 
 Please submit any bug reports or feature suggestions on the [Issues](https://github.com/xesdoog/ylp/issues/new/choose) page.
 
-## Preview
-
-<div>
-    <a href="https://github.com/xesdoog/YLP/blob/main/src/frontend/main_window.hpp">
-        <img height="256" width="256" alt="Home" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/1.jpg">
-    </a>
-    <a href="https://github.com/xesdoog/YLP/blob/main/src/frontend/yimmenu_lua.hpp">
-        <img height="256" width="256" alt="YimMenu-Lua" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/2.jpg">
-    </a>
-    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/3.jpg">
-        <img height="256" width="256" alt="User DLLs" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/3.jpg">
-    </a>
-    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">
-        <img height="256" width="256" alt="Code Executor" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">
-    </a>
-    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
-        <img height="256" width="256" alt="Settings" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
-    </a>
-</div>
-
 ## Acknowledgments
 
 A huge thanks to the open source community and their immense contributions. You can find out more in the [Third Party](./docs/thirdparty/Readme.md) section
+
+## Preview
+
+<div>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/1.jpg">
+        <img height="256" width="256" alt="Home" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/1.jpg">&nbsp;&nbsp;
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/2.jpg">
+        <img height="256" width="256" alt="YimMenu-Lua" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/2.jpg">&nbsp;&nbsp;
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/3.jpg">
+        <img height="256" width="256" alt="User DLLs" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/3.jpg">&nbsp;&nbsp;
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
+        <img height="256" width="256" alt="Settings" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">&nbsp;&nbsp;
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
+        <img height="512" width="512" alt="Code Executor" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">&nbsp;&nbsp;
+    </a>
+</div>
 
 ___
 
