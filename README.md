@@ -1,8 +1,24 @@
+<!-- markdownlint-disable MD033 -->
+
 # About
 
-![ss](./docs/screenshots/1.jpg)
+<div align="center">
+  <a href="#">
+    <img height="512" width="512"  alt="logo" src="https://github.com/xesdoog/YLP/blob/main/docs/img/logo.png">
+  </a>
+</div>
 
 A launchpad for YimMenu Legacy and YimMenuV2 with opt-in automatic injection and Lua scripting.
+
+## Getting Started
+
+1. Download the latest version from the [Releases](https://github.com/xesdoog/ylp/releases) page.
+2. Move it to your preferred location.
+3. Run **YLP.exe**. No installation required.
+4. The built-in updater will keep you up to date.
+
+> [!Note]
+> Windows will flag the executable on first launch. You'll need to whitelist both the executable and its data folder (`%AppData%\YLP`) in your anti-virus.
 
 ## Features
 
@@ -32,34 +48,39 @@ A launchpad for YimMenu Legacy and YimMenuV2 with opt-in automatic injection and
 - Lua code can be typed and executed directly in the UI as well.
 - More info can be found in the [LuaAPI](./docs/Lua%20API/Readme.md) docs section.
 
->[!Note]
-> For returning users, the legacy **Python version of YLP** is **no longer supported**.
-> Automatic updates from that version will not work anymore.
-> However, you can still access its full source code under the [legacy branch](https://github.com/xesdoog/ylp/tree/legacy_ylp_python).
-
 ## Themes
 
 Visit the [themes section](./docs/themes/Readme.md) to read more about UI themes.
 
 ## Feedback & Issues
 
-Please report any bugs or feature suggestions on the [Issues](https://github.com/xesdoog/ylp/issues/new/choose) page.
+Please submit any bug reports or feature suggestions on the [Issues](https://github.com/xesdoog/ylp/issues/new/choose) page.
 
-## Getting Started
+## Preview
 
-1. Download the latest version from the [Releases](https://github.com/xesdoog/ylp/releases) page.
-2. Move it to your preferred location.
-3. Run **YLP.exe**. No installation required.
-4. The built-in updater will keep you up to date.
+<div>
+    <a href="https://github.com/xesdoog/YLP/blob/main/src/frontend/main_window.hpp">
+        <img height="256" width="256" alt="Home" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/1.jpg">
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/src/frontend/yimmenu_lua.hpp">
+        <img height="256" width="256" alt="YimMenu-Lua" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/2.jpg">
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/3.jpg">
+        <img height="256" width="256" alt="User DLLs" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/3.jpg">
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">
+        <img height="256" width="256" alt="Code Executor" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">
+    </a>
+    <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
+        <img height="256" width="256" alt="Settings" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">
+    </a>
+</div>
 
-> [!Note]
-> Windows will flag the executable on first launch. You'll need to whitelist both the executable and its data folder (`%AppData%\YLP`) in your anti-virus.
+## Acknowledgments
 
-### Thank You
+A huge thanks to the open source community and their immense contributions. You can find out more in the [Third Party](./docs/thirdparty/Readme.md) section
 
-A huge thanks to the open source community and their immense contributions. You can find out more in the [Third Party](./docs/thirdparty/Readme.md) section.
-
-------------------------------------------------------------------------
+___
 
 > [!Important]
 > YLP is provided **as is**, without any warranty of any kind, express or implied.

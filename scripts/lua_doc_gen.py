@@ -1,4 +1,4 @@
-import re, os
+import re, os, shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -45,6 +45,11 @@ UNRESOLVED_MEMBERS: list[ApiMember] = []
 ANNOTATION_RE = re.compile(r"/\*\s?@ylp\.(?P<header>.+?)[\r\n](?P<body>.*?)[\r\n]\s*@\*/", re.DOTALL,)
 HEADER_RE = re.compile(r"^(?P<kind>\w+)\s+(?P<name>\S+).*?$")
 PARAM_RE = re.compile(r"^(?P<name>[^<\s]+)<(?P<type>[^>]+)>(?:\s+(?P<description>.*))?$")
+
+
+def clear_dir(dir: Path):
+	for p in dir.iterdir():
+		shutil.rmtree(str(p), ignore_errors=True) # don't care, this is just to keep the docs clean on Github
 
 
 def clean_line(line: str) -> str:
@@ -213,12 +218,12 @@ def parse_lua(lib: ApiLibrary, write_path: Path):
 			if member.kind in ("function", "method"):
 				methods.append(member)
 			elif member.kind == "operator":
-				docstring += f"---@operator {member.name}({"|".join(p.type for p in member.parameters)}): {member.returns[0].type}\n" # are there even Lua operators that have multiple returns? eh, I can't be arsed
+				docstring += f"---@operator {member.name}({"| ".join(p.type for p in member.parameters)}): {member.returns[0].type}\n" # are there even Lua operators that have multiple returns? eh, I can't be arsed
 			elif member.kind == "field":
 				docstring += f"---@field {member.name}: {member.type} {member.description}"
 			elif member.kind == "constructor":
 				if member.name == "__call":
-					docstring += f"---@overload fun({", ".join(p.name for p in member.parameters)}): {lib.name}\n"
+					docstring += f"---@overload fun({", ".join(f"{p.name}: {p.type}" for p in member.parameters)}): {lib.name}\n"
 				else:
 					methods.append(member)
 
@@ -246,6 +251,7 @@ def gen_luals_defs(model: ApiModel, docs_path: Path):
 	if not libs:
 		return
 
+	clear_dir(docs_path)
 	for lib in libs:
 		parse_lua(lib, docs_path)
 
@@ -429,6 +435,7 @@ def gen_markdown_docs(model: ApiModel, docs_path: Path):
     if not model.libraries:
         return
 
+    clear_dir(docs_path)
     for lib in model.libraries:
         parse_markdown(lib, docs_path)
 

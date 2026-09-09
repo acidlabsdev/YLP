@@ -1,60 +1,26 @@
+<!-- markdownlint-disable MD033 -->
+
 # Third-Party Components and Licenses
 
 This project makes use of the following third-party open-source components.
 
 Each component retains its own copyright and license terms.
 
-## Dear ImGui
+| Component | Author | License | Modifications
+| :---: | :---: | :---: | :---:
+| [Dear ImGui](https://github.com/ocornut/imgui) | <a href="https://github.com/ocornut"><img height="40" width="40" alt="ocornut" src="https://avatars.githubusercontent.com/ocornut"><br/>Omar Cornut</a> | [MIT](https://opensource.org/licenses/MIT) | None.
+| [JSON For Modern C++](https://github.com/nothings/stb) | <a href="https://github.com/nlohmann"><img height="40" width="40" alt="nlohmann" src="https://avatars.githubusercontent.com/nlohmann"><br/>Niels Lohmann</a> | [MIT](https://opensource.org/licenses/MIT) | None.
+| [STB](https://github.com/nothings/stb) | <a href="https://github.com/nothings"><img height="40" width="40" alt="nothings" src="https://avatars.githubusercontent.com/nothings"><br/>Sean Barrett</a> | [MIT](https://opensource.org/licenses/MIT) | None.
+| [miniz-cpp](https://github.com/tfussell/miniz-cpp) | <a href="https://github.com/tfussell"><img height="40" width="40" alt="tfussell" src="https://avatars.githubusercontent.com/tfussell"><br/>Thomas Fussell</a> | [MIT](https://opensource.org/licenses/MIT) | None.
+| [ImGuiColorTextEdit](https://github.com/goossens/ImGuiColorTextEdit) | <a href="https://github.com/goossens"><img height="40" width="40" alt="goossens" src="https://avatars.githubusercontent.com/goossens"><br/>Johan A. Goossens</a> | [MIT](https://opensource.org/licenses/MIT) | Removed all language definitions except Lua.
+| [IconFontCppHeaders](https://github.com/juliettef/IconFontCppHeaders) | <a href="https://github.com/juliettef"><img height="40" width="40" alt="juliettef" src="https://avatars.githubusercontent.com/juliettef"><br/>Juliette F.</a> | [Zlib](https://opensource.org/licenses/Zlib) | None.
+| [LuaJIT](https://github.com/LuaJIT/LuaJIT) | <a href="https://github.com/mikepall"><img height="40" width="40" alt="mikepall" src="https://avatars.githubusercontent.com/mikepall"><br/>Mike Pall</a> | [MIT](https://opensource.org/licenses/MIT) | None.
 
-- **Author:** [Omar Cornut](https://github.com/ocornut)
-- **Source:** [https://github.com/ocornut/imgui](https://github.com/ocornut/imgui)
-- **License:** [MIT](https://opensource.org/licenses/MIT)
+All third-party components are used unmodified unless stated otherwise.
 
-## JSON for Modern C++
-
-- **Author:** [Niels Lohmann](https://github.com/nlohmann)
-- **Source:** [https://github.com/nlohmann/json](https://github.com/nlohmann/json)
-- **License:** [MIT](https://opensource.org/licenses/MIT)
-
-## stb
-
-- **Author:** [Sean Barrett](https://github.com/nothings)
-- **Source:** [https://github.com/nothings/stb](https://github.com/nothings/stb)
-- **License:** [Public Domain / MIT](https://opensource.org/licenses/MIT)
-
-## miniz-cpp
-
-- **Author:** [Thomas Fussell](https://github.com/tfussell)
-- **Source:** [https://github.com/tfussell/miniz-cpp](https://github.com/tfussell/miniz-cpp)
-- **License:** [MIT](https://opensource.org/licenses/MIT)
-
-## IconFontCppHeaders
-
-- **Author:** [Juliette F.](https://github.com/juliettef)
-- **Source:** [https://github.com/juliettef/IconFontCppHeaders](https://github.com/juliettef/IconFontCppHeaders)
-- **License:** [Zlib](https://opensource.org/licenses/Zlib)
-
-## LuaJIT CMake Build Support
-
-- **Author:** [WohlSoft Team](https://github.com/WohlSoft)
-- **Source:** [https://github.com/WohlSoft/LuaJIT](https://github.com/WohlSoft/LuaJIT)
-- **License:** [MIT](https://opensource.org/licenses/MIT)
-
-## ImGuiColorTextEdit
-
-- **Author:** [Johan A. Goossens](https://github.com/goossens)
-- **Source:** [https://github.com/goossens/ImGuiColorTextEdit](https://github.com/goossens/ImGuiColorTextEdit)
-- **License:** [MIT](https://opensource.org/licenses/MIT)
-- **Modifications:**
-  - Removed all language definitions except Lua.
+Their respective license texts are included in their sources or can be found at their original repositories.
 
 ## Fonts
 
 - **Material Design** - © Google inc., licensed under [Apache-2.0](https://opensource.org/licenses/Apache-2.0)
 - **JetBrains Mono** - © JetBrains s.r.o., licensed under [SIL Open Font License v1.1](https://openfontlicense.org/)
-
-___
-
-All third-party components are used unmodified unless stated otherwise.
-
-Their respective license texts are included in their sources or can be found at their original repositories.
