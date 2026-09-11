@@ -99,6 +99,7 @@ namespace YLP
 #include "core/settings.hpp"
 #include "core/threadmgr.hpp"
 #include "core/updater.hpp"
+#include "resources/fonts/fonts.hpp"
 #include "core/gui/imgui_helpers.hpp"
 
 

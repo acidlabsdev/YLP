@@ -20,6 +20,7 @@
 #include "core/gui/gui_tab.hpp"
 #include "core/lua_scripting/lua_mgr.hpp"
 #include "core/gui/theme_mgr.hpp"
+#include "core/gui/window_bg_state.hpp"
 
 
 namespace YLP::Frontend
@@ -31,20 +32,19 @@ namespace YLP::Frontend
 	{
 	public:
 		SettingsTab() :
-		    GuiTab(eTabID::TAB_SETTINGS, ICON_MD_SETTINGS, "Settings")
+		    GuiTab(eTabID::TAB_SETTINGS, ICON_MS_SETTINGS, "Settings")
 		{
 		}
 
-		static inline void DrawGeneral()
+		static inline void DrawGeneral(Settings::Config& cfg)
 		{
-			auto& cfg = Config();
 			auto updateState = YLPUpdater.GetState();
 			ImGui::BeginDisabled(updateState == Updater::UpdateState::Error);
 			switch (updateState)
 			{
 			case Updater::UpdateState::Idle:
 			{
-				if (ImGui::Button(ICON_MD_SYNC))
+				if (ImGui::Button(ICON_MS_SYNC))
 					YLPUpdater.Check();
 				ImGui::SameLine();
 				ImGui::Text("Check For Updates");
@@ -55,7 +55,7 @@ namespace YLP::Frontend
 				break;
 			case Updater::UpdateState::Pending:
 			{
-				if (ImGui::Button(ICON_MD_DOWNLOAD))
+				if (ImGui::Button(ICON_MS_DOWNLOAD))
 					YLPUpdater.Download();
 				ImGui::ToolTip("Update");
 				ImGui::SameLine();
@@ -89,8 +89,31 @@ namespace YLP::Frontend
 			ImGui::EndDisabled();
 		}
 
-		static inline void DrawThemes()
+		static inline void DrawUISettings(Settings::Config& cfg)
 		{
+			ImGui::Text(ICON_MS_OPACITY " Global Opacity");
+			ImGui::HelpMarker("Overrides window opacity across the entire application. When selecting a window blur or acrylic effect, this must be lowered in order to see those effects.");
+			ImGui::SliderFloat("##alphaoverride", &cfg.bgAlphaMultiplier, 0.0f, 1.0f, "%.2f");
+
+			ImGui::Spacing();
+			ImGui::Text(ICON_MS_BACKGROUND_REPLACE " Window Background Effect");
+			ImGui::HelpMarker("Set or remove a background effect from the main window. You must lower the 'Global Opacity' setting in order to see changes.");
+			if (ImGui::BeginCombo("##windowEffects", accentStates[cfg.windowAccentState]))
+			{
+				for (int i = ACCENT_DISABLED; i < ACCENT_ENABLE_HOSTBACKDROP; i++)
+				{
+					ImGui::Selectable(accentStates[i], (i == cfg.windowAccentState));
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+					{
+						cfg.windowAccentState = i;
+						SetBackgroundAccentState(g_Hwnd, static_cast<eWindowAccentState>(i));
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			ImGui::Spacing();
+			ImGui::SeparatorText(ICON_MS_PALETTE " Themes");
 			ImVec2 previewSize(200, 220);
 			Theme* currentTheme = ThemeManager::GetCurrentTheme();
 			auto& themes = ThemeManager::GetThemes();
@@ -106,10 +129,8 @@ namespace YLP::Frontend
 			}
 		}
 
-		static inline void DrawPlugins()
+		static inline void DrawPlugins(Settings::Config& cfg)
 		{
-			auto& cfg = Config();
-
 			if (ImGui::Checkbox("Enable Lua Scripting", &cfg.enableScripting))
 			{
 				if (!cfg.enableScripting)
@@ -135,7 +156,7 @@ namespace YLP::Frontend
 			auto& disabledModules = LuaManager::GetDisabledModules();
 			ImVec2 region = ImGui::GetContentRegionAvail();
 			ImGui::BeginChild("##enabledPlugins", ImVec2(region.x * 0.5, 0), ImGuiChildFlags_Borders);
-			if (ImGui::SmallButton(ICON_MD_REFRESH))
+			if (ImGui::SmallButton(ICON_MS_REFRESH))
 				LuaManager::ReloadAllModules();
 			ImGui::ToolTip("Reload All");
 
@@ -177,10 +198,10 @@ namespace YLP::Frontend
 
 					if (ImGui::BeginPopup(pathName.c_str()))
 					{
-						if (ImGui::MenuItem(ICON_MD_REFRESH " Reload"))
+						if (ImGui::MenuItem(ICON_MS_REFRESH " Reload"))
 							m->Reload();
 
-						if (ImGui::MenuItem(ICON_MD_ARROW_RIGHT " Disable"))
+						if (ImGui::MenuItem(ICON_MS_TOGGLE_ON " Disable"))
 							m->Unload();
 
 						ImGui::EndPopup();
@@ -239,7 +260,7 @@ namespace YLP::Frontend
 
 					if (ImGui::BeginPopup(pathName.c_str()))
 					{
-						if (ImGui::MenuItem(ICON_MD_ARROW_LEFT " Enable"))
+						if (ImGui::MenuItem(ICON_MS_TOGGLE_OFF " Enable"))
 							LuaManager::EnableModule(pathName);
 
 						ImGui::EndPopup();
@@ -267,18 +288,22 @@ namespace YLP::Frontend
 				totalWidth += ImGui::CalcTextSize(tabs[i]).x + style.FramePadding.x * 2.0f;
 
 			totalWidth += style.ItemSpacing.x * (tabCount - 1);
+
 			float regionWidth = ImGui::GetContentRegionAvail().x;
-			float startX = (regionWidth - totalWidth) * 0.5f;
+			float startX	  = (regionWidth - totalWidth) * 0.5f;
+
 			ImGui::SetCursorPosX(startX > 0.0f ? ImGui::GetCursorPosX() + startX : 0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_TabBarBorderSize, 0.0f);
 			if (ImGui::BeginTabBar("##SettingsTabBar"));
 			{
+				auto& cfg = Config();
+
 				if (ImGui::BeginTabItem(tabs[0]))
 				{
 					ImGui::Separator();
 					ImGui::Dummy(ImVec2(0, 10));
 					ImGui::BeginChild(tabs[1], ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBackground);
-					DrawGeneral();
+					DrawGeneral(cfg);
 					ImGui::EndChild();
 					ImGui::EndTabItem();
 				}
@@ -287,7 +312,7 @@ namespace YLP::Frontend
 					ImGui::Separator();
 					ImGui::Dummy(ImVec2(0, 10));
 					ImGui::BeginChild(tabs[1], ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBackground);
-					DrawThemes();
+					DrawUISettings(cfg);
 					ImGui::EndChild();
 					ImGui::EndTabItem();
 				}
@@ -296,7 +321,7 @@ namespace YLP::Frontend
 					ImGui::Separator();
 					ImGui::Dummy(ImVec2(0, 10));
 					ImGui::BeginChild(tabs[2], ImVec2(0, 0), 0, ImGuiWindowFlags_AlwaysUseWindowPadding | ImGuiWindowFlags_NoBackground);
-					DrawPlugins();
+					DrawPlugins(cfg);
 					ImGui::EndChild();
 					ImGui::EndTabItem();
 				}
@@ -310,8 +335,22 @@ namespace YLP::Frontend
 		static inline std::shared_ptr<LuaJIT::LuaModule> dragSourcePtr{nullptr};
 		static inline std::string selectedDisabledPath{};
 		static inline std::string dragSourceStr{};
-		static inline const char* tabs[] = {ICON_MD_TUNE " General", ICON_MD_PALETTE " Themes", ICON_MD_CODE " Scripting"};
 		static inline const int tabCount = 3;
+
+		static inline const char* tabs[] = {
+			ICON_MS_TUNE " General",
+			ICON_MS_DISPLAY_SETTINGS " User Interface",
+			ICON_MS_CODE " Scripting"
+		};
+
+		static inline const char* accentStates[] = {
+		    "None",
+		    "Gradient",
+		    "Transparent Gradient",
+		    "Blur",
+		    "Acrylic Blur",
+		    "Host Backdrop", // does jack shit. will exclude it in the loop
+		};
 	};
 
 	inline SettingsTab _SettingsTab;

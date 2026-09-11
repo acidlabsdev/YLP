@@ -195,18 +195,18 @@ namespace YLP
 
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - 120.0f);
-		if (ImGui::SelectableLabel(muted ? ICON_MD_VOLUME_MUTE : ICON_MD_VOLUME_UP, false))
+		if (ImGui::SelectableLabel(muted ? ICON_MS_VOLUME_MUTE : ICON_MS_VOLUME_UP, false))
 			ToggleMute();
 		ImGui::ToolTip(muted ? "Unmute" : "Mute");
 
 		ImGui::SameLine();
-		if (ImGui::SelectableLabel(m_IsSnoozed ? ICON_MD_NOTIFICATIONS_PAUSED : ICON_MD_NOTIFICATIONS_ACTIVE, false))
+		if (ImGui::SelectableLabel(m_IsSnoozed ? ICON_MS_NOTIFICATIONS_PAUSED : ICON_MS_NOTIFICATIONS_ACTIVE, false))
 			ToggleSnooze();
 		ImGui::ToolTip(m_IsSnoozed ? "Enable toast notifications." : "Snooze toast notifications.");
 
 		ImGui::SameLine();
 		ImGui::BeginDisabled(empty);
-		if (ImGui::SelectableLabel(ICON_MD_CLEAR_ALL, false))
+		if (ImGui::SelectableLabel(ICON_MS_CLEAR_ALL, false))
 			m_ShouldFlush = true;
 		ImGui::ToolTip("Clear all notifications");
 		ImGui::EndDisabled();
@@ -375,7 +375,7 @@ namespace YLP
 		ImVec2 btnBR = ImVec2(btnPos.x + 20.0f, btnPos.y + 20.0f);
 		drawList->AddRectFilled(btnPos, btnBR, cardBg, 6.0f);
 		ImGui::PushFont(Fonts::Small);
-		drawList->AddText(ImVec2(btnPos.x + 3.0f, btnPos.y + 1), textColor, ICON_MD_CLEAR);
+		drawList->AddText(ImVec2(btnPos.x + 3.0f, btnPos.y + 1), textColor, ICON_MS_CLEAR);
 		ImGui::PopFont();
 
 		ImVec2 bodyPos = ImVec2(accentCenter.x, accentCenter.y + titleSize.y + titleSpacing);

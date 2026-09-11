@@ -24,9 +24,10 @@
 #endif
 
 
-#include "mdis_regular.hpp"
+#include "fonts.hpp"
 #include "JetBrainsMono.hpp"
 #include "JetBrainsMonoBold.hpp"
+#include "MaterialSymbolsStripped.hpp"
 
 #if defined(__GNUC__) || defined(__clang__)
 	#pragma GCC diagnostic pop
@@ -35,25 +36,26 @@
 #endif
 
 
-ImFont* Fonts::Small = nullptr;
-ImFont* Fonts::Regular = nullptr;
-ImFont* Fonts::Bold = nullptr;
-ImFont* Fonts::Title = nullptr;
+ImFont* Fonts::Small	= nullptr;
+ImFont* Fonts::Regular  = nullptr;
+ImFont* Fonts::Bold		= nullptr;
+ImFont* Fonts::Title	= nullptr;
+ImFont* Fonts::IconsBig = nullptr;
 
 static void MergeIcons(ImGuiIO& io, float size)
 {
 	ImFontConfig icon_cfg;
-	icon_cfg.MergeMode = true;
-	icon_cfg.PixelSnapH = true;
+	icon_cfg.MergeMode		  = true;
+	icon_cfg.PixelSnapH		  = true;
 	icon_cfg.GlyphMinAdvanceX = 16.0f;
-	icon_cfg.GlyphOffset = ImVec2(0, 3);
+	icon_cfg.GlyphOffset	  = ImVec2(1, 3);
 
-	strcpy(icon_cfg.Name, "MaterialDesignIcons");
-	static const ImWchar icons_range[] = {ICON_MIN_MD, ICON_MAX_MD, 0};
+	strcpy(icon_cfg.Name, "MaterialDesignSymbols");
+	static const ImWchar icons_range[] = {ICON_MIN_MS, ICON_MAX_MS, 0};
 
 	io.Fonts->AddFontFromMemoryCompressedTTF(
-	    mdis_regular_compressed_data,
-	    mdis_regular_compressed_size,
+	    material_symbols_compressed_data,
+	    material_symbols_compressed_size,
 	    size,
 	    &icon_cfg,
 	    icons_range);
@@ -71,19 +73,23 @@ void Fonts::Load(ImGuiIO& io)
 
 	strcpy(cfg.Name, "JetBrainsMono Default");
 	Regular = fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 19.0f, &cfg);
-	MergeIcons(io, 19.f);
+	MergeIcons(io, 21.f);
 
 	strcpy(cfg.Name, "JetBrainsMono Bold");
 	Bold = fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 19.0f, &cfg);
-	MergeIcons(io, 19.f);
+	MergeIcons(io, 21.f);
 
 	strcpy(cfg.Name, "JetBrainsMono Small");
 	Small = fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 15.0f, &cfg);
-	MergeIcons(io, 15.0f);
+	MergeIcons(io, 17.0f);
 
 	strcpy(cfg.Name, "JetBrainsMono Title");
 	Title = fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 25.0f, &cfg);
-	MergeIcons(io, 25.0f);
+	MergeIcons(io, 27.0f);
+
+	strcpy(cfg.Name, "Icons Big");
+	IconsBig = fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 25.0f, &cfg);
+	MergeIcons(io, 32.0f);
 
 	io.FontDefault = Regular;
 	fonts->AddFontDefault(&cfg);

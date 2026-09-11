@@ -28,7 +28,7 @@ namespace YLP::Frontend
 	{
 	public:
 		AboutTab() :
-		    GuiTab(eTabID::TAB_INFO, ICON_MD_INFO, "About")
+		    GuiTab(eTabID::TAB_INFO, ICON_MS_INFO, "About")
 		{
 		}
 
@@ -74,16 +74,16 @@ The author shall not be held liable for any damages, data loss, or issues arisin
 			ImGui::Spacing();
 			ImGui::TextWrapped("See");
 			ImGui::SameLine();
-			ImGui::TextLinkOpenURL("Third-Party " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/YLP/tree/main/docs/thirdparty");
+			ImGui::TextLinkOpenURL("Third-Party " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/YLP/tree/main/docs/thirdparty");
 			ImGui::SameLine();
 			ImGui::TextWrapped("for details.");
 
 			ImGui::NewLine();
 			ImGui::TitleText("Useful Links", true);
 			ImGui::Spacing();
-			ImGui::TextLinkOpenURL("Source Code " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/YLP");
-			ImGui::TextLinkOpenURL("Report a Bug " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/ylp/issues/new/choose");
-			ImGui::TextLinkOpenURL("Start a Discussion " ICON_MD_OPEN_IN_NEW, "https://github.com/xesdoog/YLP/discussions/new/choose");
+			ImGui::TextLinkOpenURL("Source Code " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/YLP");
+			ImGui::TextLinkOpenURL("Report a Bug " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/ylp/issues/new/choose");
+			ImGui::TextLinkOpenURL("Start a Discussion " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/YLP/discussions/new/choose");
 		}
 	};
 

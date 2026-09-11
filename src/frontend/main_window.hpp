@@ -19,7 +19,6 @@
 
 
 #include "../core/gui/gui_tab.hpp"
-#include "../core/gui/fonts/fonts.hpp"
 #include "../core/gui/msgbox.hpp"
 #include "../core/YimMenu/yimmenu.hpp"
 #include "../core/memory/pointers.hpp"
@@ -40,7 +39,7 @@ namespace YLP::Frontend
 	{
 	public:
 		MainTab() :
-		    GuiTab(eTabID::TAB_MAIN, ICON_MD_HOME, "Home")
+		    GuiTab(eTabID::TAB_MAIN, ICON_MS_HOME_APP_LOGO, "Home")
 		{
 		}
 
@@ -157,7 +156,7 @@ namespace YLP::Frontend
 				return;
 
 			ImGui::SameLine();
-			if (ImGui::Button(ICON_MD_DOWNLOAD " Download", ButtonBig))
+			if (ImGui::Button(ICON_MS_DOWNLOAD " Download", ButtonBig))
 			{
 				ThreadManager::Run([&menu] {
 					menu.Download();
@@ -191,7 +190,7 @@ namespace YLP::Frontend
 			{
 				case YimMenu::eMenuViewState::PendingUpdate:
 				{
-					if (ImGui::Button(ICON_MD_UPDATE))
+					if (ImGui::Button(ICON_MS_UPDATE))
 					{
 						ThreadManager::Run([&menu] {
 							menu.Download();
@@ -208,7 +207,7 @@ namespace YLP::Frontend
 				case YimMenu::eMenuViewState::Idle:
 				{
 				    ImGui::BeginDisabled(wantsAutoUpdate);
-				    if (ImGui::Button(ICON_MD_SYNC))
+				    if (ImGui::Button(ICON_MS_SYNC))
 					{
 						ThreadManager::Run([&menu] {
 							menu.CheckForUpdates();
@@ -235,11 +234,12 @@ namespace YLP::Frontend
 			if (!menu || menu.GetState() == YimMenu::eMenuViewState::Downloading)
 				return;
 
-			ImGui::Spacing();
 			const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
-			bool wantsAutoInject = (Config().autoMonitorFlags & monitorTarget) != 0;
-			bool disabledCond = (wantsAutoInject || injected || !running);
-			auto injectLabel = injected ? ICON_MD_CHECK_CIRCLE_OUTLINE " Injected" : ICON_MD_START " Inject";
+			bool wantsAutoInject		= (Config().autoMonitorFlags & monitorTarget) != 0;
+			bool disabledCond			= (wantsAutoInject || injected || !running);
+			auto injectLabel			= injected ? ICON_MS_CHECK_CIRCLE_OUTLINE " Injected" : ICON_MS_SYRINGE " Inject";
+
+			ImGui::Spacing();
 			ImGui::BeginDisabled(disabledCond);
 			if (ImGui::Button(injectLabel, ButtonBig))
 			{
@@ -274,7 +274,7 @@ namespace YLP::Frontend
 			ImGui::SameLine();
 
 			ImGui::BeginChild("##game", ImVec2(0, 165), 0, ImGuiWindowFlags_NoBackground);
-			const char* playBtnLabel = isRunning ? "Playing" : ICON_MD_PLAY_ARROW " Play";
+			const char* playBtnLabel = isRunning ? "Playing" : ICON_MS_PLAY_ARROW " Play";
 			if (m_AttemptedGameLaunch)
 				playBtnLabel = hourglassIcons[static_cast<int>(ImGui::GetTime() / 0.12f) & 3];
 
@@ -292,7 +292,7 @@ namespace YLP::Frontend
 			ImGui::EndDisabled();
 
 			ImGui::SameLine();
-			if (ImGui::Button(ICON_MD_MORE_VERT, ImVec2(35, 35)))
+			if (ImGui::Button(ICON_MS_MORE_VERT, ImVec2(35, 35)))
 				ImGui::OpenPopup("##launcherPopup");
 
 			ImGui::SetNextWindowPos(ImGui::GetItemRectMax(), ImGuiCond_Always);
@@ -339,7 +339,7 @@ namespace YLP::Frontend
 					ImGui::Spacing();
 					ImGui::Text("Custom Executable Path:");
 					ImGui::Spacing();
-					if (ImGui::SelectableLabel(ICON_MD_CLEAR, false))
+					if (ImGui::SelectableLabel(ICON_MS_CLEAR, false))
 					{
 						menu.m_ExePath.clear();
 						Config().gtaExePaths.erase(menu.m_TargetProcess);
@@ -356,11 +356,12 @@ namespace YLP::Frontend
 
 			ImGui::Spacing();
 			ImGui::PushFont(Fonts::Small);
-			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK, false, isRunning ? ImGreen : ImRed);
+			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MS_CHECK_CIRCLE : ICON_MS_BLOCK, false, isRunning ? ImGreen : ImRed);
 
 
 			int versionIndex = menu.m_Version == eYimVersion::YimMenuV1 ? 0 : 1;
 			auto& versionStr = m_CachedVersions[versionIndex];
+
 			if (versionStr.empty() && pointers.GameVersion && pointers.OnlineVersion)
 			{
 				auto gv = pointers.GameVersion ? pointers.GameVersion.Read<std::string>() : "";
@@ -368,7 +369,7 @@ namespace YLP::Frontend
 				m_CachedVersions[versionIndex] = std::format("{} (Online: {})", gv, ov);
 			}
 
-			ImGui::DrawKeyValue("Version:", versionStr);
+			ImGui::DrawKeyValue("Version:", versionStr.empty() ? "Unknown": versionStr);
 
 			/*auto runtime = (isRunning && pointers.GameTime) ? pointers.GameTime.Read<int32_t>() : 0; // unnecessary read. who cares about playtime?
 			if (runtime > 0)
@@ -409,7 +410,7 @@ namespace YLP::Frontend
 
 			ImGui::DrawKeyValue(
 				"Official GitHub Source: ",
-				std::format("{} {}", menu.m_Name, ICON_MD_OPEN_IN_NEW),
+				std::format("{} {}", menu.m_Name, ICON_MS_OPEN_IN_NEW),
 				false,
 				defaultTextCol,
 			    ImGui::KVflagsHyperlink,
@@ -431,7 +432,7 @@ namespace YLP::Frontend
 				ImGui::ToolTip(std::format("Full commit hash: {}", menu.m_LastCommitHash).c_str(), Fonts::Small, true, 0);
 
 			ImGui::DrawKeyValue("Injected:",
-				injected ? ICON_MD_CHECK_CIRCLE : ICON_MD_BLOCK,
+				injected ? ICON_MS_CHECK_CIRCLE : ICON_MS_BLOCK,
 				false,
 				injected ? ImGreen : defaultTextCol);
 
@@ -491,10 +492,10 @@ namespace YLP::Frontend
 		static inline std::array<std::string, 2> m_CachedVersions{"", ""};
 
 		static inline std::array hourglassIcons{
-			ICON_MD_HOURGLASS_EMPTY, 
-			ICON_MD_HOURGLASS_TOP, 
-			ICON_MD_HOURGLASS_EMPTY, 
-			ICON_MD_HOURGLASS_BOTTOM
+			ICON_MS_HOURGLASS_EMPTY, 
+			ICON_MS_HOURGLASS_TOP, 
+			ICON_MS_HOURGLASS_EMPTY, 
+			ICON_MS_HOURGLASS_BOTTOM
 		};
 
 		static inline std::array m_Launchers{

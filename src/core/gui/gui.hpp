@@ -19,7 +19,6 @@
 
 #include "renderer.hpp"
 #include "gui_tab.hpp"
-#include "fonts/fonts.hpp"
 #include "../../frontend/injector.hpp"
 #include "../../frontend/main_window.hpp"
 #include "../../frontend/yimmenu_lua.hpp"

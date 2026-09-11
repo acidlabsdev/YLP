@@ -57,7 +57,7 @@ namespace ImGui
 	void HelpMarker(const char* text, ImFont* font)
 	{
 		ImGui::SameLine();
-		ImGui::TextDisabled(ICON_MD_HELP);
+		ImGui::TextDisabled(ICON_MS_HELP);
 		ToolTip(text, font, false);
 	}
 
@@ -65,7 +65,7 @@ namespace ImGui
 	{
 		ImGui::PushFont(Fonts::Title);
 		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35);
-		ImGui::TextColored(ImVec4(1.0f, 0.7568, 0.027f, 1.0f), ICON_MD_WARNING);
+		ImGui::TextColored(ImVec4(1.0f, 0.7568, 0.027f, 1.0f), ICON_MS_WARNING);
 		ImGui::SameLine();
 		ImGui::Text("Warning");
 		ImGui::PopFont();
@@ -191,7 +191,7 @@ namespace ImGui
 		if (copyable)
 		{
 			ImGui::SameLine();
-			if (ImGui::SmallButton(ICON_MD_FILE_COPY))
+			if (ImGui::SmallButton(ICON_MS_FILE_COPY))
 				ImGui::SetClipboardText(value.c_str());
 			ImGui::ToolTip("Copy");
 		}

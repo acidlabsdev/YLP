@@ -21,8 +21,8 @@ namespace ImGui
 {
 	inline bool ThemePreview(const YLP::Frontend::Theme& theme, bool selected = false, const ImVec2& size = {200, 200})
 	{
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImGuiStyle& style = ImGui::GetStyle();
+		ImVec2 pos			 = ImGui::GetCursorScreenPos();
+		ImGuiStyle& style	 = ImGui::GetStyle();
 		ImVec2 windowPadding = style.WindowPadding;
 
 		ImGui::BeginGroup();
@@ -31,23 +31,25 @@ namespace ImGui
 		auto& themeStyles = theme.m_StyleVars;
 		auto& themeColors = theme.m_Colors;
 
-		ImVec4 windowBg = themeColors.find("WindowBg") != themeColors.end() ? themeColors.at("WindowBg") : style.Colors[ImGuiCol_WindowBg];
-		ImVec4 childBg = themeColors.find("ChildBg") != themeColors.end() ? themeColors.at("ChildBg") : style.Colors[ImGuiCol_ChildBg];
-		ImVec4 borderCol = themeColors.find("Border") != themeColors.end() ? themeColors.at("Border") : style.Colors[ImGuiCol_Border];
-		ImVec4 textColor = themeColors.find("Text") != themeColors.end() ? themeColors.at("Text") : style.Colors[ImGuiCol_Text];
+		ImVec4 windowBg    = themeColors.find("WindowBg") != themeColors.end() ? themeColors.at("WindowBg") : style.Colors[ImGuiCol_WindowBg];
+		ImVec4 childBg	   = themeColors.find("ChildBg") != themeColors.end() ? themeColors.at("ChildBg") : style.Colors[ImGuiCol_ChildBg];
+		ImVec4 borderCol   = themeColors.find("Border") != themeColors.end() ? themeColors.at("Border") : style.Colors[ImGuiCol_Border];
+		ImVec4 textColor   = themeColors.find("Text") != themeColors.end() ? themeColors.at("Text") : style.Colors[ImGuiCol_Text];
 		ImVec4 buttonColor = themeColors.find("Button") != themeColors.end() ? themeColors.at("Button") : style.Colors[ImGuiCol_Button];
 		
-		float childRounding = themeStyles.find("ChildRounding") != themeStyles.end() ? std::get<float>(themeStyles.at("ChildRounding")) : style.ChildRounding;
-		float frameRounding = themeStyles.find("FrameRounding") != themeStyles.end() ? std::get<float>(themeStyles.at("FrameRounding")) : style.FrameRounding;
-		bool clicked = ImGui::InvisibleButton("##preview", size + style.ItemSpacing + ImVec2(0, ImGui::GetFrameHeight()));
-		bool hovered = ImGui::IsItemHovered();
-		const float pad = size.x * 0.06f;
-		const float consoleMockHeight = size.x * 0.22f;
-		const float lowerTextHeight = style.ItemSpacing.y * 7;
-		const float lineH = size.y * 0.025f;
+		float childRounding			  = themeStyles.find("ChildRounding") != themeStyles.end() ? std::get<float>(themeStyles.at("ChildRounding")) : style.ChildRounding;
+		float frameRounding			  = themeStyles.find("FrameRounding") != themeStyles.end() ? std::get<float>(themeStyles.at("FrameRounding")) : style.FrameRounding;
+		bool clicked				  = ImGui::InvisibleButton("##preview", size + style.ItemSpacing + ImVec2(0, ImGui::GetFrameHeight()));
+		bool hovered				  = ImGui::IsItemHovered();
+		bool isDrawingConsole         = YLP::Settings::Get().internalConsole;
+		const float pad				  = size.x * 0.06f;
+		const float consoleMockHeight = isDrawingConsole ? size.x * 0.22f : 0.0f;
+		const float lowerTextHeight   = style.ItemSpacing.y * 7;
+		const float lineH			  = size.y * 0.025f;
+
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		ImVec2 min = pos + ImVec2(1, 1);
-		ImVec2 max = min + size - ImVec2(1, 1 + consoleMockHeight + lowerTextHeight);
+		ImVec2 min			 = pos + ImVec2(1, 1);
+		ImVec2 max			 = min + size - ImVec2(1, 1 + consoleMockHeight + lowerTextHeight);
 		drawList->AddRectFilled(
 		    min,
 		    max,
@@ -119,24 +121,26 @@ namespace ImGui
 
 		ImVec2 consoleMin(min.x, max.y + (pad * 0.5));
 		ImVec2 consoleMax(max.x, consoleMin.y + consoleMockHeight);
-		drawList->AddRectFilled(
-		    consoleMin,
-		    consoleMax,
-		    ImGui::GetColorU32(windowBg),
-		    childRounding);
+		if (isDrawingConsole)
+		{
+			drawList->AddRectFilled(
+			    consoleMin,
+			    consoleMax,
+			    ImGui::GetColorU32(windowBg),
+			    childRounding);
 
-		drawList->AddRectFilled(
-		    consoleMin + ImVec2(4.f, 4.f),
-		    consoleMax - ImVec2(4.f, 4.f),
-		    IM_COL32(0, 0, 0, 225),
-		    childRounding);
+			drawList->AddRectFilled(
+			    consoleMin + ImVec2(4.f, 4.f),
+			    consoleMax - ImVec2(4.f, 4.f),
+			    IM_COL32(0, 0, 0, 225),
+			    childRounding);
+		}
 
-		int textColIdx = selected ? ImGuiCol_CheckMark : hovered ? ImGuiCol_TextDisabled :
-		                                                           ImGuiCol_Text;
-		ImVec2 textSize = ImGui::CalcTextSize(theme.m_Name.data());
-		ImVec2 rbSize = ImGui::CalcTextSize(ICON_MD_RADIO_BUTTON_CHECKED);
+		int textColIdx   = selected ? ImGuiCol_CheckMark : hovered ? ImGuiCol_TextDisabled : ImGuiCol_Text;
+		ImVec2 textSize  = ImGui::CalcTextSize(theme.m_Name.data());
+		ImVec2 rbSize	 = ImGui::CalcTextSize(ICON_MS_RADIO_BUTTON_CHECKED);
 		float textCenter = (pos.x + max.x - textSize.x) * 0.5f;
-		float rbCenter = (pos.x + max.x - rbSize.x) * 0.5f;
+		float rbCenter	 = (pos.x + max.x - rbSize.x) * 0.5f;
 		drawList->AddText(
 		    ImVec2(textCenter, consoleMax.y + style.ItemSpacing.y),
 		    ImGui::GetColorU32(style.Colors[textColIdx]),
@@ -145,7 +149,7 @@ namespace ImGui
 		drawList->AddText(
 		    ImVec2(rbCenter, consoleMax.y + textSize.y + (style.ItemSpacing.y * 2)),
 		    ImGui::GetColorU32(style.Colors[textColIdx]),
-		    selected ? ICON_MD_RADIO_BUTTON_CHECKED : ICON_MD_RADIO_BUTTON_UNCHECKED);
+		    selected ? ICON_MS_RADIO_BUTTON_CHECKED : ICON_MS_RADIO_BUTTON_UNCHECKED);
 
 		if (hovered)
 		{
