@@ -181,7 +181,6 @@ def resolve_members(model: ApiModel) -> None:
 			UNRESOLVED_MEMBERS.remove(member)
 
 
-
 def parse_source(source: str) -> ApiModel:
 	model = ApiModel()
 	model.libraries.append(GLOBAL_TABLE)
@@ -309,7 +308,7 @@ def md_method(method: ApiMember, lib: ApiLibrary) -> str:
     index_char = ":" if lib.kind == "class" else "."
     params = ", ".join(f"{param.name}" for param in method.parameters)
     prefix = lib.name + index_char if lib.name != "Global Table" else ""
-    signature = f"{prefix}({params})"
+    signature = f"{prefix}{method.name}({params})"
     output = [
         f"## `{method.name}`",
         "",
