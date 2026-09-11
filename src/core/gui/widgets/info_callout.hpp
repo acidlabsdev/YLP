@@ -42,17 +42,17 @@ namespace ImGui
 		case ImCalloutType::Note:
 			accentColor = ImVec4(0.0f, 0.001f, 0.803f, 1.0f);
 			label = "Note";
-			icon = ICON_MD_MESSAGE;
+			icon = ICON_MS_MESSAGE;
 			break;
 		case ImCalloutType::Warning:
 			accentColor = ImVec4(1.0f, 0.7568, 0.027f, 1.0f);
 			label = "Warning";
-			icon = ICON_MD_WARNING;
+			icon = ICON_MS_WARNING;
 			break;
 		case ImCalloutType::Important:
 			accentColor = ImVec4(0.498f, 0.1f, 1.0f, 1.0f);
 			label = "Important";
-			icon = ICON_MD_PRIORITY_HIGH;
+			icon = ICON_MS_PRIORITY_HIGH;
 			break;
 		}
 

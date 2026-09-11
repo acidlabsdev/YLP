@@ -64,14 +64,16 @@ namespace YLP
 			bool muteNotifs			= false;
 			bool enableScripting	= false;
 
-			int lastTabIndex	= 0;
-			int themeIndex		= 0;
-			int windowWidth		= 800;
-			int windowHeight	= 770;
-			int windowX			= -1;
-			int windowY			= -1;
-			int launcherIndex	= -1;
-			int mainWindowIndex = 0;
+			int lastTabIndex	    = 0;
+			int themeIndex		    = 0;
+			int mainWindowIndex     = 0; // bad naming. this represents Legacy/Enhanced in the main tab
+			int windowAccentState   = 0;
+			int windowWidth		    = 800;
+			int windowHeight	    = 770;
+			int windowX			    = -1;
+			int windowY			    = -1;
+			int launcherIndex	    = -1;
+			float bgAlphaMultiplier = 1.0f;
 
 			uint8_t autoMonitorFlags	= MonitorNone;
 			uint8_t menuAutoUpdateFlags = MonitorNone;
@@ -170,7 +172,9 @@ namespace YLP
 			j["menu_auto_update_flags"] = m_Config.menuAutoUpdateFlags;
 			j["lua_repo_sort_mode"]		= m_Config.luaRepoSortMode;
 			j["launcher_idx"]			= m_Config.launcherIndex;
+			j["bg_alpha_multiplier"]    = m_Config.bgAlphaMultiplier;
 			j["main_window_index"]		= m_Config.mainWindowIndex;
+			j["window_accent_state"]    = m_Config.windowAccentState;
 			j["last_tab_index"]			= m_Config.lastTabIndex;
 			j["internal_console"]		= m_Config.internalConsole;
 			j["external_console"]		= m_Config.externalConsole;
@@ -229,8 +233,9 @@ namespace YLP
 			m_Config.autoMonitorFlags	= j.value("auto_monitor_flags", MonitorNone);
 			m_Config.luaRepoSortMode	= j.value("lua_repo_sort_mode", eLuaRepoSortMode::COMMIT);
 			m_Config.lastTabIndex		= j.value("last_tab_index", 0);
+			m_Config.windowAccentState  = j.value("window_accent_state", 0);
 			m_Config.launcherIndex		= j.value("launcher_idx", -1);
-			m_Config.mainWindowIndex	= j.value("main_window_index", 0);
+			m_Config.bgAlphaMultiplier  = j.value("bg_alpha_multiplier", 1.0f);
 			m_Config.internalConsole	= j.value("internal_console", true);
 			m_Config.externalConsole	= j.value("external_console", false);
 			m_Config.autoExit			= j.value("auto_exit", false);

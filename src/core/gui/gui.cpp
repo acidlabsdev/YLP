@@ -99,7 +99,19 @@ namespace YLP
 
 	void GUI::DrawImpl()
 	{
-		m_WindowSize = Renderer::GetWindowSize();
+		m_WindowSize		= Renderer::GetWindowSize();
+		Theme* currentTheme = ThemeManager::GetCurrentTheme();
+		auto& themeColors   = currentTheme->m_Colors;
+		float alphaMult     = Config().bgAlphaMultiplier;
+		ImGuiStyle& style   = ImGui::GetStyle();
+		ImVec4 windowBg     = themeColors.find("WindowBg") != themeColors.end() ? themeColors.at("WindowBg") : style.Colors[ImGuiCol_WindowBg];
+		ImVec4 childBg      = themeColors.find("ChildBg") != themeColors.end() ? themeColors.at("ChildBg") : style.Colors[ImGuiCol_ChildBg];
+		//ImVec4 popupBg      = themeColors.find("PopupBg") != themeColors.end() ? themeColors.at("PopupBg") : style.Colors[ImGuiCol_PopupBg];
+
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, windowBg * alphaMult);
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, childBg * alphaMult);
+		//ImGui::PushStyleColor(ImGuiCol_PopupBg, popupBg * alphaMult);
+
 		ImGui::SetNextWindowSize(m_WindowSize, ImGuiCond_Always);
 		ImGui::SetNextWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -144,6 +156,7 @@ namespace YLP
 		OnTabSwitchImpl();
 		Notifier::DrawToasts();
 		ImGui::End();
+		ImGui::PopStyleColor(2);
 	}
 
 	void GUI::DrawTopBarImpl()
@@ -155,7 +168,7 @@ namespace YLP
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		const bool isSnoozed = Notifier::IsSnoozed();
-		const char* notifIcon = isSnoozed ? ICON_MD_NOTIFICATIONS_OFF : (Notifier::IsViewed() ? ICON_MD_NOTIFICATIONS : ICON_MD_NOTIFICATIONS_ACTIVE);
+		const char* notifIcon = isSnoozed ? ICON_MS_NOTIFICATIONS_OFF : (Notifier::IsViewed() ? ICON_MS_NOTIFICATIONS : ICON_MS_NOTIFICATIONS_ACTIVE);
 		ImVec4 notifColor = Notifier::IsViewed() ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_CheckMark];
 		ImGui::SetCursorPos(ImVec2(ImGui::GetContentRegionAvail().x - 10.f, 10.f));
 		ImGui::TextColored(Notifier::IsOpen() ? style.Colors[ImGuiCol_ButtonActive] : notifColor, notifIcon);
@@ -178,18 +191,19 @@ namespace YLP
 		if (tabCount == 0)
 			return;
 
-		const float frameH = ImGui::GetFrameHeight();
-		static float padding = 8.0f;
-		static float accentY = 0.0f;
-		static float accentHeight = 0.0f;
-		static float accentTargetY = 0.0f;
+		const float frameH				= ImGui::GetFrameHeight();
+		static float padding			= 8.0f;
+		static float accentY			= 0.0f;
+		static float accentHeight		= 0.0f;
+		static float accentTargetY		= 0.0f;
 		static float accentTargetHeight = 0.0f;
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		ImGui::SetCursorPosY(60);
-		ImGui::PushFont(Fonts::Title);
-		float iconWidth = ImGui::CalcTextSize(ICON_MD_EXTENSION).x;
-		float offsetX = (ImGui::GetContentRegionAvail().x - iconWidth) * 0.5f;
+		ImGui::PushFont(Fonts::IconsBig);
+		float iconWidth = ImGui::CalcTextSize(ICON_MS_EXTENSION).x;
+		float offsetX   = (ImGui::GetContentRegionAvail().x - iconWidth) * 0.5f;
+
 		for (size_t i = 0; i < tabCount; i++)
 		{
 			auto tab = m_Tabs[i];
@@ -250,12 +264,12 @@ namespace YLP
 			ImGui::PushFont(Fonts::Small);
 			ImGui::BeginDisabled(entries.empty());
 
-			if (ImGui::Button(ICON_MD_CONTENT_COPY))
+			if (ImGui::Button(ICON_MS_CONTENT_COPY))
 				ImGui::SetClipboardText(imguiSink.GetText().c_str());
 			ImGui::ToolTip("Copy all log entries");
 
 			ImGui::SameLine();
-			if (ImGui::Button(ICON_MD_DELETE))
+			if (ImGui::Button(ICON_MS_DELETE))
 				imguiSink.Clear();
 			ImGui::ToolTip("Clear all log entries");
 

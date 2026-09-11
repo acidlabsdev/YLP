@@ -30,7 +30,7 @@ namespace YLP::Frontend
 	{
 	public:
 		ScriptingTab() :
-		    GuiTab(eTabID::TAB_SCRIPTING, ICON_MD_CODE, "LuaJIT scripting")
+		    GuiTab(eTabID::TAB_SCRIPTING, ICON_MS_CODE, "LuaJIT scripting")
 		{
 		}
 
@@ -63,11 +63,11 @@ namespace YLP::Frontend
 			ImGui::Separator();
 
 			ImGui::BeginDisabled(m_Editor.IsEmpty());
-			if (ImGui::Button(ICON_MD_TERMINAL " Execute"))
+			if (ImGui::Button(ICON_MS_TERMINAL " Execute"))
 				LuaJIT::LuaManager::ExecuteCode(m_Editor.GetText().data());
 
 			ImGui::SameLine();
-			if (ImGui::Button(ICON_MD_BACKSPACE " Clear"))
+			if (ImGui::Button(ICON_MS_BACKSPACE " Clear"))
 				m_Editor.ClearText();
 			ImGui::EndDisabled();
 		}

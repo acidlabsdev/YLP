@@ -19,12 +19,12 @@
 
 #include "renderer.hpp"
 #include "theme.hpp"
-#include "fonts/fonts.hpp"
 #include "widgets/info_callout.hpp"
 #include "widgets/segmented_ctrl.hpp"
 #include "widgets/spinner.hpp"
 #include "widgets/theme_preview.hpp"
 #include "widgets/wrapped_selectable.hpp"
+#include "../../resources/fonts/fonts.hpp"
 
 
 namespace ImGui

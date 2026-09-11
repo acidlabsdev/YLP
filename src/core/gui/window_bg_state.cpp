@@ -15,17 +15,26 @@
 // along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
 
-#pragma once
-
-#include <thirdparty/IconsMaterialDesign.h>
+#include "window_bg_state.hpp"
 
 
-namespace Fonts
+namespace YLP
 {
-	extern ImFont* Small;
-	extern ImFont* Regular;
-	extern ImFont* Bold;
-	extern ImFont* Title;
+	void SetBackgroundAccentState(HWND hwnd, eWindowAccentState state)
+	{
+		if (!SetWindowCompositionAttribute)
+		{
+			LOG_ERROR("SetWindowCompositionAttribute function not found!");
+			return;
+		}
 
-	void Load(ImGuiIO& io);
+		if (state < ACCENT_DISABLED || state > ACCENT_ENABLE_HOSTBACKDROP)
+			state = ACCENT_DISABLED;
+
+		ACCENT_POLICY policy                = {state, 0, 0, 0};
+		WINDOWCOMPOSITIONATTRIBUTEDATA data = {WCA_ACCENT_POLICY, &policy, sizeof(ACCENT_POLICY)};
+
+		if (!SetWindowCompositionAttribute(hwnd, &data))
+			LOG_ERROR("SetWindowCompositionAttribute failed: {}", GetLastError());
+	};
 }

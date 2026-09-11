@@ -20,7 +20,6 @@
 #include "../core/gui/gui_tab.hpp"
 #include "../core/github/gitmgr.hpp"
 #include "../core/gui/renderer.hpp"
-#include "../core/gui/fonts/fonts.hpp"
 #include "../core/gui/widgets/ylp_spinner.hpp"
 
 
@@ -30,7 +29,7 @@ namespace YLP::Frontend
 	{
 	public:
 		YimLuaTab() :
-		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MD_EXTENSION, "YimMenu-Lua repositories")
+		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MS_EXTENSION, "YimMenu-Lua repositories")
 		{
 		}
 		
@@ -62,14 +61,14 @@ namespace YLP::Frontend
 
 		static inline void DrawInstalledRepo(const Repository* repo)
 		{
-			if (ImGui::ColoredButton(ICON_MD_DELETE, ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 3.0f))
+			if (ImGui::ColoredButton(ICON_MS_DELETE, ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 3.0f))
 				GitHubManager::RemoveRepository(repo->name);
 			ImGui::ToolTip("Delete");
 
 			ImGui::SameLine();
 			if (repo->isDisabled)
 			{
-				if (ImGui::ColoredButton(ICON_MD_CHECK_CIRCLE, ImVec4(0.20f, 0.95f, 0.20f, 0.69f), 2.0f))
+				if (ImGui::ColoredButton(ICON_MS_CHECK_CIRCLE, ImVec4(0.20f, 0.95f, 0.20f, 0.69f), 2.0f))
 				{
 					auto src = g_YimPath / "scripts" / "disabled" / repo->name;
 					auto dest = g_YimPath / "scripts" / repo->name;
@@ -79,7 +78,7 @@ namespace YLP::Frontend
 			}
 			else
 			{
-				if (ImGui::Button(ICON_MD_BLOCK))
+				if (ImGui::Button(ICON_MS_BLOCK))
 				{
 					auto src = g_YimPath / "scripts" / repo->name;
 					auto dest = g_YimPath / "scripts" / "disabled" / repo->name;
@@ -90,13 +89,13 @@ namespace YLP::Frontend
 				if (repo->isPendingUpdate)
 				{
 					ImGui::SameLine();
-					if (ImGui::Button(ICON_MD_UPDATE))
+					if (ImGui::Button(ICON_MS_UPDATE))
 						GitHubManager::DownloadRepository(repo->name);
 					ImGui::ToolTip("Update");
 
 					ImGui::SameLine();
 					ImGui::PushFont(Fonts::Title);
-					auto icon = ICON_MD_CLOUD_DOWNLOAD;
+					auto icon = ICON_MS_CLOUD_DOWNLOAD;
 					float iconWidth = ImGui::CalcTextSize(icon).x;
 					float regionWidth = ImGui::GetContentRegionAvail().x;
 					ImGui::SetCursorPosX(ImGui::GetCursorPosX() + regionWidth - iconWidth);
@@ -107,7 +106,7 @@ namespace YLP::Frontend
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button(ICON_MD_FOLDER))
+			if (ImGui::Button(ICON_MS_FOLDER))
 				IO::Open(repo->currentPath.string());
 			ImGui::ToolTip("Open folder");
 		}
@@ -137,7 +136,7 @@ namespace YLP::Frontend
 				IO::Open(repo->htmlUrl);
 
 			ImGui::Spacing();
-			ImGui::TextDisabled(ICON_MD_BOOK);
+			ImGui::TextDisabled(ICON_MS_BOOK);
 			ImGui::SameLine();
 			ImGui::TextColored(ImVec4(0.3f, 0.5f, 0.8f, 1.0f), repo->name.c_str());
 
@@ -153,7 +152,7 @@ namespace YLP::Frontend
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2.f, 0.f));
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0, 0, 128, 255));
-			ImGui::Text(ICON_MD_CIRCLE);
+			ImGui::Text(ICON_MS_BRIGHTNESS_1);
 			ImGui::PopStyleColor();
 			ImGui::SameLine();
 			ImGui::TextDisabled("Lua");
@@ -161,7 +160,7 @@ namespace YLP::Frontend
 
 			ImGui::SameLine();
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2.f, 0.f));
-			ImGui::TextDisabled(ICON_MD_STAR);
+			ImGui::TextDisabled(ICON_MS_STAR);
 			ImGui::SameLine();
 			ImGui::TextDisabled("%d", repo->stars);
 			ImGui::PopStyleVar();
@@ -181,7 +180,7 @@ namespace YLP::Frontend
 			}
 			else
 			{
-				if (ImGui::Button(ICON_MD_DOWNLOAD))
+				if (ImGui::Button(ICON_MS_DOWNLOAD))
 					GitHubManager::DownloadRepository(repo->name);
 				ImGui::ToolTip("Download");
 			}
@@ -195,7 +194,7 @@ namespace YLP::Frontend
 			auto sortmode = GitHubManager::GetSortMode();
 			auto state = GitHubManager::GetState();
 
-			if (ImGui::Button(ICON_MD_FILTER_LIST))
+			if (ImGui::Button(ICON_MS_FILTER_LIST))
 				ImGui::OpenPopup("##filterScripts");
 
 			ImVec2 filterPopupPos = ImGui::GetItemRectMax();
@@ -222,7 +221,7 @@ namespace YLP::Frontend
 				m_SortPopupOpen = false;
 
 			ImGui::SameLine(0.f, 10.f);
-			if (ImGui::Button(ICON_MD_REFRESH))
+			if (ImGui::Button(ICON_MS_REFRESH))
 			{
 				ThreadManager::Run([] {
 					GitHubManager::FetchRepositories();
@@ -233,7 +232,7 @@ namespace YLP::Frontend
 
 			ImGui::SameLine(0.0f, 60.0f);
 			ImGui::SetNextItemWidth(-1);
-			ImGui::InputTextWithHint("##searchBar", ICON_MD_SEARCH, searchBuffer, sizeof(searchBuffer));
+			ImGui::InputTextWithHint("##searchBar", ICON_MS_SEARCH, searchBuffer, sizeof(searchBuffer));
 
 			ImGui::Separator();
 			ImGui::Spacing();

@@ -15,12 +15,12 @@
 // along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
 
-#include <thirdparty/stb_image.h>
-#include <resources/res.h>
-
 #include "renderer.hpp"
 #include "gui.hpp"
 #include "window_bg_state.hpp"
+
+#include "../../resources/res.h"
+#include "../../thirdparty/stb_image.h"
 
 
 namespace YLP
@@ -82,10 +82,10 @@ namespace YLP
 		}
 
 		auto& cfg = Settings::Get();
-		m_Width = cfg.windowWidth;
-		m_Height = cfg.windowHeight;
-		int x, y;
+		m_Width   = cfg.windowWidth;
+		m_Height  = cfg.windowHeight;
 
+		int x, y;
 		if (cfg.windowX == -1 || cfg.windowY == -1)
 		{
 			RECT desktop;
@@ -130,26 +130,27 @@ namespace YLP
 
 		if (hIcon)
 		{
-			SendMessage(m_HWND, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-			SendMessage(m_HWND, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+			SendMessage(m_HWND, WM_SETICON, ICON_BIG,   reinterpret_cast<LPARAM>(hIcon));
+			SendMessage(m_HWND, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
 		}
 		else
 			LOG_WARN("Failed to load window icon!");
 
-		SetBackgroundAccentState(m_HWND, ACCENT_ENABLE_ACRYLICBLURBEHIND);
+		SetBackgroundAccentState(m_HWND, static_cast<eWindowAccentState>(cfg.windowAccentState));
 		ShowWindow(m_HWND, Config().fullscreenWindow ? SW_SHOWMAXIMIZED : SW_SHOWDEFAULT);
 		UpdateWindow(m_HWND);
 
 		m_HDC = GetDC(m_HWND);
 		PIXELFORMATDESCRIPTOR pfd{
-		    .nSize = sizeof(pfd),
-		    .nVersion = 1,
-		    .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-		    .iPixelType = PFD_TYPE_RGBA,
-		    .cColorBits = 32,
-		    .cDepthBits = 24,
+		    .nSize		  = sizeof(pfd),
+		    .nVersion     = 1,
+		    .dwFlags      = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
+		    .iPixelType   = PFD_TYPE_RGBA,
+		    .cColorBits   = 32,
+			.cAlphaBits   = 8,
+		    .cDepthBits   = 24,
 		    .cStencilBits = 8,
-		    .iLayerType = PFD_MAIN_PLANE,
+		    .iLayerType   = PFD_MAIN_PLANE,
 		};
 
 		int pf = ChoosePixelFormat(m_HDC, &pfd);
@@ -158,6 +159,16 @@ namespace YLP
 			LOG_ERROR("ChoosePixelFormat failed!");
 			return false;
 		}
+
+#ifdef DEBUG
+		PIXELFORMATDESCRIPTOR fucktard{};
+		DescribePixelFormat(m_HDC, pf, sizeof(fucktard), &fucktard); // dis moi what the fuck is your problème?
+		LOG_DEBUG("Pixel format: c={} a={} d={} s={}",
+		    fucktard.cColorBits,
+		    fucktard.cAlphaBits,
+		    fucktard.cDepthBits,
+		    fucktard.cStencilBits);
+#endif // DEBUG
 
 		if (!SetPixelFormat(m_HDC, pf, &pfd))
 		{
@@ -287,7 +298,7 @@ namespace YLP
 		}
 
 		ImGui::Render();
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		SwapBuffers(m_HDC);

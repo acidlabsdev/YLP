@@ -18,7 +18,6 @@
 #pragma once
 
 #include "../core/gui/gui_tab.hpp"
-#include "../core/gui/fonts/fonts.hpp"
 #include "../core/gui/msgbox.hpp"
 
 
@@ -30,7 +29,7 @@ namespace YLP::Frontend
 	{
 	public:
 		InjectorTab() :
-		    GuiTab(eTabID::TAB_INJECTOR, ICON_MD_STORAGE, "Standalone injector & custom DLLs")
+		    GuiTab(eTabID::TAB_INJECTOR, ICON_MS_BROWSE, "Standalone injector & custom DLLs")
 		{
 		}
 
@@ -67,7 +66,7 @@ namespace YLP::Frontend
 
 			ImGui::Spacing();
 			ImGui::SetNextItemWidth(-1);
-			if (ImGui::BeginCombo("##processList", std::format("{} {}", ICON_MD_MEMORY, preview).c_str(), ImGuiComboFlags_HeightLarge))
+			if (ImGui::BeginCombo("##processList", std::format("{} {}", ICON_MS_MEMORY, preview).c_str(), ImGuiComboFlags_HeightLarge))
 			{
 				if (!initialized)
 				{
@@ -76,7 +75,7 @@ namespace YLP::Frontend
 				}
 
 				ImGui::SetNextItemWidth(-1);
-				ImGui::InputTextWithHint("##SearchBox", ICON_MD_SEARCH, searchBuffer, sizeof(searchBuffer));
+				ImGui::InputTextWithHint("##SearchBox", ICON_MS_SEARCH, searchBuffer, sizeof(searchBuffer));
 				ImGui::Separator();
 
 				ImGui::BeginChild("##processList", ImVec2(0, 200), 0, ImGuiWindowFlags_AlwaysUseWindowPadding);
@@ -117,14 +116,14 @@ namespace YLP::Frontend
 
 			ImGui::Dummy(ImVec2(0, 30));
 			ImGui::BeginChild("##dllList", ImVec2(childRegion.x * 0.5, 0), ImGuiChildFlags_Borders);
-			ImGui::Text(ICON_MD_LIST " Your Files");
+			ImGui::Text(ICON_MS_LIST " Your Files");
 			
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
 
 			ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f));
-			ImGui::Selectable(ICON_MD_ADD, false);
+			ImGui::Selectable(ICON_MS_ADD, false);
 			ImGui::PopStyleVar();
 			ImGui::ToolTip("Add a new file.");
 			if (ImGui::IsItemClicked(0))
@@ -165,7 +164,7 @@ namespace YLP::Frontend
 				auto label = std::format("[{}] {}", short_sha, dll.filepath.filename().string());
 
 				ImGui::PushFont(Fonts::Small);
-				if (ImGui::ColoredButton(std::format("{}##{}", ICON_MD_DELETE, short_sha).c_str(), ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 4.0f))
+				if (ImGui::ColoredButton(std::format("{}##{}", ICON_MS_DELETE, short_sha).c_str(), ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 4.0f))
 				{
 					std::scoped_lock lock(m_Mutex);
 					std::erase_if(savedDLLs, [&](auto& d) {
@@ -264,7 +263,7 @@ namespace YLP::Frontend
 				ImGui::SameLine();
 				bool injectBtnDisabled = !selectedProcess.m_Pid;
 				ImGui::BeginDisabled(injectBtnDisabled);
-				if (ImGui::Button("Inject", ImVec2(-1, 40)))
+				if (ImGui::Button(ICON_MS_SYRINGE " Inject", ImVec2(-1, 40)))
 				{
 					const std::string processName = selectedProcess.m_Name;
 					const DllInfo dll = selectedDLL;

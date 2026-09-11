@@ -76,6 +76,9 @@ namespace YLP
 
 	bool ProcessMonitor::IsProcessRunning() const
 	{
+		if (!m_Running)
+			return PsUtils::GetProcessId(m_ProcessName).has_value();
+
 		return m_Found.load();
 	};
 

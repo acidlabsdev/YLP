@@ -18,16 +18,6 @@
 #pragma once
 
 
-enum eAccentState : int
-{
-	ACCENT_DISABLED,
-	ACCENT_ENABLE_GRADIENT,
-	ACCENT_ENABLE_TRANSPARENTGRADIENT,
-	ACCENT_ENABLE_BLURBEHIND,
-	ACCENT_ENABLE_ACRYLICBLURBEHIND,
-	ACCENT_ENABLE_HOSTBACKDROP,
-};
-
 enum eWindowCompositionAttribute : int
 {
 	WCA_UNDEFINED,
@@ -59,14 +49,6 @@ enum eWindowCompositionAttribute : int
 	WCA_LAST,
 };
 
-struct ACCENT_POLICY
-{
-	eAccentState m_state;
-	UINT m_flags;
-	INT m_color_ref;
-	LONG m_anim_id;
-};
-
 
 struct WINDOWCOMPOSITIONATTRIBUTEDATA
 {
@@ -76,20 +58,32 @@ struct WINDOWCOMPOSITIONATTRIBUTEDATA
 };
 
 
-using namespace YLP;
-using SetWindowCompositionAttribute_t = BOOL(WINAPI*)(HWND, WINDOWCOMPOSITIONATTRIBUTEDATA*);
-static inline auto procaddr = GetProcAddress(GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
+using SetWindowCompositionAttribute_t			 = BOOL(WINAPI*)(HWND, WINDOWCOMPOSITIONATTRIBUTEDATA*);
+static inline auto procaddr						 = GetProcAddress(GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute");
 static inline auto SetWindowCompositionAttribute = reinterpret_cast<SetWindowCompositionAttribute_t>(procaddr);
 
-void SetBackgroundAccentState(HWND hwnd, eAccentState state = ACCENT_DISABLED)
+namespace YLP
 {
-	if (!SetWindowCompositionAttribute)
-	{
-		LOG_ERROR("SetWindowCompositionAttribute not found!");
-		return;
-	}
+	// TODO: (maybe?) migrate this to the new API
+	// https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/nf-dwmapi-dwmsetwindowattribute
 
-	ACCENT_POLICY policy = { state, 0, 0, 0};
-	WINDOWCOMPOSITIONATTRIBUTEDATA data = { WCA_ACCENT_POLICY, &policy, sizeof(ACCENT_POLICY) };
-	SetWindowCompositionAttribute(hwnd, &data);
-};
+	enum eWindowAccentState : int
+	{
+		ACCENT_DISABLED,
+		ACCENT_ENABLE_GRADIENT,
+		ACCENT_ENABLE_TRANSPARENTGRADIENT,
+		ACCENT_ENABLE_BLURBEHIND,
+		ACCENT_ENABLE_ACRYLICBLURBEHIND,
+		ACCENT_ENABLE_HOSTBACKDROP,
+	};
+
+	struct ACCENT_POLICY
+	{
+		eWindowAccentState m_state;
+		UINT m_flags;
+		INT m_color_ref;
+		LONG m_anim_id;
+	};
+
+	void SetBackgroundAccentState(HWND hwnd, eWindowAccentState state = ACCENT_DISABLED);
+}

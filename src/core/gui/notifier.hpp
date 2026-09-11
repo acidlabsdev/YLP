@@ -208,19 +208,19 @@ namespace YLP
 			switch (level)
 			{
 			case Info:
-				icon = ICON_MD_MESSAGE;
+				icon = ICON_MS_MESSAGE;
 				color = {0.02f, 1.f, 0.027f, 1.f};
 				break;
 			case Warning:
-				icon = ICON_MD_WARNING;
+				icon = ICON_MS_WARNING;
 				color = {1.f, 0.76f, 0.027f, 1.f};
 				break;
 			case Error:
-				icon = ICON_MD_ERROR;
+				icon = ICON_MS_ERROR;
 				color = {1.f, 0.0068f, 0.0027f, 1.f};
 				break;
 			default:
-				icon = ICON_MD_MESSAGE;
+				icon = ICON_MS_MESSAGE;
 				color = {0.02f, 1.f, 0.027f, 1.f};
 				break;
 			}
