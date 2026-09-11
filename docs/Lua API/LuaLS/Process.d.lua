@@ -24,6 +24,5 @@ function Process:Update() end
 ---@param pattern string IDA-style byte signature. Example: `"8B 88 C0 ?? ?? ?? 89 8F"`
 ---@param name string? Optional name of the pattern to scan. Purely for logging purposes.
 ---@param chunkSize integer? Optional memory chunk size. Defaults to 4096
----@return Pointer A pointer at the found address or a null pointer if the scan fails. This is guaranteed to always return a Pointer object.
+---@return Pointer ptr A pointer at the found address or a null pointer if the scan fails. This is guaranteed to always return a Pointer object.
 function Process:FindPattern(pattern, name, chunkSize) end
-

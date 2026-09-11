@@ -7,8 +7,10 @@ Provides functions to output text to console and log file.
 ## `info`
 
 ```lua
-function log.info(...) end
+function log.(...) end
 ```
+
+Logs an information message.
 
 ### Parameters
 
@@ -19,8 +21,10 @@ function log.info(...) end
 ## `warning`
 
 ```lua
-function log.warning(...) end
+function log.(...) end
 ```
+
+Logs a warning message.
 
 ### Parameters
 
@@ -31,8 +35,10 @@ function log.warning(...) end
 ## `debug`
 
 ```lua
-function log.debug(...) end
+function log.(...) end
 ```
+
+Logs a debug message.
 
 ### Parameters
 
@@ -43,8 +49,10 @@ function log.debug(...) end
 ## `error`
 
 ```lua
-function log.error(...) end
+function log.(...) end
 ```
+
+Logs an error message.
 
 ### Parameters
 
@@ -52,3 +60,62 @@ function log.error(...) end
 | --- | --- | --- |
 | `...` | `any` | Any number of arguments of any type. |
 
+## `finfo`
+
+```lua
+function log.(msg, ...) end
+```
+
+Logs a formatted information message. Arguments are the same as `string.format`
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `msg` | `string` | Message. |
+| `...` | `any` | Optional format arguments. |
+
+## `fwarning`
+
+```lua
+function log.(msg, ...) end
+```
+
+Logs a formatted warning message. Arguments are the same as `string.format`
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `msg` | `string` | Message. |
+| `...` | `any` | Optional format arguments. |
+
+## `fdebug`
+
+```lua
+function log.(msg, ...) end
+```
+
+Logs a formatted debug message. Arguments are the same as `string.format`
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `msg` | `string` | Message. |
+| `...` | `any` | Optional format arguments. |
+
+## `ferror`
+
+```lua
+function log.(msg, ...) end
+```
+
+Logs a formatted error message. Arguments are the same as `string.format`
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `msg` | `string` | Message. |
+| `...` | `any` | Optional format arguments. |

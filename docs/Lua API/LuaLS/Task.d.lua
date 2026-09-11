@@ -17,4 +17,3 @@ function Task.Sleep(ms) end
 
 ---@param ms integer? Optional yield time in milliseconds
 function Task.Yield(ms) end
-

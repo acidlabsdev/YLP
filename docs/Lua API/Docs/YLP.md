@@ -4,10 +4,22 @@
 
 ## Methods
 
+## `GetVersion`
+
+```lua
+function YLP.() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | version The current YLP version. |
+
 ## `RegisterProcessWatcher`
 
 ```lua
-function YLP.RegisterProcessWatcher(processName, callback, delay) end
+function YLP.(processName, callback, delay) end
 ```
 
 Registers a callback to be executed once when a process is first seen.
@@ -19,7 +31,7 @@ You can call `Task.Yield` and `Task.Sleep` in your callback function.
 | Name | Type | Description |
 | --- | --- | --- |
 | `processName` | `string` | The name of the process |
-| `callback` | `function` | The function to execute |
+| `callback` | `fun(process: Process)` | The function to execute. YLP will pass a Process object to the function as an argument. |
 | `delay` | `integer?` | Optional delay in milliseconds |
 
 ### Returns
@@ -31,7 +43,7 @@ You can call `Task.Yield` and `Task.Sleep` in your callback function.
 ## `InjectDll`
 
 ```lua
-function YLP.InjectDll(dllPath, processName) end
+function YLP.(dllPath, processName) end
 ```
 
 Injects a dynamic link library into a target process.
@@ -53,7 +65,7 @@ Injects a dynamic link library into a target process.
 ## `OnShutdown`
 
 ```lua
-function YLP.OnShutdown(callback) end
+function YLP.(callback) end
 ```
 
 Registers a function to be executed when YLP is shutting down.
@@ -63,4 +75,3 @@ Registers a function to be executed when YLP is shutting down.
 | Name | Type | Description |
 | --- | --- | --- |
 | `callback` | `function` | The function to execute |
-

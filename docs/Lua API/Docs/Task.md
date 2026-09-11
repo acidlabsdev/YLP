@@ -7,7 +7,7 @@ Provides functions to run tasks in YLP's thread.
 ## `Run`
 
 ```lua
-function Task.Run(callback) end
+function Task.(callback) end
 ```
 
 ### Parameters
@@ -19,7 +19,7 @@ function Task.Run(callback) end
 ## `RunDelayed`
 
 ```lua
-function Task.RunDelayed(delay, callback) end
+function Task.(delay, callback) end
 ```
 
 Execute a callback after a delay
@@ -34,7 +34,7 @@ Execute a callback after a delay
 ## `Sleep`
 
 ```lua
-function Task.Sleep(ms) end
+function Task.(ms) end
 ```
 
 ### Parameters
@@ -46,7 +46,7 @@ function Task.Sleep(ms) end
 ## `Yield`
 
 ```lua
-function Task.Yield(ms) end
+function Task.(ms) end
 ```
 
 ### Parameters
@@ -54,4 +54,3 @@ function Task.Yield(ms) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `ms` | `integer?` | Optional yield time in milliseconds |
-

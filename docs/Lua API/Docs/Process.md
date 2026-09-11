@@ -18,7 +18,7 @@ Process(processName)
 ## `IsRunning`
 
 ```lua
-function Process:IsRunning() end
+function Process:() end
 ```
 
 ### Returns
@@ -30,7 +30,7 @@ function Process:IsRunning() end
 ## `IsModuleLoaded`
 
 ```lua
-function Process:IsModuleLoaded(moduleName) end
+function Process:(moduleName) end
 ```
 
 ### Parameters
@@ -48,7 +48,7 @@ function Process:IsModuleLoaded(moduleName) end
 ## `GetModuleSize`
 
 ```lua
-function Process:GetModuleSize() end
+function Process:() end
 ```
 
 ### Returns
@@ -60,7 +60,7 @@ function Process:GetModuleSize() end
 ## `GetModuleBase`
 
 ```lua
-function Process:GetModuleBase() end
+function Process:() end
 ```
 
 ### Returns
@@ -72,7 +72,7 @@ function Process:GetModuleBase() end
 ## `Update`
 
 ```lua
-function Process:Update() end
+function Process:() end
 ```
 
 Updates the process object's internal state. This is useful because the `Process` class does not poll for status on its own.
@@ -80,7 +80,7 @@ Updates the process object's internal state. This is useful because the `Process
 ## `FindPattern`
 
 ```lua
-function Process:FindPattern(pattern, name, chunkSize) end
+function Process:(pattern, name, chunkSize) end
 ```
 
 ### Parameters
@@ -95,5 +95,4 @@ function Process:FindPattern(pattern, name, chunkSize) end
 
 | Type | Description |
 | --- | --- |
-| `Pointer` | A pointer at the found address or a null pointer if the scan fails. This is guaranteed to always return a Pointer object. |
-
+| `Pointer` | ptr A pointer at the found address or a null pointer if the scan fails. This is guaranteed to always return a Pointer object. |
