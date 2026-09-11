@@ -18,7 +18,7 @@ Process(processName)
 ## `IsRunning`
 
 ```lua
-function Process:() end
+function Process:IsRunning() end
 ```
 
 ### Returns
@@ -30,7 +30,7 @@ function Process:() end
 ## `IsModuleLoaded`
 
 ```lua
-function Process:(moduleName) end
+function Process:IsModuleLoaded(moduleName) end
 ```
 
 ### Parameters
@@ -48,7 +48,7 @@ function Process:(moduleName) end
 ## `GetModuleSize`
 
 ```lua
-function Process:() end
+function Process:GetModuleSize() end
 ```
 
 ### Returns
@@ -60,7 +60,7 @@ function Process:() end
 ## `GetModuleBase`
 
 ```lua
-function Process:() end
+function Process:GetModuleBase() end
 ```
 
 ### Returns
@@ -72,7 +72,7 @@ function Process:() end
 ## `Update`
 
 ```lua
-function Process:() end
+function Process:Update() end
 ```
 
 Updates the process object's internal state. This is useful because the `Process` class does not poll for status on its own.
@@ -80,7 +80,7 @@ Updates the process object's internal state. This is useful because the `Process
 ## `FindPattern`
 
 ```lua
-function Process:(pattern, name, chunkSize) end
+function Process:FindPattern(pattern, name, chunkSize) end
 ```
 
 ### Parameters

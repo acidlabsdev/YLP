@@ -5,7 +5,7 @@
 ## `printf`
 
 ```lua
-function (msg, ...) end
+function printf(msg, ...) end
 ```
 
 ### Parameters

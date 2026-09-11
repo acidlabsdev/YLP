@@ -7,7 +7,7 @@ Provides functions to output text to console and log file.
 ## `info`
 
 ```lua
-function log.(...) end
+function log.info(...) end
 ```
 
 Logs an information message.
@@ -21,7 +21,7 @@ Logs an information message.
 ## `warning`
 
 ```lua
-function log.(...) end
+function log.warning(...) end
 ```
 
 Logs a warning message.
@@ -35,7 +35,7 @@ Logs a warning message.
 ## `debug`
 
 ```lua
-function log.(...) end
+function log.debug(...) end
 ```
 
 Logs a debug message.
@@ -49,7 +49,7 @@ Logs a debug message.
 ## `error`
 
 ```lua
-function log.(...) end
+function log.error(...) end
 ```
 
 Logs an error message.
@@ -63,7 +63,7 @@ Logs an error message.
 ## `finfo`
 
 ```lua
-function log.(msg, ...) end
+function log.finfo(msg, ...) end
 ```
 
 Logs a formatted information message. Arguments are the same as `string.format`
@@ -78,7 +78,7 @@ Logs a formatted information message. Arguments are the same as `string.format`
 ## `fwarning`
 
 ```lua
-function log.(msg, ...) end
+function log.fwarning(msg, ...) end
 ```
 
 Logs a formatted warning message. Arguments are the same as `string.format`
@@ -93,7 +93,7 @@ Logs a formatted warning message. Arguments are the same as `string.format`
 ## `fdebug`
 
 ```lua
-function log.(msg, ...) end
+function log.fdebug(msg, ...) end
 ```
 
 Logs a formatted debug message. Arguments are the same as `string.format`
@@ -108,7 +108,7 @@ Logs a formatted debug message. Arguments are the same as `string.format`
 ## `ferror`
 
 ```lua
-function log.(msg, ...) end
+function log.ferror(msg, ...) end
 ```
 
 Logs a formatted error message. Arguments are the same as `string.format`

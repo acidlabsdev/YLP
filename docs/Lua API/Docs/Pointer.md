@@ -22,7 +22,7 @@ It is exclusively returned by [Process](lua://Process), it can not be explicitly
 ## `Add`
 
 ```lua
-function Pointer:(offset) end
+function Pointer:Add(offset) end
 ```
 
 ### Parameters
@@ -40,7 +40,7 @@ function Pointer:(offset) end
 ## `Sub`
 
 ```lua
-function Pointer:(offset) end
+function Pointer:Sub(offset) end
 ```
 
 ### Parameters
@@ -58,7 +58,7 @@ function Pointer:(offset) end
 ## `Rip`
 
 ```lua
-function Pointer:() end
+function Pointer:Rip() end
 ```
 
 ### Returns
@@ -70,7 +70,7 @@ function Pointer:() end
 ## `Dereference`
 
 ```lua
-function Pointer:() end
+function Pointer:Dereference() end
 ```
 
 ### Returns
@@ -82,7 +82,7 @@ function Pointer:() end
 ## `GetAddress`
 
 ```lua
-function Pointer:() end
+function Pointer:GetAddress() end
 ```
 
 ### Returns
@@ -94,7 +94,7 @@ function Pointer:() end
 ## `IsNull`
 
 ```lua
-function Pointer:() end
+function Pointer:IsNull() end
 ```
 
 ### Returns
@@ -106,7 +106,7 @@ function Pointer:() end
 ## `ReadInt8`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt8() end
 ```
 
 ### Returns
@@ -118,7 +118,7 @@ function Pointer:() end
 ## `ReadInt16`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt16() end
 ```
 
 ### Returns
@@ -130,7 +130,7 @@ function Pointer:() end
 ## `ReadInt32`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt32() end
 ```
 
 ### Returns
@@ -142,7 +142,7 @@ function Pointer:() end
 ## `ReadInt64`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt64() end
 ```
 
 ### Returns
@@ -154,7 +154,7 @@ function Pointer:() end
 ## `ReadFloat`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadFloat() end
 ```
 
 ### Returns
@@ -166,7 +166,7 @@ function Pointer:() end
 ## `WriteString`
 
 ```lua
-function Pointer:(arg) end
+function Pointer:WriteString(arg) end
 ```
 
 ### Parameters
@@ -178,7 +178,7 @@ function Pointer:(arg) end
 ## `WriteUint8`
 
 ```lua
-function Pointer:(arg) end
+function Pointer:WriteUint8(arg) end
 ```
 
 ### Parameters
@@ -190,7 +190,7 @@ function Pointer:(arg) end
 ## `WriteUint16`
 
 ```lua
-function Pointer:(arg) end
+function Pointer:WriteUint16(arg) end
 ```
 
 ### Parameters
@@ -202,7 +202,7 @@ function Pointer:(arg) end
 ## `WriteUint32`
 
 ```lua
-function Pointer:(arg) end
+function Pointer:WriteUint32(arg) end
 ```
 
 ### Parameters
@@ -214,7 +214,7 @@ function Pointer:(arg) end
 ## `WriteUint64`
 
 ```lua
-function Pointer:(arg) end
+function Pointer:WriteUint64(arg) end
 ```
 
 ### Parameters
@@ -226,7 +226,7 @@ function Pointer:(arg) end
 ## `WriteDouble`
 
 ```lua
-function Pointer:(arg) end
+function Pointer:WriteDouble(arg) end
 ```
 
 ### Parameters
