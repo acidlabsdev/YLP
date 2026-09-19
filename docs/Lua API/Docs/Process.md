@@ -1,3 +1,5 @@
+<!-- markdownlint-disable -->
+
 # Process
 
 A process abstraction providing basic process interactions.

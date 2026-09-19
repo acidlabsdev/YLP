@@ -1,0 +1,42 @@
+---@meta
+
+---@class ImGuiStyleVar
+---@field DisabledAlpha integer
+---@field WindowPadding integer
+---@field WindowRounding integer
+---@field WindowBorderSize integer
+---@field WindowMinSize integer
+---@field WindowTitleAlign integer
+---@field ChildRounding integer
+---@field ChildBorderSize integer
+---@field PopupRounding integer
+---@field PopupBorderSize integer
+---@field FramePadding integer
+---@field FrameRounding integer
+---@field FrameBorderSize integer
+---@field ItemSpacing integer
+---@field ItemInnerSpacing integer
+---@field IndentSpacing integer
+---@field CellPadding integer
+---@field ScrollbarSize integer
+---@field ScrollbarRounding integer
+---@field ScrollbarPadding integer
+---@field GrabMinSize integer
+---@field GrabRounding integer
+---@field ImageBorderSize integer
+---@field TabRounding integer
+---@field TabBorderSize integer
+---@field TabMinWidthBase integer
+---@field TabMinWidthShrink integer
+---@field TabBarBorderSize integer
+---@field TabBarOverlineSize integer
+---@field TableAngledHeadersAngle integer
+---@field TableAngledHeadersTextAlign integer
+---@field TreeLinesSize integer
+---@field TreeLinesRounding integer
+---@field ButtonTextAlign integer
+---@field SelectableTextAlign integer
+---@field SeparatorTextBorderSize integer
+---@field SeparatorTextAlign integer
+---@field SeparatorTextPadding integer
+ImGuiStyleVar = {}

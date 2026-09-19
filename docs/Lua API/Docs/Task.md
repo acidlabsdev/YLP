@@ -1,3 +1,5 @@
+<!-- markdownlint-disable -->
+
 # Task
 
 Provides functions to run tasks in YLP's thread.
