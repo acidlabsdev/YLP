@@ -103,7 +103,9 @@ end)
 >[!Note]
 >The example code above is GTA V-specific but the underlying API is not. [Process](./Docs/Process.md) and [Pointer](./Docs/Pointer.md) operate on arbitrary processes so Lua scripts can be used to extend YLP for other applications and modding frameworks as well.
 
-For advanced users, the `JIT` and `FFI` libs are open. `debug` is not. If you experience crashes/instability with certain shared modules *(JSON/XML parsers, web scrapers, etc.)* try disabling jit either for those specific modules only or for your entire module.
+The Lua API is not limited to making external basic cheats similar to the example above, *(actually that's a side effect)*. It was mainly implemented to allow you to to do pretty much the exact thing YLP currently does to [maintain](../../src/core/YimMenu/yimmenu.hpp) and [auto-inject](../../src/core/memory/pointers.cpp) YimMenu for any other mod/game combo using its [Task](./Docs/Task.md), [Filesystem](./Docs/Filesystem.md), [Path](./Docs/Path.md), basic [HTTP](./Docs/HTTP.md) `GET` requests, and the [DLL injection function](./Docs/YLP.md#injectdll).
+
+For advanced users, the `JIT` and `FFI` libs are open. `debug` is not. If you experience crashes/instability with certain shared modules *(JSON/XML parsers, web scrapers, etc.)* try disabling jit either for those specific modules only or for your entire plugin.
 
 ## Language Server
 

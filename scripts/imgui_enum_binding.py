@@ -37,7 +37,7 @@ with ENUM_TXT.open(encoding="utf-8", mode="r") as f:
 
 with open("./binding.txt", "w", encoding="utf-8", newline="\n") as out:
 	out.write(f"/*@ylp.enum {enum_name}")
-	out.write("\n* " + "\n* ".join(f"field {field}" for field in members))
+	out.write("\n* " + "\n* ".join(f"field {field}<integer>" for field in members))
 	out.write("\n@*/\n")
 	out.write(f'L.new_enum("{enum_name}",\n\t')
 	out.write(",\n\t".join(f'"{field}", {enum_name}_{field}' for field in members))

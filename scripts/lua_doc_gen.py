@@ -46,6 +46,7 @@ GLOBAL_TABLE: ApiLibrary = ApiLibrary(name="Global Table", kind="table")
 ANNOTATION_RE = re.compile(r"/\*\s?@ylp\.(?P<header>.+?)[\r\n](?P<body>.*?)[\r\n]\s*@\*/", re.DOTALL,)
 HEADER_RE = re.compile(r"^(?P<kind>\w+)\s+(?P<name>\S+).*?$")
 PARAM_RE = re.compile(r"^(?P<name>[^<\s]+)<(?P<type>[^>]+)>(?:\s+(?P<description>.*))?$")
+LUA_REF_RE = re.compile(r"(lua://(\w+))")
 
 
 def clear_dir(dir: Path):
@@ -70,6 +71,19 @@ def split_member_name(name: str) -> tuple[str | None, str]:
 		raise ValueError(f"Invalid member name: {name!r}")
 
 	return owner, member
+
+
+def parse_field(value: str) -> ApiMember:
+    match = PARAM_RE.match(value.strip())
+    if not match:
+        raise ValueError(f"Invalid field declaration: {value!r}")
+
+    return ApiMember(
+        kind="field",
+        name=match.group("name"),
+        type=match.group("type"),
+        description=(match.group("description") or "").strip(),
+    )
 
 
 def parse_param(value: str) -> Parameter:
@@ -139,29 +153,31 @@ def parse_annotation(header: str, body: str) -> ApiMember | ApiLibrary:
 				description_lines.append(line)
 				continue
 
-		member_match = re.match(r"^(constructor|operator|method|function|field)\s+?(.+?)$", line)
+		member_match = re.match(r"^(constructor|operator|method|function|field)(.+?)$", line)
 		if member_match:
-			member_name, _, maybe_desc = member_match.group(2).partition(" ")
-			current_member = ApiMember(
-				kind=member_match.group(1),
-				name= member_name,
-				description=maybe_desc or ""
-			)
+			kind = member_match.group(1)
+			declaration = member_match.group(2) or ""
+
+			if kind == "field":
+				current_member = parse_field(declaration.strip())
+			else:
+				member_name, _, maybe_desc = declaration.partition(" ")
+				current_member = ApiMember(
+					kind=kind,
+					name=member_name,
+					description=maybe_desc or "",
+				)
 
 			result.members.append(current_member)
 			continue
 
 		if current_member:
 			if line.startswith("param "):
-				current_member.parameters.append(
-					parse_param(line[6:])
-				)
+				current_member.parameters.append(parse_param(line[6:]))
 				continue
 
 			if line.startswith("return "):
-				current_member.returns.append(
-					parse_return(line[7:])
-				)
+				current_member.returns.append(parse_return(line[7:]))
 				continue
 
 	result.description = "\n".join(description_lines).strip()
@@ -216,8 +232,9 @@ def parse_lua(lib: ApiLibrary, write_path: Path):
 		elif member.kind == "operator":
 			docstring += f"---@operator {member.name}({"| ".join(p.type for p in member.parameters)}): {member.returns[0].type}\n" # are there even Lua operators that have multiple returns? eh, I can't be arsed
 		elif member.kind == "field":
-			desc = "integer" if lib.kind == "enum" else member.description
-			docstring += f"---@field {member.name} {desc}\n"
+			field_type = member.type or "any"
+			description = member.description or ""
+			docstring += f"---@field {member.name} {field_type} {description}\n"
 		elif member.kind == "constructor":
 			if member.name == "__call":
 				docstring += f"---@overload fun({", ".join(f"{p.name}: {p.type}" for p in member.parameters)}): {lib.name}\n"
@@ -256,7 +273,7 @@ def gen_luals_defs(model: ApiModel, docs_path: Path):
 
 
 def md_fix_ref(value: str) -> str:
-	return value.replace("lua://", "./")
+	return re.sub(LUA_REF_RE, r"./\2.md", value)
 
 
 def md_escape(value: str) -> str:
@@ -359,12 +376,12 @@ def md_operator(operator: ApiMember) -> str:
 
 
 def md_field(field: ApiMember) -> str:
-	output = [
-		f"| `{field.name}` | {md_type(field.type)} | "
-		f"{md_escape(field.description)} |"
-	]
+    field_type = field.type or "any"
 
-	return "".join(output)
+    return (
+        f"| `{field.name}` | {md_type(field_type)} | "
+        f"{md_escape(field.description)} |"
+    )
 
 
 def parse_markdown(lib: ApiLibrary, write_path: Path):
