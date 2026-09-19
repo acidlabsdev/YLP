@@ -17,11 +17,12 @@
 
 #pragma once
 
+#include "core/updater.hpp"
+#include "core/injector/injector.hpp"
+#include "core/memory/scanner.hpp"
+
 #include "../lua_library.hpp"
 #include "../lua_module.hpp"
-#include "../../memory/scanner.hpp"
-#include "../../utils/psutils.hpp"
-#include "../../updater.hpp"
 
 
 namespace YLP::LuaJIT
@@ -46,42 +47,87 @@ namespace YLP::LuaJIT
 			* param delay<integer?> Optional delay in milliseconds
 			* return boolean success Whether the registration was successful or not.
 
+			* function RegisterGui Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
+			* param callback<function> The UI to draw. ImGui functions can only be called here.
+
 			* function InjectDll Injects a dynamic link library into a target process.
-			* param dllPath<string> Path to the DLL file.
+			* param dllPath<Path> DLL file path. Must be a [Path](lua://Path) object.
 			* param processName<string> Name of the target process.
+			* param manualMap<boolean?> Use manual mapping instead of standard `LoadLibrary`
+			* param manualMapArgs<{ eraseHeaders: boolean?, enableSEH: boolean?, randomizeBaseAddress: boolean?}?> Optional manual mapping configuration.
 			* return boolean status Success or failure.
 			* return string? failReason Optional error message if injection fails.
 
 			* function OnShutdown Registers a function to be executed when YLP is shutting down.
 			* param callback<function> The function to execute
+
+			* function UnloadThisModule Unloads the caller module.~~The module can only be loaded again from the Settings tab in YLP's UI.
 			@*/
 			auto ylpTable = L["YLP"].get_or_create<sol::table>();
 
-			ylpTable["GetVersion"] = []() {
+			ylpTable["GetVersion"] = []()
+			{
 				return YLPUpdater.GetLocalVersion().ToString();
 			};
 
-			ylpTable["RegisterProcessWatcher"] = [&](const std::string& processName, sol::protected_function callback, sol::optional<int> delayMs) {
-				auto module = GetModuleFromLuaState(L);
-				if (!module)
+			ylpTable["RegisterProcessWatcher"] = [&](const std::string& processName, sol::protected_function callback, sol::optional<int> delayMs)
+			{
+				auto mod = GetModuleFromLuaState(L);
+				if (!mod)
 					return false;
 
 				int ms = std::max(0, delayMs.value_or(0));
-				module->RegisterProcessWatcher(processName, callback, std::chrono::milliseconds(ms));
+				mod->RegisterProcessWatcher(processName, callback, std::chrono::milliseconds(ms));
 				return true;
 			};
 
-			ylpTable["OnShutdown"] = [&](sol::protected_function callback) {
-				auto module = GetModuleFromLuaState(L);
-				if (!module)
+			ylpTable["RegisterGui"] = [&](sol::protected_function callback)
+			{
+				auto mod = GetModuleFromLuaState(L);
+				if (!mod)
 					return;
 
-				module->RegisterShutdownCallback(callback);
+				auto name = mod->GetName();
+				if (name == "CodeExecutor")
+				{
+					LOG_ERROR("CodeExecutor can not register GUIs.");
+					return;
+				}
+
+				if (mod->m_GuiCallback.valid())
+				{
+					LOG_WARN("Module '{}' already has a GUI!", name);
+					return;
+				}
+
+				mod->m_GuiCallback = std::move(callback);
 			};
 
-			ylpTable["InjectDll"] = [&](const fs::path& dllPath, const std::string& processName) {
-				InjectResult res = PsUtils::Inject(processName, dllPath);
-				return std::make_tuple(res.success, res.message);
+			ylpTable["InjectDll"] = [&](const LuaPath& dllPath, const std::string& processName, bool manualMap, sol::optional<sol::table> manualMappingConfig)
+			{
+				auto args = manualMappingConfig.value_or(sol::table());
+
+				Injector::InjectorConfig cfg = {
+				    .m_Mode             = manualMap ? 1 : 0,
+				    .m_WipePE           = args["eraseHeaders"].get_or(false),
+				    .m_RandomizeAddress = args["randomizeBaseAddress"].get_or(false),
+				    .m_EnableSEH        = args["enableSEH"].get_or(false)
+				};
+
+				Injector::InjectResult res = Injector::Inject(processName, dllPath.Get(), cfg);
+				return std::make_tuple(res.m_Success, res.m_Message);
+			};
+
+			ylpTable["OnShutdown"] = [&](sol::protected_function callback)
+			{
+				if (auto module = GetModuleFromLuaState(L))
+					module->RegisterShutdownCallback(callback);
+			};
+
+			ylpTable["UnloadThisModule"] = [&]()
+			{
+				if (auto module = GetModuleFromLuaState(L))
+					module->Unload();
 			};
 		}
 	};

@@ -41,8 +41,14 @@ namespace YLP
 		if (!maybepid.has_value())
 			return false;
 
-		m_Pid = maybepid.value();
-		m_ProcessHandle = OpenProcess(SYNCHRONIZE | PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, m_Pid);
+		m_Pid			= maybepid.value();
+		m_ProcessHandle = OpenProcess(
+			SYNCHRONIZE
+			| PROCESS_VM_READ
+			| PROCESS_VM_WRITE
+		    | PROCESS_VM_OPERATION
+			| PROCESS_QUERY_INFORMATION
+			, FALSE, m_Pid);
 
 		if (!m_ProcessHandle)
 			return false;
@@ -84,7 +90,7 @@ namespace YLP
 		}
 	}
 
-	bool ProcessScanner::IsModuleLoaded(const std::string& moduleName)
+	bool ProcessScanner::IsModuleLoaded(const std::string& moduleName) const
 	{
 		std::string lower = Utils::StringToLower(moduleName);
 
@@ -145,7 +151,6 @@ namespace YLP
 	bool ProcessScanner::IsMemoryReadable(uintptr_t address) const
 	{
 		MEMORY_BASIC_INFORMATION mbi{};
-
 		if (VirtualQueryEx(m_ProcessHandle, reinterpret_cast<LPCVOID>(address), &mbi, sizeof(mbi)))
 			return (mbi.State == MEM_COMMIT && !(mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD)));
 		return false;
@@ -168,9 +173,8 @@ namespace YLP
 	std::vector<std::optional<uint8_t>> ProcessScanner::ParsePattern(const std::string& sig)
 	{
 		std::vector<std::optional<uint8_t>> bytes{};
-
-		const auto nonnull = sig.size() - 1;
-		bytes.reserve(nonnull / 2);
+		const auto nonNull = sig.size() - 1;
+		bytes.reserve(nonNull / 2);
 
 		for (size_t i = 0; i < sig.size();)
 		{
@@ -189,9 +193,9 @@ namespace YLP
 			{
 				auto c1 = Utils::CharToHex(sig[i]);
 				auto c2 = (i + 1 < sig.size()) ? Utils::CharToHex(sig[i + 1]) : std::nullopt;
-
 				if (c1 && c2)
 					bytes.emplace_back(static_cast<uint8_t>((*c1 << 4) + *c2));
+
 				i += 2;
 			}
 		}
@@ -201,57 +205,52 @@ namespace YLP
 
 	uint64_t ProcessScanner::ScanPattern(std::vector<std::optional<uint8_t>> bytes, std::vector<uint8_t> memchunk)
 	{
-		size_t len = bytes.size();
-		size_t current = memchunk.size();
-		if (len == 0 || current < len)
+		size_t numBytes = bytes.size();
+		size_t current  = memchunk.size();
+		if (numBytes == 0 || current < numBytes)
 			return {};
 
-		size_t max_idx = len - 1;
-		size_t max_shift = len;
-		size_t wildcard_idx{static_cast<size_t>(-1)};
-
-		for (int i{static_cast<int>(max_idx - 1)}; i >= 0; --i)
+		size_t maxIdx   = numBytes - 1;
+		size_t maxShift = numBytes;
+		size_t wildcardIdx{static_cast<size_t>(-1)};
+		for (int i{static_cast<int>(maxIdx - 1)}; i >= 0; --i)
 		{
 			if (!bytes[i])
 			{
-				max_shift = max_idx - i;
-				wildcard_idx = i;
+				maxShift    = maxIdx - i;
+				wildcardIdx = i;
 				break;
 			}
 		}
 
-		if (wildcard_idx == static_cast<size_t>(-1))
-			wildcard_idx = 0;
+		if (wildcardIdx == static_cast<size_t>(-1))
+			wildcardIdx = 0;
 
-		std::size_t shift_table[UINT8_MAX + 1]{};
+		std::size_t shiftTable[UINT8_MAX + 1]{};
 		for (std::size_t i{}; i <= UINT8_MAX; ++i)
-		{
-			shift_table[i] = max_shift;
-		}
+			shiftTable[i] = maxShift;
 
-		for (std::size_t i{wildcard_idx + 1}; i != max_idx; ++i)
-		{
-			shift_table[*bytes[i]] = max_idx - i;
-		}
+		for (std::size_t i{wildcardIdx + 1}; i != maxIdx; ++i)
+			shiftTable[*bytes[i]] = maxIdx - i;
 
-		const auto scan_end = current - len;
-		auto current_idx = 0;
-		while (current_idx <= scan_end)
+		const auto scanEnd = current - numBytes;
+		auto currentIdx    = 0;
+		while (currentIdx <= scanEnd)
 		{
 			bool match = true;
-			for (size_t i = 0; i < len; ++i)
+			for (size_t i = 0; i < numBytes; ++i)
 			{
 				auto& b = bytes[i];
-				if (b && memchunk[current_idx + i] != *b)
+				if (b && memchunk[currentIdx + i] != *b)
 				{
 					match = false;
 					break;
 				}
 			}
 			if (match)
-				return current_idx;
+				return currentIdx;
 
-			current_idx++;
+			currentIdx++;
 		}
 		return NULL;
 	}
@@ -259,38 +258,54 @@ namespace YLP
 	Pointer ProcessScanner::FindPattern(const std::string& pattern, const std::string& name, size_t chunkSize)
 	{
 		auto bytes = ParsePattern(pattern);
-		auto current_addr = GetBaseAddress();
-		auto module_size = GetModuleSize();
-		auto end_addr = current_addr + module_size;
+		if (bytes.empty())
+			return {};
+
+		auto currentAddr = GetBaseAddress();
+		auto moduleSize  = GetModuleSize();
+		auto endAddr     = currentAddr + moduleSize;
 
 		LOG_DEBUG("Scanning memory pattern: '{}'", name);
+		const size_t overlap = bytes.size() - 1;
 
-		while (current_addr < end_addr)
+		while (currentAddr < endAddr)
 		{
-			auto read_size = std::min(chunkSize, end_addr - current_addr);
-			std::vector<uint8_t> mem_chunk{};
+			const auto remaining = endAddr - currentAddr;
+			const auto readSize  = std::min(chunkSize, remaining);
+
+			std::vector<uint8_t> chunk;
 
 			try
 			{
-				mem_chunk = ReadMemory(current_addr, read_size);
+				chunk = ReadMemory(currentAddr, readSize);
 			}
 			catch (const std::exception& e)
 			{
 				LOG_ERROR("Failed to read memory!: '{}'", e.what());
-				current_addr += read_size;
+				currentAddr += readSize;
 				continue;
 			}
 
-			auto offset = ScanPattern(bytes, mem_chunk);
+			auto offset = ScanPattern(bytes, chunk);
+
 			if (offset != NULL)
 			{
-				uintptr_t fnd = current_addr + offset;
-				LOG_DEBUG("Found pattern '{}' at 0x{:X}", name, fnd);
-				return Pointer(m_ProcessHandle, current_addr + offset);
+				const auto address = currentAddr + offset;
+
+				LOG_DEBUG(
+				    "Found pattern '{}' at 0x{:X}",
+				    name,
+				    address);
+
+				return Pointer(m_ProcessHandle, address);
 			}
 
-			current_addr += read_size;
+			if (readSize <= overlap)
+				break;
+
+			currentAddr += readSize - overlap;
 		}
+
 		LOG_ERROR("Failed to find pattern {}", name);
 		return {};
 	}

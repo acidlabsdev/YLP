@@ -35,6 +35,9 @@ namespace YLP::Frontend
 	I'll try to make it look better in the future.
 	For now it does the job and that's it.
 	*/
+
+	using namespace Memory;
+
 	class MainTab final : public GuiTab
 	{
 	public:
@@ -45,11 +48,11 @@ namespace YLP::Frontend
 
 		void Draw() override
 		{
-			ImVec2 cursorPos = ImGui::GetCursorPos();
-			ImVec2 childSize = ImGui::GetWindowSize();
-			auto branchIdx = Config().mainWindowIndex;
+			ImVec2 cursorPos     = ImGui::GetCursorPos();
+			ImVec2 childSize     = ImGui::GetWindowSize();
+			auto branchIdx       = Config().mainWindowIndex;
 			float tabButtonWidth = ImGui::CalcTextSize("Enhanced").x + 40.f + (ImGui::GetStyle().ItemSpacing.x * 2);
-			float centerX = (childSize.x - (tabButtonWidth * 2)) * 0.5;
+			float centerX        = (childSize.x - (tabButtonWidth * 2)) * 0.5;
 
 			ImGui::PushFont(Fonts::Title);
 			ImGui::SegmentedControl("##branchSelector",
@@ -64,7 +67,7 @@ namespace YLP::Frontend
 		}
 
 	private:
-		static inline void LaunchGame(int launcherIndex, YimMenu& menu, std::shared_ptr<ProcessMonitor>& monitor)
+		void LaunchGame(int launcherIndex, YimMenu& menu, std::shared_ptr<ProcessMonitor>& monitor)
 		{
 			m_AttemptedGameLaunch = true;
 			std::string cmd;
@@ -150,7 +153,7 @@ namespace YLP::Frontend
 			m_AttemptedGameLaunch = false;
 		}
 
-		static inline void DrawMenuDownload(YimMenu& menu)
+		void DrawMenuDownload(YimMenu& menu)
 		{
 			if (menu || menu.GetState() == YimMenu::eMenuViewState::Downloading)
 				return;
@@ -164,25 +167,25 @@ namespace YLP::Frontend
 			}
 		}
 
-		static inline void DrawMenuControls(YimMenu& menu)
+		void DrawMenuControls(YimMenu& menu)
 		{
 			auto state = menu.GetState();
+			auto& cfg  = Config();
+
+			const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
+			bool wantsAutoInject        = (cfg.autoMonitorFlags & monitorTarget) != 0;
+			bool wantsAutoUpdate        = (cfg.menuAutoUpdateFlags & monitorTarget) != 0;
 
 			ImGui::BeginDisabled(state != YimMenu::eMenuViewState::Idle);
-			const uint8_t monitorTarget = (menu.m_Version == YimMenuV1) ? MonitorLegacy : MonitorEnhanced;
-			bool wantsAutoInject        = (Config().autoMonitorFlags & monitorTarget) != 0;
-			bool wantsAutoUpdate        = (Config().menuAutoUpdateFlags & monitorTarget) != 0;
 			if (ImGui::Checkbox("Auto-Inject", &wantsAutoInject))
 			{
-				Config().autoMonitorFlags ^= monitorTarget;
+				cfg.autoMonitorFlags ^= monitorTarget;
 				SwitchMonitorMode();
 			}
 
 			if (ImGui::Checkbox("Auto-Update", &wantsAutoUpdate))
-			{
-				Config().menuAutoUpdateFlags ^= monitorTarget;
-				SwitchMonitorMode();
-			}
+				cfg.menuAutoUpdateFlags ^= monitorTarget;
+
 			ImGui::EndDisabled();
 			ImGui::Spacing();
 
@@ -229,7 +232,7 @@ namespace YLP::Frontend
 				ImGui::ProgressBar(menu.m_DownloadProgress, ButtonBig);
 		}
 
-		static inline void DrawInjectButton(YimMenu& menu, bool running, bool injected)
+		void DrawInjectButton(YimMenu& menu, bool running, bool injected)
 		{
 			if (!menu || menu.GetState() == YimMenu::eMenuViewState::Downloading)
 				return;
@@ -245,10 +248,10 @@ namespace YLP::Frontend
 			{
 				ThreadManager::Run([&menu] {
 					auto result = menu.Inject();
-					if (!result.success)
+					if (!result.m_Success)
 					{
-						LOG_ERROR("{}", result.message);
-						MsgBox::Error("Error", result.message.c_str());
+						LOG_ERROR("{}", result.m_Message);
+						MsgBox::Error("Error", result.m_Message.c_str());
 					}
 				});
 			}
@@ -257,7 +260,7 @@ namespace YLP::Frontend
 				ImGui::ToolTip("Currently unavailable.\n\nMake sure the game is running, auto-inject is off, and the menu isn't already injected.");
 		}
 
-		static inline void DrawMenuUI(YimMenu& menu,
+		void DrawMenuUI(YimMenu& menu,
 		    ImTextureID iconTexture,
 		    std::shared_ptr<ProcessMonitor>& monitor,
 		    GTAPointers pointers)
@@ -285,18 +288,19 @@ namespace YLP::Frontend
 				if (launcherIdx < 0)
 					ImGui::OpenPopup("##launcherPopup");
 				else
-					ThreadManager::RunDetached([&menu, &monitor, &launcherIdx] {
+					ThreadManager::RunDetached([&] {
 						LaunchGame(launcherIdx, menu, monitor);
 					});
 			}
 			ImGui::EndDisabled();
+			auto popupPos = ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y);
 
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MS_MORE_VERT, ImVec2(35, 35)))
 				ImGui::OpenPopup("##launcherPopup");
 
-			ImGui::SetNextWindowPos(ImGui::GetItemRectMax(), ImGuiCond_Always);
-			if (ImGui::BeginPopup("##launcherPopup"))
+			ImGui::SetNextWindowPos(popupPos, ImGuiCond_Always);
+			if (ImGui::BeginPopup("##launcherPopup", ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoScrollbar))
 			{
 				ImGui::TextCentered("Select Launcher");
 				ImGui::Separator();
@@ -357,7 +361,6 @@ namespace YLP::Frontend
 			ImGui::Spacing();
 			ImGui::PushFont(Fonts::Small);
 			ImGui::DrawKeyValue("Status:", isRunning ? ICON_MS_CHECK_CIRCLE : ICON_MS_BLOCK, false, isRunning ? ImGreen : ImRed);
-
 
 			int versionIndex = menu.m_Version == eYimVersion::YimMenuV1 ? 0 : 1;
 			auto& versionStr = m_CachedVersions[versionIndex];
@@ -442,14 +445,14 @@ namespace YLP::Frontend
 			ImGui::EndChild();
 		}
 
-		static inline void DrawLegacy()
+		void DrawLegacy()
 		{
 			if (!IconGTAV) // this is redundant because renderer loads once anyway but it would bebetter to make it lazy-load instead. i'm too lazy to do it
 				IconGTAV = Renderer::LoadTextureFromMemory(gta_legacy_data, gta_legacy_size, "IconGTAV");
 			DrawMenuUI(g_YimV1, IconGTAV, g_ProcLegacy, g_Pointers.Legacy);
 		}
 
-		static inline void DrawEnhanced()
+		void DrawEnhanced()
 		{
 			if (!IconGTAVE)
 				IconGTAVE = Renderer::LoadTextureFromMemory(gta_enhanced_data, gta_enhanced_size, "IconGTAVE");
@@ -457,7 +460,7 @@ namespace YLP::Frontend
 			DrawMenuUI(g_YimV2, IconGTAVE, g_ProcEnhanced, g_Pointers.Enhanced);
 		}
 
-		static inline void SwitchMonitorMode()
+		void SwitchMonitorMode()
 		{
 			switch (Config().autoMonitorFlags)
 			{
@@ -483,22 +486,25 @@ namespace YLP::Frontend
 		}
 
 	private:
-		static inline ImTextureID IconGTAV{0};
-		static inline ImTextureID IconGTAVE{0};
-		static inline ImVec4 ImRed{1, 0, 0, 1};
-		static inline ImVec4 ImGreen{0, 1, 0, 1};
-		static inline ImVec2 ButtonBig{-1, 37};
-		static inline bool m_AttemptedGameLaunch{false};
-		static inline std::array<std::string, 2> m_CachedVersions{"", ""};
+		ImTextureID IconGTAV{0};
+		ImTextureID IconGTAVE{0};
 
-		static inline std::array hourglassIcons{
+		ImVec4 ImRed{1, 0, 0, 1};
+		ImVec4 ImGreen{0, 1, 0, 1};
+		ImVec2 ButtonBig{-1, 37};
+
+		bool m_AttemptedGameLaunch{false};
+
+		std::array<std::string, 2> m_CachedVersions{"", ""};
+
+		std::array<const char*, 4> hourglassIcons{
 			ICON_MS_HOURGLASS_EMPTY, 
 			ICON_MS_HOURGLASS_TOP, 
 			ICON_MS_HOURGLASS_EMPTY, 
 			ICON_MS_HOURGLASS_BOTTOM
 		};
 
-		static inline std::array m_Launchers{
+		std::array<const char*, 4> m_Launchers{
 		    "Steam",
 		    "Rockstar Games Launcher",
 		    "Epic Games Launcher",

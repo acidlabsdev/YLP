@@ -1,16 +1,24 @@
-// YLP Project - GPL-3.0
-// See LICENSE file or <https://www.gnu.org/licenses/> for details.
-
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// YLP is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
 #include "scanner.hpp"
-#include <core/YimMenu/yimmenu.hpp>
+#include "core/YimMenu/yimmenu.hpp"
 
 
 namespace YLP
 {
 	using OnProcessFoundCallback = std::function<void(ProcessScanner&)>;
+	using namespace Memory;
 
 	class ProcessMonitor
 	{
@@ -61,16 +69,24 @@ namespace YLP
 		void MonitorLoop();
 
 		OnProcessFoundCallback m_OnFound;
+
 		uint8_t m_MonitorMode;
+
 		std::chrono::milliseconds m_CallbackDelay{0};
+		std::chrono::system_clock::time_point m_LastBEcheckTime{};
+
 		std::atomic<bool> m_Running{false};
 		std::atomic<bool> m_Found{false};
 		std::atomic<bool> m_HeBeWatchin{false};
+
 		std::thread m_Thread;
+
 		std::string m_ProcessName;
+
 		std::unique_ptr<ProcessScanner> m_Scanner;
-		std::chrono::system_clock::time_point m_LastBEcheckTime{};
+	
 		std::mutex m_Mutex;
+
 		YimMenu* m_Menu;
 	};
 }

@@ -1,4 +1,4 @@
-﻿{
+{
   "configurations": [
     {
       "name": "x64-Release-FastCompile",
@@ -41,7 +41,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_CXX_FLAGS_DEBUG=\"/Od /Z7 /EHsc /MDd /MP /permissive- /Zc:__cplusplus /std:c++20\"",
+      "cmakeCommandArgs": "-DCMAKE_CXX_FLAGS_DEBUG=\"/Od /Z7 /EHsc /MDd /MP /permissive- /Zc:__cplusplus /std:c++latest\"",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     }

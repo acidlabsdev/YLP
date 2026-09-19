@@ -17,7 +17,8 @@ from pathlib import Path
 # from alive_progress import alive_bar
 
 
-SRC   = Path(__file__).parent.parent.parent / "src"
+ROOT  = Path(__file__).parent.parent.parent
+SRC   = ROOT / "src"
 TEMP  = Path(__file__).parent / "temp"
 BIN2C = Path(__file__).parent / "bin2c.exe"
 
@@ -28,8 +29,27 @@ BIN2C_URL      = "https://github.com/ocornut/imgui/blob/master/misc/fonts/binary
 NAMES_LOCAL_PATH     = Path(__file__).parent / "names.txt"
 OUT_FONT_HEADER_PATH = SRC / "resources" / "fonts" / "MaterialSymbolsStripped.hpp"
 OUT_DEFS_PATH        = SRC / "resources" / "fonts" / "MaterialSymbolsStrippedDefs.hpp"
+LUA_DEFS_PATH        = ROOT / "docs" / "Lua API" / "shared" / "icons.lua"
 TTF_TEMP_PATH        = TEMP / "MaterialDesignSymbolsOutlined.ttf"
 STRIPPED_TEMP_PATH   = TEMP / "MaterialDesignSymbolsOutlinedStripped.ttf"
+
+YLP_NOTICE = """
+Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+This file is part of YLP.
+
+YLP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+YLP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with YLP.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 
 def sizefmt(size: int) -> str:
@@ -93,6 +113,33 @@ def download_font_ttf():
 
 	with TTF_TEMP_PATH.open(mode="wb") as f:
 		f.write(resp.content)
+
+
+def write_icon_defs(icons: dict[str, int], used: set[str], codepoints: list[int]):
+	cpp_lines = []
+	lua_lines = []
+
+	for name in sorted(used):
+		codepoint = icons[name]
+		name      = f"ICON_MS_{name.upper():<40}"
+		icondef   = f"\"{cp2utf8(codepoint)}\""
+		cp_hex    = f"{codepoint:04X}"
+		cpp_lines.append(f"#define {name} {icondef} // U+{cp_hex}\n")
+		lua_lines.append(f"\t{name} = {icondef}, -- U+{cp_hex}\n")
+
+	with OUT_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
+		f.write(f"/*{YLP_NOTICE}*/\n\n\n")
+		f.write("#pragma once\n\n")
+		f.write(f"#define ICON_MIN_MS 0x{min(codepoints):X}\n")
+		f.write(f"#define ICON_MAX_MS 0x{max(codepoints):X}\n\n")
+		f.writelines(cpp_lines)
+		f.write("\n")
+
+	with LUA_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
+		f.write(f"--[[{YLP_NOTICE}]]\n\n\n")
+		f.write("return {\n")
+		f.writelines(lua_lines)
+		f.write("}\n")
 
 
 def main(local_font_path: str | None = None):
@@ -179,14 +226,7 @@ def main(local_font_path: str | None = None):
 		)
 
 	print("Generating icon definitions...\n")
-	with OUT_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
-		f.write("#pragma once\n\n")
-		f.write(f"#define ICON_MIN_MS 0x{min(codepoints):X}\n")
-		f.write(f"#define ICON_MAX_MS 0x{max(codepoints):X}\n\n")
-
-		for name in sorted(used):
-			cp = icons[name]
-			f.write(f"#define ICON_MS_{name.upper():<40} \"{cp2utf8(cp)}\" // U+{cp:04X}\n")
+	write_icon_defs(icons, used, codepoints)
 
 	print("Done.\n")
 

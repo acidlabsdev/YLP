@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(YLP LANGUAGES C CXX)
-
 include(FetchContent)
 include(cmake/imgui.cmake)
 include(cmake/json.cmake)
 include(cmake/luajit.cmake)
 include(cmake/sol3.cmake)
+# include(cmake/mhde.cmake)
 
-set(CMAKE_CXX_STANDARD 20)
+project(YLP LANGUAGES C CXX ASM_MASM)
+
+set(CMAKE_CXX_STANDARD 23)
 set(SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 
 file(GLOB LUA_LIB_HEADERS "${SRC_DIR}/core/lua_scripting/libs/*.hpp")
@@ -25,10 +26,11 @@ foreach(LIB ${LUA_LIB_HEADERS})
 endforeach()
 
 file(GLOB_RECURSE SRC_FILES
-    "${SRC_DIR}/**.h"
-    "${SRC_DIR}/**.hpp"
-    "${SRC_DIR}/**.cpp"
+    "${SRC_DIR}/*.h"
+    "${SRC_DIR}/*.hpp"
+    "${SRC_DIR}/*.cpp"
     "${SRC_DIR}/*.rc"
+    "${SRC_DIR}/*.asm"
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
@@ -45,6 +47,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${imgui_SOURCE_DIR}"
 	"${luajit_SOURCE_DIR}/src"
     "${luajit_BINARY_DIR}/src"
+	# "${mhde_SOURCE_DIR}/include"
 )
 
 message(STATUS "Setting up linked libraries...")
@@ -54,7 +57,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 	nlohmann_json::nlohmann_json
 	sol2::sol2
 	libluajit
+	# mhde_lib_x64
 )
+
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 message(STATUS "Adding compile definitions...")
@@ -68,6 +73,14 @@ if (WIN32)
     message(STATUS "Setting up Win32 properties...")
     set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
+
+if (MSVC)
+  target_compile_options(${PROJECT_NAME} PRIVATE /bigobj)
+  target_compile_options(${PROJECT_NAME} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+  target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+else ()
+  add_compile_options(-Wa,-mbig-obj)
+endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)

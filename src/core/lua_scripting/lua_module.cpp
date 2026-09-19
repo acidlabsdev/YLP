@@ -24,7 +24,7 @@
 namespace YLP::LuaJIT
 {
 	// https://sol2.readthedocs.io/en/latest/exceptions.html
-	static int exception_handler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description)
+	static int ExceptionHandler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description)
 	{
 		if (maybe_exception)
 		{
@@ -38,7 +38,7 @@ namespace YLP::LuaJIT
 		return sol::stack::push(L, description);
 	}
 
-	static inline void panic_handler(sol::optional<std::string> maybe_msg)
+	static inline void PanicHandler(sol::optional<std::string> maybe_msg)
 	{
 		LOG_ERROR("Lua is in a panic state and will now abort the application");
 		if (maybe_msg)
@@ -48,7 +48,7 @@ namespace YLP::LuaJIT
 		}
 	}
 
-	static int traceback_error_handler(lua_State* L)
+	static int TracebackErrorHandler(lua_State* L)
 	{
 		std::string msg = "An unknown error has triggered the error handler";
 		sol::optional<sol::string_view> maybetopmsg = sol::stack::unqualified_check_get<sol::string_view>(L, 1, &sol::no_panic);
@@ -68,6 +68,16 @@ namespace YLP::LuaJIT
 		return sol::stack::push(L, msg);
 	}
 
+	template<size_t N>
+	static constexpr auto DisabledLuaFunc(const char (&funcName)[N])
+	{
+		return [funcName](sol::this_state state, sol::variadic_args args)
+		{
+			sol::state_view Lua(state);
+			Lua.safe_script(std::format("error(\"Can not invoke '{}', a deleted function.\", 2)", funcName));
+		};
+	}
+
 	LuaModule::LuaModule(fs::path root) :
 		m_LuaState(sol::state{}),
 		m_Root(root),
@@ -79,8 +89,11 @@ namespace YLP::LuaJIT
 		    sol::lib::bit32,
 		    sol::lib::coroutine,
 		    sol::lib::ffi,
+		    sol::lib::io,
 		    sol::lib::jit,
 		    sol::lib::math,
+		    sol::lib::os,
+		    sol::lib::package,
 		    sol::lib::string,
 		    sol::lib::table,
 		    sol::lib::utf8);
@@ -88,13 +101,19 @@ namespace YLP::LuaJIT
 		m_LuaState["this*"]  = reinterpret_cast<void*>(this);
 		m_LuaState["whodis"] = m_Name;
 
-		m_LuaState.set_exception_handler(exception_handler);
-		m_LuaState.set_panic(sol::c_call<decltype(&panic_handler), &panic_handler>);
-		lua_CFunction traceback_function = sol::c_call<decltype(&traceback_error_handler), &traceback_error_handler>;
+		m_LuaState.set_exception_handler(ExceptionHandler);
+		m_LuaState.set_panic(sol::c_call<decltype(&PanicHandler), &PanicHandler>);
+		lua_CFunction traceback_function = sol::c_call<decltype(&TracebackErrorHandler), &TracebackErrorHandler>;
 		sol::protected_function::set_default_handler(sol::object(m_LuaState.lua_state(), sol::in_place, traceback_function));
 
 		LuaManager::RegisterLibraries(m_LuaState);
 		m_DirectoryWatcher = DirectoryWatcher(root, 1s);
+
+		auto strlib = m_LuaState["string"];
+		m_LuaStrFmt = strlib["format"];
+
+		SandboxOsLib();
+		SandboxIoLib();
 	}
 
 	LuaModule::~LuaModule()
@@ -108,6 +127,24 @@ namespace YLP::LuaJIT
 			if (func.valid())
 				func();
 		}
+
+		for (auto& patch : m_BytePatches)
+			patch->Restore();
+
+		m_BytePatches.clear();
+		m_GuiCallback = {};
+	}
+
+	std::string LuaModule::FormatLuaString(const std::string& fmt, sol::variadic_args args)
+	{
+		if (!m_LuaStrFmt.valid())
+			return fmt;
+
+		auto result = m_LuaStrFmt(fmt, args);
+		if (!result.valid())
+			return fmt;
+
+		return result.get<std::string>();
 	}
 
 	bool LuaModule::Load()
@@ -139,6 +176,22 @@ namespace YLP::LuaJIT
 		m_LoadState = WANTS_UNLOAD;
 	}
 
+	void LuaModule::SetAsBroken(std::optional<std::string> errorMsg)
+	{
+		m_LoadState = BROKEN;
+		m_LastError = errorMsg.value_or("");
+	}
+
+	void LuaModule::Disable()
+	{
+		m_LoadState = WANTS_DISABLE;
+	}
+
+	const std::string LuaModule::GetErrorMsg() const
+	{
+		return m_LastError;
+	}
+
 	const bool LuaModule::IsSafeToUnload() const noexcept
 	{
 		return !m_IsRunningTasks;
@@ -164,6 +217,112 @@ namespace YLP::LuaJIT
 		return m_Root;
 	}
 
+	void LuaModule::SandboxOsLib()
+	{
+		auto os = m_LuaState["os"];
+		sol::table sandboxedOs(m_LuaState, sol::create);
+
+		sandboxedOs["clock"]    = os["clock"];
+		sandboxedOs["date"]     = os["date"];
+		sandboxedOs["difftime"] = os["difftime"];
+		sandboxedOs["time"]     = os["time"];
+
+		sandboxedOs["rename"] = [this](const std::string& oldname, const std::string& newname) -> sol::object
+		{
+			const auto oldPath = IO::MakeAbsPath(m_Root, oldname);
+            const auto newPath = IO::MakeAbsPath(m_Root, newname);
+
+			if (!oldPath)
+			{
+				LOG_WARN("os.rename is restricted to the module's root only.");
+				return sol::make_object(m_LuaState, std::make_tuple(false, "Invalid file path."));
+			}
+
+			if (!newPath)
+			{
+				LOG_WARN("os.rename is restricted to the module's root only.");
+				return sol::make_object(m_LuaState, std::make_tuple(false, "Invalid new path."));
+			}
+
+			try
+			{
+				std::filesystem::rename(oldPath.value(), newPath.value());
+				return sol::make_object(m_LuaState, true);
+			}
+			catch (const std::exception& e)
+			{
+				return sol::make_object(m_LuaState, std::make_tuple(false, e.what()));
+			}
+		};
+
+		m_LuaState["os"] = sandboxedOs;
+	}
+
+	void LuaModule::SandboxIoLib()
+	{
+		auto ioLib  = m_LuaState["io"];
+		m_LuaIoOpen = ioLib["open"];
+
+		sol::table sandboxedIo(m_LuaState, sol::create);
+		sandboxedIo["open"] = [this](const std::string& filename, const std::string& mode)
+		{
+			const auto absPath = IO::MakeAbsPath(m_Root, filename);
+			if (!absPath.has_value())
+				return std::make_tuple(sol::reference(sol::lua_nil), "io.open is restricted to the module's root only.");
+
+			auto res = m_LuaIoOpen(absPath.value().u8string().c_str(), mode).get<sol::reference>();
+			return std::make_tuple(res, "");
+		};
+
+		sandboxedIo["exists"] = [this](const std::string& filename) -> bool {
+			const auto absPath = IO::MakeAbsPath(m_Root, filename);
+			if (!absPath)
+			{
+				LOG_ERROR("io.open is restricted to the module's root only.");
+				return false;
+			}
+
+			return IO::Exists(*absPath);
+		};
+
+		m_LuaState["io"] = sandboxedIo;
+	}
+
+	// https://github.com/Mr-X-GTA/YimMenu/blob/master/src/lua/lua_module.cpp#L175
+	void LuaModule::SetRequireFolder(const fs::path& pluginsPath)
+	{
+		std::string searchPath = pluginsPath.string() + "/?.lua;";
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(pluginsPath, std::filesystem::directory_options::skip_permission_denied))
+		{
+			if (!entry.is_directory())
+				continue;
+
+			if (std::filesystem::relative(entry, pluginsPath).wstring().contains(L"disabled"))
+				continue;
+
+			searchPath += entry.path().string() + "/?.lua;";
+		}
+
+		searchPath.pop_back();
+		m_LuaState["package"]["path"] = searchPath;
+	}
+
+	// https://github.com/Mr-X-GTA/YimMenu/blob/master/src/lua/lua_module.cpp#L321
+	void LuaModule::SandboxLoaders(const fs::path& pluginsPath)
+	{
+		m_LuaState["load"]       = DisabledLuaFunc("load");
+		m_LuaState["loadstring"] = DisabledLuaFunc("loadstring");
+		m_LuaState["loadfile"]   = DisabledLuaFunc("loadfile");
+		m_LuaState["dofile"]     = DisabledLuaFunc("dofile");
+
+		m_LuaState["package"]["loadlib"]      = DisabledLuaFunc("package.loadlib");
+		m_LuaState["package"]["cpath"]        = "";
+		m_LuaState["package"]["searchers"][3] = DisabledLuaFunc("package.searcher C");
+		m_LuaState["package"]["searchers"][4] = DisabledLuaFunc("package.searcher Croot");
+
+		SetRequireFolder(pluginsPath);
+	}
+
 	const bool LuaModule::IsRunningTasks() const noexcept
 	{
 		return m_IsRunningTasks;
@@ -185,13 +344,18 @@ namespace YLP::LuaJIT
 	{
 		std::unique_lock lock(m_TaskMutex);
 		auto thread = sol::thread::create(m_LuaState);
-		auto co = sol::coroutine(m_LuaState, func);
+		auto co     = sol::coroutine(m_LuaState, func);
 		m_Tasks.push_back({
 			std::move(thread),
 			std::move(co),
 		    std::chrono::steady_clock::now() + delayMs,
 		    std::move(args)
 		});
+	}
+
+	void LuaModule::AddBytePatch(std::shared_ptr<BytePatch> patch)
+	{
+		m_BytePatches.emplace_back(std::move(patch));
 	}
 
 	void LuaModule::RegisterProcessWatcher(const std::string& processName, sol::protected_function callback, std::chrono::milliseconds delayMs)
@@ -264,17 +428,19 @@ namespace YLP::LuaJIT
 				++it;
 			}
 		}
-
-		m_DirectoryWatcher.PollOnce([this](const fs::path& _unused, DirectoryWatcher::ePathStatus status) {
-			switch (status) // TODO: handle different cases properly
-			{
-			case DirectoryWatcher::ePathStatus::Created:
-			case DirectoryWatcher::ePathStatus::Modified:
-			case DirectoryWatcher::ePathStatus::Erased:
-				m_LoadState = WANTS_RELOAD;
-				break;
-			}
-		});
+		if (Config().autoReloadLuaModules)
+		{
+			m_DirectoryWatcher.PollOnce([this](const fs::path& _unused, DirectoryWatcher::ePathStatus status) {
+				switch (status) // TODO: handle different cases properly
+				{
+				case DirectoryWatcher::ePathStatus::Created:
+				case DirectoryWatcher::ePathStatus::Modified:
+				case DirectoryWatcher::ePathStatus::Erased:
+					m_LoadState = WANTS_RELOAD;
+					break;
+				}
+			});
+		}
 
 		m_IsRunningTasks.store(false);
 	}

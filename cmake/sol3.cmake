@@ -1,4 +1,4 @@
-message(STATUS "Setting up Sol2 (...or 3)")
+message(STATUS "Setting up Sol3")
 
 FetchContent_Declare(
     sol2

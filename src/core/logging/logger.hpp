@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <format>
 #include <source_location>
 
 #include "conout_sink.hpp"
@@ -86,7 +87,18 @@ namespace YLP
 		ConsoleSink m_ConsoleSink;
 		FileSink m_FileSink;
 		ImGuiSink m_ImGuiSink;
+
 		std::deque<ILogSink*> m_Sinks{};
 		std::atomic<bool> m_Initialized{false};
+	};
+
+	template<typename T>
+	    requires std::is_same_v<T, HANDLE> || std::is_same_v<T, HINSTANCE> || std::is_same_v<T, HWND>
+	struct std::formatter<T> : std::formatter<const void*>
+	{
+		auto format(T handle, format_context& ctx) const
+		{
+			return std::formatter<const void*>::format(static_cast<const void*>(handle), ctx);
+		}
 	};
 }

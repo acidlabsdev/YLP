@@ -104,27 +104,24 @@ namespace YLP
 		auto& themeColors   = currentTheme->m_Colors;
 		float alphaMult     = Config().bgAlphaMultiplier;
 		ImGuiStyle& style   = ImGui::GetStyle();
-		ImVec4 windowBg     = themeColors.find("WindowBg") != themeColors.end() ? themeColors.at("WindowBg") : style.Colors[ImGuiCol_WindowBg];
-		ImVec4 childBg      = themeColors.find("ChildBg") != themeColors.end() ? themeColors.at("ChildBg") : style.Colors[ImGuiCol_ChildBg];
-		//ImVec4 popupBg      = themeColors.find("PopupBg") != themeColors.end() ? themeColors.at("PopupBg") : style.Colors[ImGuiCol_PopupBg];
+		ImVec4 windowBg     = style.Colors[ImGuiCol_WindowBg];
+		ImVec4 childBg      = style.Colors[ImGuiCol_ChildBg];
+		windowBg.w          *= alphaMult;
+		childBg.w           *= alphaMult;
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, windowBg * alphaMult);
-		ImGui::PushStyleColor(ImGuiCol_ChildBg, childBg * alphaMult);
-		//ImGui::PushStyleColor(ImGuiCol_PopupBg, popupBg * alphaMult);
-
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, windowBg);
+		ImGui::PushStyleColor(ImGuiCol_ChildBg, childBg);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::SetNextWindowSize(m_WindowSize, ImGuiCond_Always);
 		ImGui::SetNextWindowPos(ImVec2(0.f, 0.f), ImGuiCond_Always);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::Begin("YLP", nullptr,
-		    ImGuiWindowFlags_NoMove
-		    | ImGuiWindowFlags_NoResize
-		    | ImGuiWindowFlags_NoTitleBar);
-
+		ImGui::Begin("YLP", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 		ImGui::PopStyleVar();
+
 		ImGui::BeginDisabled(m_ShouldDisableUI);
 
 		const float consoleChildHeight = std::min(m_WindowSize.y * 0.3f, 240.0f);
-		float mainChildHeight = Config().internalConsole ? m_WindowSize.y - consoleChildHeight : ImGui::GetContentRegionAvail().y;
+		float mainChildHeight          = Config().internalConsole ? m_WindowSize.y - consoleChildHeight : ImGui::GetContentRegionAvail().y;
+
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, .11f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
@@ -142,13 +139,13 @@ namespace YLP
 		DrawTopBarImpl();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, m_CallbackChildAlpha);
-		ImGui::BeginChild("##main_scroll_region", ImVec2(0, 0), 0, ImGuiWindowFlags_NoBackground);
+		ImGui::BeginChild("##cb", ImVec2(0, 0), 0, ImGuiWindowFlags_NoBackground);
 		if (m_ActiveTab)
 			m_ActiveTab->Draw();
 		ImGui::EndChild();
 		ImGui::PopStyleVar();
 
-		ImGui::EndChild();
+		ImGui::EndChild(); // ##main
 
 		DrawDebugConsoleImpl();
 		ImGui::EndDisabled();
@@ -166,12 +163,15 @@ namespace YLP
 		ImGui::TextDisabled("v%s", version.ToString().c_str());
 		ImGui::PopFont();
 
-		ImGuiStyle& style = ImGui::GetStyle();
-		const bool isSnoozed = Notifier::IsSnoozed();
-		const char* notifIcon = isSnoozed ? ICON_MS_NOTIFICATIONS_OFF : (Notifier::IsViewed() ? ICON_MS_NOTIFICATIONS : ICON_MS_NOTIFICATIONS_ACTIVE);
-		ImVec4 notifColor = Notifier::IsViewed() ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_CheckMark];
-		ImGui::SetCursorPos(ImVec2(ImGui::GetContentRegionAvail().x - 10.f, 10.f));
+		ImGuiStyle& style     = ImGui::GetStyle();
+		const bool isSnoozed  = Notifier::IsSnoozed();
+		const char* notifIcon = isSnoozed ? ICON_MS_NOTIFICATIONS_OFF : (Notifier::IsViewed() ? ICON_MS_NOTIFICATIONS : ICON_MS_NOTIFICATIONS_UNREAD);
+		ImVec4 notifColor     = Notifier::IsViewed() ? style.Colors[ImGuiCol_Text] : style.Colors[ImGuiCol_CheckMark];
+
+		ImGui::PushFont(Fonts::Title);
+		ImGui::SetCursorPos(ImVec2(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(notifIcon).x, 5.0f));
 		ImGui::TextColored(Notifier::IsOpen() ? style.Colors[ImGuiCol_ButtonActive] : notifColor, notifIcon);
+		ImGui::PopFont();
 
 		if (ImGui::IsItemHovered())
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
@@ -260,7 +260,8 @@ namespace YLP
 		if (ImGui::BeginChild("##console", ImVec2(0, 0), ImGuiChildFlags_Border))
 		{
 			auto& imguiSink = Logger::GetImGuiSink();
-			auto& entries = imguiSink.GetEntries();
+			auto& entries   = imguiSink.GetEntries();
+
 			ImGui::PushFont(Fonts::Small);
 			ImGui::BeginDisabled(entries.empty());
 
@@ -276,7 +277,8 @@ namespace YLP
 			ImGui::EndDisabled();
 			ImGui::Spacing();
 
-			imguiSink.Draw();
+			if (!Renderer::IsResizing())
+				imguiSink.Draw();
 
 			ImGui::PopFont();
 		}

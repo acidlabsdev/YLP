@@ -44,6 +44,7 @@ namespace YLP::Frontend
 				for (auto& c : bullets)
 				{
 					ImGui::Bullet();
+					ImGui::SameLine();
 					ImGui::TextWrapped(c);
 				}
 			}
@@ -78,11 +79,13 @@ The author shall not be held liable for any damages, data loss, or issues arisin
 			ImGui::SameLine();
 			ImGui::TextWrapped("for details.");
 
+			auto& ylpTag = YLPUpdater.GetLocalVersion().ToString();
 			ImGui::NewLine();
 			ImGui::TitleText("Useful Links", true);
 			ImGui::Spacing();
-			ImGui::TextLinkOpenURL("Source Code " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/YLP");
-			ImGui::TextLinkOpenURL("Report a Bug " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/ylp/issues/new/choose");
+			ImGui::TextLinkOpenURL("Changelog "          ICON_MS_OPEN_IN_NEW, std::format("https://github.com/xesdoog/YLP/releases/tag/{}", ylpTag).c_str());
+			ImGui::TextLinkOpenURL("Source Code "        ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/YLP");
+			ImGui::TextLinkOpenURL("Report a Bug "       ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/ylp/issues/new/choose");
 			ImGui::TextLinkOpenURL("Start a Discussion " ICON_MS_OPEN_IN_NEW, "https://github.com/xesdoog/YLP/discussions/new/choose");
 		}
 	};

@@ -37,41 +37,33 @@ namespace YLP::LuaJIT
 				if (!output.empty())
 					output += '\t';
 
-				sol::protected_function tostring  = L["tostring"];
-				sol::protected_function_result r  = tostring(arg);
+				sol::protected_function tostring = L["tostring"];
+				sol::protected_function_result r = tostring(arg);
 
 				output += r.valid() ? r.get<std::string>() : "";
 			}
 			return "[" + moduleName + (moduleName == "CodeExecutor" ? "]: " : "/main.lua]: ") + output;
 		}
-		static inline std::string lua_fmt(sol::state& L, sol::variadic_args args)
+
+		static inline std::string lua_fmt(sol::state& L, const std::string& fmt, sol::variadic_args args)
 		{
-			auto moduleName                  = L["whodis"].get<std::string>();
-			sol::table string                = L["string"];
-			sol::protected_function fmt      = string["format"];
-			sol::protected_function_result r = fmt(args);
-			if (!r.valid())
-			{
-				sol::error err = r;
-				LOG_ERROR("{}: {}", moduleName, err.what());
-				return "<format error!>";
-			}
-			return "[" + moduleName + (moduleName == "CodeExecutor" ? "]: " : "/main.lua]: ") + r.get<std::string>();
+			auto moduleName = L["whodis"].get<std::string>();
+			return "[" + moduleName + (moduleName == "CodeExecutor" ? "]: " : "/main.lua]: ") + LuaStringFormat(L, fmt, args);
 		}
 
 	public:
 		void Register(sol::state& L) override
 		{
 			L["print"] = [&](sol::variadic_args args) {
-				LOG_INFO(lua_tostr(L, args));
+				LOG_INFO("{}", lua_tostr(L, args));
 			};
 
 			/*@ylp.function printf Prints a formatted message. Arguments are the same as `string.format`
 			* param msg<string> Message.
 			* param ...<any> Optional format arguments.
 			@*/
-			L["printf"] = [&](sol::variadic_args args) {
-				LOG_INFO(lua_fmt(L, args));
+			L["printf"] = [&](const std::string& fmt, sol::variadic_args args) {
+				LOG_INFO("{}", lua_fmt(L, fmt, args));
 			};
 
 			/*@ylp.table log
@@ -109,35 +101,35 @@ namespace YLP::LuaJIT
 			auto log = L["log"].get_or_create<sol::table>();
 
 			log["info"] = [&](sol::variadic_args args) {
-				LOG_INFO(lua_tostr(L, args));
+				LOG_INFO("{}", lua_tostr(L, args));
 			};
 
 			log["warning"] = [&](sol::variadic_args args) {
-				LOG_WARN(lua_tostr(L, args));
+				LOG_WARN("{}", lua_tostr(L, args));
 			};
 
 			log["debug"] = [&](sol::variadic_args args) {
-				LOG_DEBUG(lua_tostr(L, args));
+				LOG_DEBUG("{}", lua_tostr(L, args));
 			};
 
 			log["error"] = [&](sol::variadic_args args) {
-				LOG_ERROR(lua_tostr(L, args));
+				LOG_ERROR("{}", lua_tostr(L, args));
 			};
 
-			log["finfo"] = [&](sol::variadic_args args) {
-				LOG_INFO(lua_fmt(L, args));
+			log["finfo"] = [&](const std::string& fmt, sol::variadic_args args) {
+				LOG_INFO("{}", lua_fmt(L, fmt, args));
 			};
 
-			log["fwarning"] = [&](sol::variadic_args args) {
-				LOG_WARN(lua_fmt(L, args));
+			log["fwarning"] = [&](const std::string& fmt, sol::variadic_args args) {
+				LOG_WARN("{}", lua_fmt(L, fmt, args));
 			};
 
-			log["fdebug"] = [&](sol::variadic_args args) {
-				LOG_DEBUG(lua_fmt(L, args));
+			log["fdebug"] = [&](const std::string& fmt, sol::variadic_args args) {
+				LOG_DEBUG("{}", lua_fmt(L, fmt, args));
 			};
 
-			log["ferror"] = [&](sol::variadic_args args) {
-				LOG_ERROR(lua_fmt(L, args));
+			log["ferror"] = [&](const std::string& fmt, sol::variadic_args args) {
+				LOG_ERROR("{}", lua_fmt(L, fmt, args));
 			};
 		}
 	};

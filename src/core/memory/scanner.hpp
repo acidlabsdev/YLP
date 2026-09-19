@@ -13,6 +13,8 @@
 
 namespace YLP
 {
+	using namespace Memory;
+
 	// Ported from YLP Python
 	class ProcessScanner
 	{
@@ -27,7 +29,7 @@ namespace YLP
 
 		bool FindProcess();
 		bool IsProcessRunning() const;
-		bool IsModuleLoaded(const std::string& moduleName);
+		bool IsModuleLoaded(const std::string& moduleName) const;
 
 		std::vector<uint8_t> ReadMemory(uintptr_t address, size_t size) const;
 		bool IsMemoryReadable(uintptr_t address) const;

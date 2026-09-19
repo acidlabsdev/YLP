@@ -23,6 +23,9 @@
 
 namespace YLP
 {
+	using PFNWGLSWAPINTERVALEXTPROC    = BOOL(WINAPI*)(int);
+	using PFNWGLGETSWAPINTERVALEXTPROC = int(WINAPI*)();
+
 	enum eTextureRequestType : uint8_t
 	{
 		RequestTypeMemory,
@@ -95,6 +98,20 @@ namespace YLP
 			return GetInstance().LoadRawTextureImpl(rgbaData, w, h, name);
 		}
 
+		static std::optional<ImTextureID> FindTextureByName(const std::string& name)
+		{
+			for (auto& tex : GetInstance().m_Textures)
+			{
+				if (tex.m_Name == name)
+				{
+					tex.m_RefCount++;
+					return tex.m_ImGuiId;
+				}
+			}
+
+			return std::nullopt;
+		}
+
 		static void RequestTexture(const std::string& name,
 		    eTextureRequestType requestType,
 		    ImTextureID outImTexture,
@@ -112,6 +129,21 @@ namespace YLP
 			GetInstance().ReleaseTextureImpl(name);
 		}
 
+		static void ReleaseTexture(const ImTextureID& imguiID)
+		{
+			GetInstance().ReleaseTextureImpl(imguiID);
+		}
+
+		static const bool IsResizing() noexcept
+		{
+			return GetInstance().m_ResizePending;
+		}
+
+		static const bool IsVSyncEnabled() noexcept
+		{
+			return GetInstance().m_HasVSync;
+		}
+
 		static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	private:
@@ -123,10 +155,13 @@ namespace YLP
 		std::atomic<bool> IsFocusedImpl() const;
 
 		ImVec2 GetWindowSizeImpl() noexcept;
+
 		ImTextureID LoadTextureFromFileImpl(const std::filesystem::path& filepath);
 		ImTextureID LoadTextureFromMemoryImpl(const unsigned char* data, size_t size, const std::string& name);
 		ImTextureID LoadRawTextureImpl(const unsigned char* rgbaData, int w, int h, const std::string& name);
+
 		void ReleaseTextureImpl(const std::string& name);
+		void ReleaseTextureImpl(const ImTextureID& imguiID);
 		void LoadPendingTexturesImpl();
 
 		WNDCLASSEX m_WndClass{};
@@ -134,9 +169,11 @@ namespace YLP
 		HDC m_HDC{};
 		HGLRC m_HGLRC{};
 
-		bool m_Initialized = false;
+		bool m_Initialized   = false;
 		bool m_ResizePending = false;
-		int m_Width = 680;
+		bool m_HasVSync      = false;
+
+		int m_Width  = 680;
 		int m_Height = 720;
 
 		std::chrono::steady_clock::time_point m_LastResizeTime;

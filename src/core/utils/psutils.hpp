@@ -29,30 +29,8 @@ namespace YLP::PsUtils
 	struct ProcessEntry
 	{
 		std::string m_Name;
-		DWORD m_Pid = 0;
+		DWORD m_Pid        = 0;
 		ImTextureID m_Icon = NULL; // fix it or ditch it
-	};
-
-	struct InjectResult
-	{
-		bool success = false;
-		std::string message;
-		DWORD win_error = 0;
-
-		static InjectResult Ok() noexcept;
-		static InjectResult Err(std::string msg, DWORD err = 0) noexcept;
-	};
-
-	struct DllInfo
-	{
-		bool ok = false;
-		bool is64bit = false;
-		bool hasExports = false;
-		std::filesystem::path filepath{};
-		std::string error{};
-		std::string checksum{};
-		std::string name{};
-		std::string lastKnownProcess{};
 	};
 
 	struct EnumWindowData
@@ -95,7 +73,9 @@ namespace YLP::PsUtils
 		void StartUpdatingImpl();
 		void StopUpdatingImpl();
 		void UpdateProcessesImpl();
+
 		const std::vector<ProcessEntry> GetSnapshotImpl();
+
 		std::vector<ProcessEntry> m_Processes{};
 		std::mutex m_Mutex{};
 		std::thread m_Worker{};
@@ -145,14 +125,14 @@ namespace YLP::PsUtils
 	};
 
 	std::optional<DWORD> GetProcessId(std::string_view name);
+
 	const bool IsSameArch(HANDLE hTargetProcess);
 	const bool IsServiceRunning(const std::wstring& serviceName);
-	DllInfo AddDLL();
-	DllInfo ValidateDLL(const std::filesystem::path& file);
-	HANDLE RemoteLoadLibraryW(HANDLE hProcess, LPVOID lpRemoteWstr);
-	InjectResult Inject(std::string_view processName, std::filesystem::path dllPath, bool manualMap = false);
+
 	std::string TranslateError(DWORD exitCode);
+
 	std::optional<DWORD> WaitForProcessExit(HANDLE hProc, DWORD timeoutMs);
+
 	BOOL CALLBACK EnumProcessWindows(HWND hWnd, LPARAM lParam);
 	HWND GetHwndFromPid(DWORD pid);
 }

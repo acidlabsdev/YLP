@@ -190,18 +190,31 @@ namespace YLP
 			return false;
 		}
 
+		//auto wglGetSwapIntervalEXT = reinterpret_cast<PFNWGLGETSWAPINTERVALEXTPROC>(wglGetProcAddress("wglGetSwapIntervalEXT"));
+		//auto wglSwapIntervalEXT = reinterpret_cast<PFNWGLSWAPINTERVALEXTPROC>(wglGetProcAddress("wglSwapIntervalEXT"));
+		//if (!wglSwapIntervalEXT)
+		//{
+		//	LOG_WARN("WGL_EXT_swap_control is unavailable, VSync cannot be enabled therefore YLP may consume more CPU than necessary.");
+		//	m_HasVSync = false;
+		//}
+		//else
+		//{
+		//	wglSwapIntervalEXT(1);
+		//	m_HasVSync = wglGetSwapIntervalEXT ? wglGetSwapIntervalEXT() : 0;
+		//}
+
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 
 		RECT rect;
 		GetClientRect(m_HWND, &rect);
-
-		m_Width = rect.right - rect.left;
+		m_Width  = rect.right - rect.left;
 		m_Height = rect.bottom - rect.top;
 
 		ImGui_ImplWin32_Init(m_HWND);
 		ImGui_ImplOpenGL3_Init("#version 130");
 		LoadPendingTextures();
+
 		GUI::Init();
 
 		m_Initialized = true;
@@ -210,9 +223,9 @@ namespace YLP
 
 	void Renderer::SetResizingImpl(LPARAM lParam)
 	{
-		m_Width = LOWORD(lParam);
-		m_Height = HIWORD(lParam);
-		m_ResizePending = true;
+		m_Width          = LOWORD(lParam);
+		m_Height         = HIWORD(lParam);
+		m_ResizePending  = true;
 		m_LastResizeTime = std::chrono::steady_clock::now();
 	}
 
@@ -222,8 +235,7 @@ namespace YLP
 		GetWindowPlacement(m_HWND, &wp);
 
 		const bool minimized = (wp.showCmd == SW_SHOWMINIMIZED);
-		const bool focused = (GetForegroundWindow() == m_HWND);
-
+		const bool focused   = (GetForegroundWindow() == m_HWND);
 		return focused && !minimized;
 	}
 
@@ -257,14 +269,14 @@ namespace YLP
 			wp.length = sizeof(WINDOWPLACEMENT);
 			if (GetWindowPlacement(hwnd, &wp))
 			{
-				RECT& rc = wp.rcNormalPosition;
+				RECT& rc  = wp.rcNormalPosition;
 				auto& cfg = Settings::Get();
-				cfg.windowWidth = rc.right - rc.left;
-				cfg.windowHeight = rc.bottom - rc.top;
-				cfg.windowX = rc.left;
-				cfg.windowY = rc.top;
 
-				Config().fullscreenWindow = wp.showCmd == SW_SHOWMAXIMIZED;
+				cfg.windowWidth      = rc.right - rc.left;
+				cfg.windowHeight     = rc.bottom - rc.top;
+				cfg.windowX		     = rc.left;
+				cfg.windowY		     = rc.top;
+				cfg.fullscreenWindow = wp.showCmd == SW_SHOWMAXIMIZED;
 			}
 			DestroyWindow(hwnd);
 			return 0;
@@ -281,18 +293,18 @@ namespace YLP
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
+		
 		GUI::Draw();
 
 		if (m_ResizePending)
 		{
-			auto now = std::chrono::steady_clock::now();
+			auto now     = std::chrono::steady_clock::now();
 			auto elapsed = duration_cast<std::chrono::milliseconds>(now - m_LastResizeTime).count();
 			if (elapsed > 100)
 			{
 				m_ResizePending = false;
-				ImGuiIO& io = ImGui::GetIO();
-				io.DisplaySize = ImVec2((float)m_Width, (float)m_Height);
+				ImGuiIO& io     = ImGui::GetIO();
+				io.DisplaySize  = ImVec2(static_cast<float>(m_Width), static_cast<float>(m_Height));
 				glViewport(0, 0, m_Width, m_Height);
 			}
 		}
@@ -306,21 +318,14 @@ namespace YLP
 
 	ImVec2 Renderer::GetWindowSizeImpl() noexcept
 	{
-		return ImVec2((float)m_Width, (float)m_Height);
+		return ImVec2(static_cast<float>(m_Width), static_cast<float>(m_Height));
 	}
 
 	ImTextureID Renderer::LoadTextureFromFileImpl(const std::filesystem::path& filepath)
 	{
 		std::string name = filepath.filename().string();
-
-		for (auto& tex : m_Textures)
-		{
-			if (tex.m_Name == name)
-			{
-				tex.m_RefCount++;
-				return tex.m_ImGuiId;
-			}
-		}
+		if (auto maybeTex = FindTextureByName(name); maybeTex.has_value())
+			return maybeTex.value();
 
 		int w, h, channels;
 		unsigned char* data = stbi_load(filepath.string().c_str(), &w, &h, &channels, 4);
@@ -347,14 +352,8 @@ namespace YLP
 
 	ImTextureID Renderer::LoadTextureFromMemoryImpl(const unsigned char* data, size_t size, const std::string& name)
 	{
-		for (auto& tex : m_Textures)
-		{
-			if (tex.m_Name == name)
-			{
-				tex.m_RefCount++;
-				return tex.m_ImGuiId;
-			}
-		}
+		if (auto maybeTex = FindTextureByName(name); maybeTex.has_value())
+			return maybeTex.value();
 
 		int w, h, channels;
 		unsigned char* pdata = stbi_load_from_memory(data, size, &w, &h, &channels, 4);
@@ -383,14 +382,8 @@ namespace YLP
 
 	ImTextureID Renderer::LoadRawTextureImpl(const unsigned char* rgbaData, int w, int h, const std::string& name)
 	{
-		for (auto& tex : m_Textures)
-		{
-			if (tex.m_Name == name)
-			{
-				tex.m_RefCount++;
-				return tex.m_ImGuiId;
-			}
-		}
+		if (auto maybeTex = FindTextureByName(name); maybeTex.has_value())
+			return maybeTex.value();
 
 		GLuint tex;
 		glGenTextures(1, &tex);
@@ -415,7 +408,23 @@ namespace YLP
 					glDeleteTextures(1, &it->m_Id);
 					m_Textures.erase(it);
 				}
-				return;
+				break;
+			}
+		}
+	}
+
+	void Renderer::ReleaseTextureImpl(const ImTextureID& imguiID)
+	{
+		for (auto it = m_Textures.begin(); it != m_Textures.end(); ++it)
+		{
+			if (it->m_ImGuiId == imguiID)
+			{
+				if (--it->m_RefCount <= 0)
+				{
+					glDeleteTextures(1, &it->m_Id);
+					m_Textures.erase(it);
+				}
+				break;
 			}
 		}
 	}

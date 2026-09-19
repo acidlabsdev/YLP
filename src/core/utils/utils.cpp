@@ -32,11 +32,7 @@ namespace YLP::Utils
 
 		try
 		{
-			hSession = WinHttpOpen(L"YLP-Client/1.0",
-			    WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
-			    WINHTTP_NO_PROXY_NAME,
-			    WINHTTP_NO_PROXY_BYPASS,
-			    0);
+			hSession = WinHttpOpen(L"YLP-Client/1.0", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 			if (!hSession)
 				throw std::runtime_error("WinHttpOpen failed");
 
@@ -45,7 +41,6 @@ namespace YLP::Utils
 				throw std::runtime_error("WinHttpConnect failed");
 
 			hRequest = WinHttpOpenRequest(hConnect, L"GET", path.c_str(), nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
-
 			if (!hRequest)
 				throw std::runtime_error("WinHttpOpenRequest failed");
 
@@ -181,6 +176,15 @@ namespace YLP::Utils
 			return c - 'A' + 10;
 
 		return c - 'a' + 10;
+	}
+
+	void CharToLower(char* c)
+	{
+		if (c[0] == '\0')
+			return;
+
+		for (int i = 0; i <= sizeof(c); ++i)
+			c[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(c[i])));
 	}
 
 	std::string Int32ToTime(int32_t seconds)

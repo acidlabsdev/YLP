@@ -1283,8 +1283,8 @@ void TextEditor::handleKeyboardInputs() {
 		else if (cursors.currentCursorHasSelection() && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiMod_Alt | ImGuiMod_Shift | ImGuiKey_D)) { selectAllOccurrences(true); }
 
 		// clipboard operations
-		else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_X)) { cut(); }
-		else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Delete)) { cut(); }
+		else if (!config.readOnly && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_X)) { cut(); }
+		else if (!config.readOnly && ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Delete)) { cut(); }
 
 		else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_C)) { copy(); }
 		else if (ImGui::Shortcut(ImGuiMod_Ctrl | ImGuiKey_Insert)) { copy(); }
@@ -11297,24 +11297,25 @@ const TextEditor::Language* TextEditor::Language::Lua() {
 	static bool initialized = false;
 	static TextEditor::Language language;
 
-	if (!initialized) {
-		language.name = "Lua";
-		language.singleLineComment = "--";
-		language.commentLevelStart = luaCommentLevelStart;
-		language.commentLevelEnd = luaCommentLevelEnd;
+	if (!initialized)
+	{
+		language.name                   = "Lua";
+		language.singleLineComment      = "--";
+		language.commentLevelStart      = luaCommentLevelStart;
+		language.commentLevelEnd        = luaCommentLevelEnd;
 		language.hasSingleQuotedStrings = true;
 		language.hasDoubleQuotedStrings = true;
-		language.stringLevelStart = luaStringLevelStart;
-		language.stringLevelEnd = luaStringLevelEnd;
-		language.stringEscape = '\\';
+		language.stringLevelStart       = luaStringLevelStart;
+		language.stringLevelEnd         = luaStringLevelEnd;
+		language.stringEscape           = '\\';
 
 		static const char* const keywords[] = {
+		    // clang-format off
 			"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil",
 			"not", "or", "repeat", "return", "then", "true", "until", "while"
 		};
 
 		static const char* const identifiers[] = {
-			// clang-format off
 			"_G", "_VERSION", "abs", "acos", "asin", "assert", "atan", "atan2", "byte", "ceil", "char", "clock", "close",
 			"collectgarbage", "concat", "coroutine", "cos", "cosh", "cpath", "create", "date", "debug", "deg", "difftime",
 			"dofile", "dump", "error", "execute", "exit", "exp", "find", "floor", "flush", "fmod", "format", "frexp", "getenv",
@@ -11326,7 +11327,9 @@ const TextEditor::Language* TextEditor::Language::Lua() {
 			"running", "seeall", "seek", "select", "setfenv", "sethook", "setlocal", "setlocale", "setmetatable", "setupvalue",
 			"setvbuf", "sin", "sinh", "sort", "sqrt", "status", "stderr", "stdin", "stdout", "string", "sub", "table", "tan",
 			"tanh", "time", "tmpfile", "tmpname", "tonumber", "tostring", "traceback", "type", "unpack", "upper", "wrap",
-		    "write", "xpcall", "yield", "Pointer", "ProcessScanner", "Task",
+		    "write", "xpcall", "yield",
+
+			 "BytePatch", "printf", "Pointer", "Process", "Task", "YLP" "info", "warning"
 			// clang-format on
 		};
 

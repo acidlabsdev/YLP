@@ -1,5 +1,8 @@
 **/out
 **/build
+*.bat
+*.ttf
+*.otf
 *.log
 *.vs
 *.ini
@@ -10,7 +13,6 @@
 *.tlog
 *.idb
 *.ilk
-*.log
 *.user
 *.sdf
 *.opensdf

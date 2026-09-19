@@ -95,7 +95,7 @@ namespace ImGui
 			    ImGui::GetColorU32(selected || hovered ? ImGuiCol_Text : ImGuiCol_TextDisabled), 
 				item);
 
-			if (hovered)
+			if (hovered && !selected)
 				ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
 			if (pressed)

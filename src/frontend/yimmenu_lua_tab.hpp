@@ -29,12 +29,11 @@ namespace YLP::Frontend
 	{
 	public:
 		YimLuaTab() :
-		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MS_EXTENSION, "YimMenu-Lua repositories")
+		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MS_EXTENSION, "YimMenu-Lua Repositories")
 		{
 		}
-		
-		static inline char searchBuffer[64];
 
+	private:
 		struct SortOption
 		{
 			const char* label;
@@ -48,7 +47,7 @@ namespace YLP::Frontend
 		    {"Installed", eLuaRepoSortMode::INSTALLED},
 		};
 
-		static const char* GetSortModeName(const eLuaRepoSortMode& mode)
+		const char* GetSortModeName(const eLuaRepoSortMode& mode)
 		{
 			for (const auto& option : SortOptions)
 			{
@@ -59,7 +58,7 @@ namespace YLP::Frontend
 			}
 		}
 
-		static inline void DrawInstalledRepo(const Repository* repo)
+		void DrawInstalledRepo(const Repository* repo)
 		{
 			if (ImGui::ColoredButton(ICON_MS_DELETE, ImVec4(0.95f, 0.20f, 0.20f, 0.69f), 3.0f))
 				GitHubManager::RemoveRepository(repo->name);
@@ -111,7 +110,7 @@ namespace YLP::Frontend
 			ImGui::ToolTip("Open folder");
 		}
 
-		static inline void DrawRepoCard(const Repository* repo)
+		void DrawRepoCard(const Repository* repo)
 		{
 			ImGui::BeginChild(repo->htmlUrl.c_str(), 
 				ImVec2(0, 0), 
@@ -189,10 +188,11 @@ namespace YLP::Frontend
 			ImGui::EndChild();
 		}
 
+	public:
 		void Draw() override
 		{
 			auto sortmode = GitHubManager::GetSortMode();
-			auto state = GitHubManager::GetState();
+			auto state    = GitHubManager::GetState();
 
 			if (ImGui::Button(ICON_MS_FILTER_LIST))
 				ImGui::OpenPopup("##filterScripts");
@@ -222,17 +222,14 @@ namespace YLP::Frontend
 
 			ImGui::SameLine(0.f, 10.f);
 			if (ImGui::Button(ICON_MS_REFRESH))
-			{
-				ThreadManager::Run([] {
-					GitHubManager::FetchRepositories();
-				});
-			}
+				ThreadManager::Run([] { GitHubManager::FetchRepositories(); });
+
 			ImGui::SameLine();
 			ImGui::Text("Refresh");
 
 			ImGui::SameLine(0.0f, 60.0f);
 			ImGui::SetNextItemWidth(-1);
-			ImGui::InputTextWithHint("##searchBar", ICON_MS_SEARCH, searchBuffer, sizeof(searchBuffer));
+			ImGui::SearchBar("##searchBar", searchBuffer);
 
 			ImGui::Separator();
 			ImGui::Spacing();
@@ -270,7 +267,7 @@ namespace YLP::Frontend
 				ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.f);
 				for (size_t i = 0; i < repos.size(); ++i)
 				{
-					if (searchBuffer[0] != '\0' && Utils::StringToLower(repos[i]->name).find(Utils::StringToLower(std::string(searchBuffer))) == std::string::npos)
+					if (searchBuffer[0] != '\0' && Utils::StringToLower(repos[i]->name).find(searchBuffer) == std::string::npos)
 						continue;
 
 					DrawRepoCard(repos[i]);
@@ -287,9 +284,13 @@ namespace YLP::Frontend
 		}
 
 	private:
-		static inline const float m_RepoCardHeight = 190;
-		static inline const ImVec2 m_CtrlBtnSize = ImVec2(120, 25);
-		static inline bool m_SortPopupOpen = false;
+		char searchBuffer[64];
+
+		const float m_RepoCardHeight = 190;
+
+		const ImVec2 m_CtrlBtnSize = ImVec2(120, 25);
+
+		bool m_SortPopupOpen = false;
 	};
 
 	inline YimLuaTab _YimLuaTab;

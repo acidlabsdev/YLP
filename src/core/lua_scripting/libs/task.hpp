@@ -23,7 +23,7 @@
 
 namespace YLP::LuaJIT
 {
-	class LuaScriptLib : public LuaLibrary
+	class LuaTaskLib : public LuaLibrary
 	{
 		using LuaLibrary::LuaLibrary;
 
@@ -73,5 +73,5 @@ namespace YLP::LuaJIT
 		}
 	};
 
-	LuaScriptLib _LuaScriptLib;
+	LuaTaskLib _LuaTaskLib;
 }

@@ -7,7 +7,7 @@
 #include "procmon.hpp"
 
 
-namespace YLP
+namespace YLP::Memory
 {
 	struct GTAPointers
 	{

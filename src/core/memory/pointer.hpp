@@ -1,32 +1,59 @@
-// YLP Project - GPL-3.0
-// See LICENSE file or <https://www.gnu.org/licenses/> for details.
+// Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+// This file is part of YLP.
+//
+// YLP is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// YLP is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with YLP.  If not, see <https://www.gnu.org/licenses/>.
 
 
 #pragma once
 
 
-namespace YLP
+namespace YLP::Memory
 {
 	class Pointer
 	{
 	public:
-		Pointer() = default;
+		Pointer()  = default;
 		~Pointer() = default;
 
-		inline Pointer(HANDLE hProcess, uintptr_t address) :
-		    m_ProcessHandle(hProcess),
-		    m_Address(address)
+		Pointer(HANDLE hProcess, uintptr_t address);
+
+		std::vector<uint8_t> ReadBytes(size_t len = 4);
+
+		bool WriteBytes(std::span<const uint8_t> bytes);
+
+		Pointer Add(int32_t offset);
+
+		Pointer Sub(int32_t offset);
+
+		Pointer Rip();
+
+		Pointer Dereference();
+
+		uintptr_t GetAddress() const noexcept;
+
+		explicit operator bool() const
 		{
+			return m_Address != 0;
 		}
 
 		template<typename T>
-		inline T Read(size_t maxLength = 64) const
+		T Read(size_t maxLength = 64) const
 		{
 			if constexpr (std::is_same_v<T, std::string>)
 			{
 				std::string buffer(maxLength, '\0');
 				SIZE_T bytesRead = 0;
-
 				if (ReadProcessMemory(m_ProcessHandle,
 				        reinterpret_cast<LPCVOID>(m_Address),
 				        buffer.data(),
@@ -59,60 +86,37 @@ namespace YLP
 		}
 
 		template<typename T>
-		inline void Write(T arg, size_t maxLength = 64) const
+		bool Write(T arg, size_t maxLength = 64) const
 		{
-			SIZE_T bytesWritten = 0;
+			unsigned long oldProtect;
+			if (!VirtualProtectEx(m_ProcessHandle, reinterpret_cast<LPVOID>(m_Address), maxLength, PAGE_EXECUTE_READWRITE, &oldProtect))
+			{
+				LOG_ERROR("Failed to write memory at 0x{:X}", m_Address);
+				return false;
+			}
+
+			bool success        = false;
+			size_t bytesWritten = 0;
 			if constexpr (std::is_same_v<T, std::string>)
 			{
-				WriteProcessMemory(m_ProcessHandle,
-				        reinterpret_cast<LPVOID>(m_Address),
-				        arg.data(),
-				        maxLength - 1,
-				        &bytesWritten);
+				success = WriteProcessMemory(m_ProcessHandle, reinterpret_cast<LPVOID>(m_Address), arg.data(), maxLength - 1, &bytesWritten);
 			}
 			else
 			{
-				WriteProcessMemory(m_ProcessHandle,
-				    reinterpret_cast<LPVOID>(m_Address),
-				    &arg,
-				    sizeof(arg),
-				    &bytesWritten);
+				success = WriteProcessMemory(m_ProcessHandle, reinterpret_cast<LPVOID>(m_Address), &arg, sizeof(arg), &bytesWritten);
 			}
-		}
 
-		inline Pointer Add(int32_t offset)
-		{
-			return Pointer(m_ProcessHandle, m_Address + offset);
-		}
+			unsigned long temp;
+			VirtualProtectEx(m_ProcessHandle, reinterpret_cast<LPVOID>(m_Address), maxLength, oldProtect, &temp);
 
-		inline Pointer Sub(int32_t offset)
-		{
-			return Pointer(m_ProcessHandle, m_Address - offset);
-		}
+			if (!success)
+				LOG_ERROR("Failed to write memory at 0x{:X}", m_Address);
 
-		inline Pointer Rip()
-		{
-			int32_t rel = Read<int32_t>();
-			return Pointer(m_ProcessHandle, m_Address + rel + 4);
-		}
-
-		inline Pointer Dereference()
-		{
-			return Pointer(m_ProcessHandle, Read<uintptr_t>());
-		}
-
-		inline uintptr_t GetAddress() const noexcept
-		{
-			return m_Address;
-		}
-
-		explicit operator bool() const
-		{
-			return m_Address != 0;
+			return success;
 		}
 
 	private:
-		uintptr_t m_Address = 0;
+		uintptr_t m_Address    = 0;
 		HANDLE m_ProcessHandle = INVALID_HANDLE_VALUE;
 	};
 }
