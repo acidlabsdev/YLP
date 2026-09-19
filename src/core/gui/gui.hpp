@@ -19,12 +19,7 @@
 
 #include "renderer.hpp"
 #include "gui_tab.hpp"
-#include "../../frontend/injector.hpp"
-#include "../../frontend/main_window.hpp"
-#include "../../frontend/yimmenu_lua.hpp"
-#include "../../frontend/scripting.hpp"
-#include "../../frontend/settings.hpp"
-#include "../../frontend/abt.hpp"
+#include "../../frontend/__tab_loader.hpp"
 
 
 namespace YLP
@@ -86,12 +81,15 @@ namespace YLP
 		void SetActiveTabImpl(const eTabID& tabID);
 		void RefreshCurrentTabImpl();
 
-		bool m_ShouldDisableUI = false;
+		bool m_ShouldDisableUI       = false;
 		bool m_IsTabSwitchInProgress = false;
+
 		float m_CallbackChildAlpha = 1.0f;
-		float m_SidebarWidth = 60.0f;
+		float m_SidebarWidth       = 60.0f;
+
 		GuiTab* m_ActiveTab = nullptr;
-		GuiTab* m_NextTab = nullptr;
+		GuiTab* m_NextTab   = nullptr;
+
 		ImVec2 m_WindowSize{};
 
 		std::array<GuiTab*, static_cast<size_t>(eTabID::__COUNT)> m_Tabs{};

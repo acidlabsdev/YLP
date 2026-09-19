@@ -141,20 +141,24 @@ namespace YLP::LuaJIT
 		}
 	}
 
-	void LuaManager::LoadDisabledModuleImpl(const fs::path& root)
+	void LuaManager::LoadDisabledModuleImpl(const fs::path& root, bool fullyDisable)
 	{
-		auto newRoot = m_PluginsDir / "disabled" / root.filename().string();
-		if (IO::Rename(root, newRoot))
-		{
-			std::scoped_lock lock(m_DisabledModulesMutex);
-			m_DisabledModules.push_back({newRoot.filename().string(), newRoot});
-		}
+		fs::path __path  = root;
+		fs::path newRoot = m_PluginsDir / "disabled" / root.filename().string();
+		if (fullyDisable && IO::Rename(root, newRoot))
+			__path = newRoot;
+
+		std::scoped_lock lock(m_DisabledModulesMutex);
+		m_DisabledModules.push_back({__path.filename().string(), __path});
 	}
 
 	void LuaManager::LoadModulesImpl()
 	{
 		if (!m_CodeExecutor)
+		{
 			m_CodeExecutor = std::make_unique<LuaModule>("/CodeExecutor");
+			m_CodeExecutor->SandboxLoaders(m_PluginsDir);
+		}
 
 		if (!IO::Exists(m_PluginsDir) || !IO::IsDir(m_PluginsDir) || IO::IsEmpty(m_PluginsDir))
 			return;
@@ -212,6 +216,8 @@ namespace YLP::LuaJIT
 				while (!m_LoadQueue.empty())
 				{
 					auto m = std::make_shared<LuaModule>(m_LoadQueue.front());
+					m->SandboxLoaders(m_PluginsDir);
+
 					if (m->Load())
 						m_Modules.push_back(m);
 					else
@@ -228,9 +234,9 @@ namespace YLP::LuaJIT
 						return true;
 
 					auto state = m->GetLoadState();
-					if (state == LuaModule::WANTS_UNLOAD)
+					if (state == LuaModule::WANTS_UNLOAD || state == LuaModule::WANTS_DISABLE)
 					{
-						LoadDisabledModuleImpl(m->GetRoot());
+						LoadDisabledModuleImpl(m->GetRoot(), state == LuaModule::WANTS_DISABLE);
 						return true;
 					}
 					else if (state == LuaModule::WANTS_RELOAD)

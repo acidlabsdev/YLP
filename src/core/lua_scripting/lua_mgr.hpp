@@ -33,15 +33,15 @@ namespace YLP::LuaJIT
 
 	private:
 		LuaManager() noexcept = default;
-		~LuaManager() = default;
+		~LuaManager()         = default;
 
-		LuaManager(const LuaManager&) = delete;
-		LuaManager(LuaManager&&) = delete;
+		LuaManager(const LuaManager&)            = delete;
+		LuaManager(LuaManager&&)                 = delete;
 		LuaManager& operator=(const LuaManager&) = delete;
-		LuaManager& operator=(LuaManager&&) = delete;
+		LuaManager& operator=(LuaManager&&)      = delete;
 
 		void LoadModuleImpl(const fs::path& path);
-		void LoadDisabledModuleImpl(const fs::path& path);
+		void LoadDisabledModuleImpl(const fs::path& path, bool fullyDisable = false);
 		void LoadDisabledModulesImpl(const fs::path& path);
 		void EnableModuleImpl(const fs::path& path);
 		void LoadModulesImpl();

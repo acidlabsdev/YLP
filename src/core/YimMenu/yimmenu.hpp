@@ -17,7 +17,8 @@
 
 #pragma once
 
-#include <core/gui/notifier.hpp>
+#include "core/gui/notifier.hpp"
+#include "core/injector/injector.hpp"
 
 
 namespace YLP
@@ -310,16 +311,16 @@ namespace YLP
 			}
 		}
 
-		PsUtils::InjectResult Inject()
+		Injector::InjectResult Inject()
 		{
 			if (!m_State != Idle)
-				return PsUtils::InjectResult::Err("Busy", ERROR_ACCESS_DENIED);
+				return Injector::InjectResult::Err("Busy", ERROR_ACCESS_DENIED);
 
 			if (!SanityCheck())
-				return PsUtils::InjectResult::Err("File not found!", ERROR_FILE_NOT_FOUND);
+				return Injector::InjectResult::Err("File not found!", ERROR_FILE_NOT_FOUND);
 
-			const auto result = PsUtils::Inject(m_TargetProcess, m_DllPath);
-			m_IsInjected = result.success;
+			const auto result = Injector::Inject(m_TargetProcess, m_DllPath);
+			m_IsInjected = result.m_Success;
 			return result;
 		}
 
@@ -329,8 +330,10 @@ namespace YLP
 		std::filesystem::path m_BasePath{};
 		std::filesystem::path m_ChecksumPath{};
 		std::filesystem::path m_SupportedVersionPath{};
+
 		std::pair<std::wstring, std::wstring> m_ReleaseUrl{};
 		std::pair<std::wstring, std::wstring> m_DownloadUrl{};
+
 		std::mutex m_Mutex;
 
 	public:

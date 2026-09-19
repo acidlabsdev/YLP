@@ -16,7 +16,7 @@
 
 
 #include "procmon.hpp"
-#include <core/gui/gui.hpp>
+#include "core/gui/gui.hpp"
 
 
 namespace YLP
@@ -169,7 +169,7 @@ namespace YLP
 
 		LOG_INFO("[ProcMon]: Preparing to auto-inject...");
 
-		bool isLegacy = (m_MonitorMode == MonitorLegacy);
+		bool isLegacy  = (m_MonitorMode == MonitorLegacy);
 		auto& pointers = isLegacy ? g_Pointers.Legacy : g_Pointers.Enhanced;
 		if (!pointers.GameTime || !pointers.GameState)
 		{
@@ -215,7 +215,13 @@ namespace YLP
 				if (!(Config().autoMonitorFlags & m_MonitorMode))
 					return false;
 
-				m_Menu->Inject();
+				auto result = m_Menu->Inject();
+				if (!result.m_Success)
+				{
+					LOG_ERROR(result.m_Message);
+					return false;
+				}
+
 				attempted_inject = true;
 			}
 			else if (gamestate == 0 || gamestate > 5)

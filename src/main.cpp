@@ -49,27 +49,21 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	if (!std::filesystem::exists(g_ProjectPath))
 		std::filesystem::create_directory(g_ProjectPath);
 
-	ThreadManager::Init();
-	Settings::Init(g_ProjectPath / "settings.json");
-	Logger::Init(g_ProjectPath / "cout.log", Config().externalConsole);
-
-	if (!std::filesystem::exists(g_YimPath))
-		LOG_INFO("User does not seem to have used YimMenu before, or at least not recently.");
-
-	if (!std::filesystem::exists(g_YimV2Path))
-		LOG_INFO("User does not seem to have used YimMenu V2 before, or at least not recently.");
+	ThreadManager	::Init();
+	Settings		::Init(g_ProjectPath / "settings.json");
+	Logger			::Init(g_ProjectPath / "cout.log", Config().externalConsole);
 
 	if (!Renderer::Init())
 	{
-		Renderer::Destroy();
-		ThreadManager::Shutdown();
-		Settings::Destroy();
-		Logger::Destroy();
+		Renderer		::Destroy();
+		Settings		::Destroy();
+		Logger			::Destroy();
+		ThreadManager	::Destroy();
 		return 1;
 	}
 
-	GitHubManager::Init();
-	YimMenuHandler::Init();
+	GitHubManager	::Init();
+	YimMenuHandler	::Init();
 
 	g_Pointers.Init();
 
@@ -90,27 +84,22 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 		}
 
 		Renderer::Draw();
+
+		//if (!Renderer::IsVSyncEnabled())
+		std::this_thread::sleep_for(10ms); // fuck it
 	}
 
 	g_Running = false;
 
-	Renderer::Destroy();
-	LuaJIT::LuaManager::Destroy();
-	Settings::Destroy();
-	ThreadManager::Shutdown();
-	Logger::Destroy();
+	Renderer			::Destroy();
+	LuaJIT::LuaManager	::Destroy();
+	Settings			::Destroy();
+	Logger				::Destroy();
+	ThreadManager		::Destroy();
 
-	std::filesystem::path dcache = g_ProjectPath / "downloads_cache";
-	if (std::filesystem::exists(dcache))
-	{
-		try
-		{
-			IO::RemoveAll(dcache);
-		}
-		catch (...)
-		{
-		}
-	}
+	fs::path dcache = g_ProjectPath / "downloads_cache";
+	if (IO::Exists(dcache))
+		IO::RemoveAll(dcache);
 
 	return 0;
 }

@@ -30,7 +30,7 @@ class ApiMember:
 @dataclass
 class ApiLibrary:
 	name: str
-	kind: str  # "class" | "table"
+	kind: str  # "class" | "table" | "enum"
 	description: str = ""
 	members: list[ApiMember] = field(default_factory=list)
 
@@ -111,7 +111,7 @@ def parse_annotation(header: str, body: str) -> ApiMember | ApiLibrary:
 	name = header_match.group("name")
 	owner = None
 
-	if kind not in {"class", "table"}:
+	if kind not in {"class", "table", "enum"}:
 		owner, name = split_member_name(name)
 		result = ApiMember(kind, name, owner)
 	else:
@@ -178,7 +178,8 @@ def resolve_members(model: ApiModel) -> None:
 		library = libraries.get(member.owner)
 		if library is not None:
 			library.members.append(member)
-			UNRESOLVED_MEMBERS.remove(member)
+
+	UNRESOLVED_MEMBERS.clear()
 
 
 def parse_source(source: str) -> ApiModel:
@@ -204,8 +205,9 @@ def parse_lua(lib: ApiLibrary, write_path: Path):
 	docstring = "---@meta\n\n"
 	methods: list[ApiMember] = []
 
-	if lib.description and lib.name != "Global Table":
-		docstring += f"-- {"\n-- ".join(line for line in lib.description.split("\n"))}\n"
+	if lib.name != "Global Table":
+		if lib.description:
+			docstring += f"-- {"\n-- ".join(line for line in lib.description.split("\n"))}\n"
 		docstring += f"---@class {lib.name}\n"
 
 	for member in lib.members:
@@ -214,7 +216,8 @@ def parse_lua(lib: ApiLibrary, write_path: Path):
 		elif member.kind == "operator":
 			docstring += f"---@operator {member.name}({"| ".join(p.type for p in member.parameters)}): {member.returns[0].type}\n" # are there even Lua operators that have multiple returns? eh, I can't be arsed
 		elif member.kind == "field":
-			docstring += f"---@field {member.name}: {member.type} {member.description}"
+			desc = "integer" if lib.kind == "enum" else member.description
+			docstring += f"---@field {member.name} {desc}\n"
 		elif member.kind == "constructor":
 			if member.name == "__call":
 				docstring += f"---@overload fun({", ".join(f"{p.name}: {p.type}" for p in member.parameters)}): {lib.name}\n"
@@ -252,187 +255,191 @@ def gen_luals_defs(model: ApiModel, docs_path: Path):
 		parse_lua(lib, docs_path)
 
 
+def md_fix_ref(value: str) -> str:
+	return value.replace("lua://", "./")
+
+
 def md_escape(value: str) -> str:
-    return value.replace("|", "\\|").replace("\n", " ")
+	return md_fix_ref(value).replace("|", "\\|").replace("\n", " ")
 
 
 def md_description(description: str) -> str:
-    if not description:
-        return ""
+	if not description:
+		return ""
 
-    paragraphs = [paragraph.strip() for paragraph in description.split("~~") if paragraph.strip()]
-    return "\n\n".join(paragraphs)
+	paragraphs = [paragraph.strip() for paragraph in description.split("~~") if paragraph.strip()]
+	return md_fix_ref("\n\n".join(paragraphs))
 
 
 def md_type(type_name: str) -> str:
-    return f"`{type_name}`"
+	return f"`{type_name}`"
 
 
 def md_params(parameters: list[Parameter]) -> str:
-    if not parameters:
-        return ""
+	if not parameters:
+		return ""
 
-    output = [
-        "### Parameters",
-        "",
-        "| Name | Type | Description |",
-        "| --- | --- | --- |",
-    ]
+	output = [
+		"### Parameters",
+		"",
+		"| Name | Type | Description |",
+		"| --- | --- | --- |",
+	]
 
-    for param in parameters:
-        description = md_escape(param.description)
-        output.append(f"| `{param.name}` | {md_type(param.type)} | {description} |")
+	for param in parameters:
+		description = md_escape(param.description)
+		output.append(f"| `{param.name}` | {md_type(param.type)} | {description} |")
 
-    return "\n".join(output)
+	return "\n".join(output)
 
 
 def md_returns(returns: list[ReturnValue]) -> str:
-    if not returns:
-        return ""
+	if not returns:
+		return ""
 
-    output = [
-        "### Returns",
-        "",
-        "| Type | Description |",
-        "| --- | --- |",
-    ]
+	output = [
+		"### Returns",
+		"",
+		"| Type | Description |",
+		"| --- | --- |",
+	]
 
-    for ret in returns:
-        description = md_escape(ret.description)
-        output.append(f"| {md_type(ret.type)} | {description} |")
+	for ret in returns:
+		description = md_escape(ret.description)
+		output.append(f"| {md_type(ret.type)} | {description} |")
 
-    return "\n".join(output)
+	return "\n".join(output)
 
 
 def md_method(method: ApiMember, lib: ApiLibrary) -> str:
-    index_char = ":" if lib.kind == "class" else "."
-    params = ", ".join(f"{param.name}" for param in method.parameters)
-    prefix = lib.name + index_char if lib.name != "Global Table" else ""
-    signature = f"{prefix}{method.name}({params})"
-    output = [
-        f"## `{method.name}`",
-        "",
-        "```lua",
-        f"function {signature} end",
-        "```",
-    ]
+	index_char = ":" if lib.kind == "class" else "."
+	params = ", ".join(f"{param.name}" for param in method.parameters)
+	prefix = lib.name + index_char if lib.name != "Global Table" else ""
+	signature = f"{prefix}{method.name}({params})"
+	output = [
+		f"## `{method.name}`",
+		"",
+		"```lua",
+		f"function {signature} end",
+		"```",
+	]
 
-    description = md_description(method.description)
-    if description:
-        output.extend(["", description])
+	description = md_description(method.description)
+	if description:
+		output.extend(["", description])
 
-    params_doc = md_params(method.parameters)
-    if params_doc:
-        output.extend(["", params_doc])
+	params_doc = md_params(method.parameters)
+	if params_doc:
+		output.extend(["", params_doc])
 
-    returns_doc = md_returns(method.returns)
-    if returns_doc:
-        output.extend(["", returns_doc])
+	returns_doc = md_returns(method.returns)
+	if returns_doc:
+		output.extend(["", returns_doc])
 
-    return "\n".join(output)
+	return "\n".join(output)
 
 
 def md_operator(operator: ApiMember) -> str:
-    params = " | ".join(param.type for param in operator.parameters)
+	params = " | ".join(param.type for param in operator.parameters)
 
-    return_type = (operator.returns[0].type if operator.returns else "any")
-    output = [
-        f"### `{operator.name}`",
-        "",
-        "```lua",
-        f"---@operator __{operator.name}({params}): {return_type}",
-        "```",
-    ]
+	return_type = (operator.returns[0].type if operator.returns else "any")
+	output = [
+		f"### `{operator.name}`",
+		"",
+		"```lua",
+		f"---@operator __{operator.name}({params}): {return_type}",
+		"```",
+	]
 
-    description = md_description(operator.description)
-    if description:
-        output.extend(["", description])
+	description = md_description(operator.description)
+	if description:
+		output.extend(["", description])
 
-    return "\n".join(output)
+	return "\n".join(output)
 
 
 def md_field(field: ApiMember) -> str:
-    output = [
-        f"| `{field.name}` | {md_type(field.type)} | "
-        f"{md_escape(field.description)} |"
-    ]
+	output = [
+		f"| `{field.name}` | {md_type(field.type)} | "
+		f"{md_escape(field.description)} |"
+	]
 
-    return "".join(output)
+	return "".join(output)
 
 
 def parse_markdown(lib: ApiLibrary, write_path: Path):
-    docstring = f"# {lib.name}\n\n"
-    description = md_description(lib.description)
-    if description:
-        docstring += description + "\n\n"
+	docstring = f"<!-- markdownlint-disable -->\n\n# {lib.name}\n\n"
+	description = md_description(lib.description)
+	if description:
+		docstring += description + "\n\n"
 
-    methods: list[ApiMember] = []
-    operators: list[ApiMember] = []
-    fields: list[ApiMember] = []
-    constructors: list[ApiMember] = []
+	methods: list[ApiMember] = []
+	operators: list[ApiMember] = []
+	fields: list[ApiMember] = []
+	constructors: list[ApiMember] = []
 
-    for member in lib.members:
-        if member.kind in ("function", "method"):
-            methods.append(member)
-        elif member.kind == "operator":
-            operators.append(member)
-        elif member.kind == "field":
-            fields.append(member)
-        elif member.kind == "constructor":
-            constructors.append(member)
+	for member in lib.members:
+		if member.kind in ("function", "method"):
+			methods.append(member)
+		elif member.kind == "operator":
+			operators.append(member)
+		elif member.kind == "field":
+			fields.append(member)
+		elif member.kind == "constructor":
+			constructors.append(member)
 
-    if constructors and lib.name != "Global Table":
-        docstring += "## Constructors\n\n"
-        for constructor in constructors:
-            if constructor.name == "__call":
-                params = ", ".join(param.name for param in constructor.parameters)
-                docstring += ("```lua\n" f"{lib.name}({params})\n" "```\n")
-            else:
-                docstring += md_method(constructor, lib) + "\n"
+	if constructors and lib.name != "Global Table":
+		docstring += "## Constructors\n\n"
+		for constructor in constructors:
+			if constructor.name == "__call":
+				params = ", ".join(param.name for param in constructor.parameters)
+				docstring += ("```lua\n" f"{lib.name}({params})\n" "```\n")
+			else:
+				docstring += md_method(constructor, lib) + "\n"
 
-            description = md_description(constructor.description)
-            if description:
-                docstring += f"\n{description}\n"
+			description = md_description(constructor.description)
+			if description:
+				docstring += f"\n{description}\n"
 
-            params_doc = md_params(constructor.parameters)
-            if params_doc:
-                docstring += f"\n{params_doc}\n"
+			params_doc = md_params(constructor.parameters)
+			if params_doc:
+				docstring += f"\n{params_doc}\n"
 
-    if operators:
-        docstring += "## Operators\n\n"
-        for operator in operators:
-            docstring += md_operator(operator)
-            docstring += "\n\n"
+	if operators:
+		docstring += "## Operators\n\n"
+		for operator in operators:
+			docstring += md_operator(operator)
+			docstring += "\n\n"
 
-    if fields:
-        docstring += "## Fields\n\n"
-        docstring += (
-            "| Name | Type | Description |\n"
-            "| --- | --- | --- |\n"
-        )
+	if fields:
+		docstring += "## Fields\n\n"
+		docstring += (
+			"| Name | Type | Description |\n"
+			"| --- | --- | --- |\n"
+		)
 
-        for field in fields:
-            docstring += md_field(field) + "\n"
+		for field in fields:
+			docstring += md_field(field) + "\n"
 
-        docstring += "\n"
+		docstring += "\n"
 
-    if methods:
-        docstring += "## Methods\n\n"
-        for method in methods:
-            docstring += md_method(method, lib)
-            docstring += "\n\n"
+	if methods:
+		docstring += "## Methods\n\n"
+		for method in methods:
+			docstring += md_method(method, lib)
+			docstring += "\n\n"
 
-    libpath = write_path / f"{lib.name}.md"
-    with libpath.open(mode="w", encoding="utf-8", newline="\n") as f:
-        f.write(docstring.strip() + "\n")
+	libpath = write_path / f"{lib.name}.md"
+	with libpath.open(mode="w", encoding="utf-8", newline="\n") as f:
+		f.write(docstring.strip() + "\n")
 
 
 def gen_markdown_docs(model: ApiModel, docs_path: Path):
-    if not model.libraries:
-        return
+	if not model.libraries:
+		return
 
-    for lib in model.libraries:
-        parse_markdown(lib, docs_path)
+	for lib in model.libraries:
+		parse_markdown(lib, docs_path)
 
 
 if __name__ == "__main__":

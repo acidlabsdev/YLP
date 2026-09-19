@@ -417,13 +417,14 @@ namespace YLP::Frontend
 
 	inline void from_json(const json& j, Theme& t)
 	{
-		t.m_Name = j.value("name", "");
-		t.m_AuthorName = j.value("author", "YLP");
-		t.m_IsDefault = false;
-		auto& styleVars = t.m_StyleVars;
-		auto& styleColors = t.m_Colors;
+		t.m_Name                  = j.value("name", "");
+		t.m_AuthorName            = j.value("author", "YLP");
+		t.m_IsDefault             = false;
+		auto& styleVars           = t.m_StyleVars;
+		auto& styleColors         = t.m_Colors;
 		const json& styleVarsJson = j["style_vars"];
-		auto& StyleResolvers = Theme::StyleResolvers;
+		auto& StyleResolvers      = Theme::StyleResolvers;
+
 		if (!styleVarsJson.is_null() && styleVarsJson.is_object())
 		{
 			for (const auto& [k, v] : styleVarsJson.items())
@@ -434,7 +435,8 @@ namespace YLP::Frontend
 		}
 
 		const json& styleColsJson = j["style_colors"];
-		auto& ImColMap = Theme::ImColMap;
+		auto& ImColMap            = Theme::ImColMap;
+
 		if (!styleColsJson.is_null() && styleColsJson.is_object())
 		{
 			for (const auto& [k, v] : styleColsJson.items())
@@ -449,11 +451,12 @@ namespace YLP::Frontend
 
 	inline void to_json(json& j, const Theme& t)
 	{
-		j["name"] = t.m_Name;
-		j["author"] = t.m_AuthorName;
-		auto& styleVars = t.m_StyleVars;
-		auto& colors = t.m_Colors;
+		j["name"]            = t.m_Name;
+		j["author"]          = t.m_AuthorName;
+		auto& styleVars      = t.m_StyleVars;
+		auto& colors         = t.m_Colors;
 		auto& StyleResolvers = Theme::StyleResolvers;
+
 		for (auto& [k, v] : styleVars)
 		{
 			if (auto it = StyleResolvers.find(k); it == StyleResolvers.end())

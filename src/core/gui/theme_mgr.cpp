@@ -21,6 +21,9 @@
 
 namespace YLP::Frontend
 {
+	namespace fs = std::filesystem;
+	using json   = nlohmann::json;
+
 	void ThemeManager::InitImpl()
 	{
 		LoadThemesImpl();
@@ -37,9 +40,9 @@ namespace YLP::Frontend
 	void ThemeManager::LoadJsonThemesImpl()
 	{
 		const fs::path& jsonThemesPath = g_ProjectPath / "Themes";
-		if (!fs::exists(jsonThemesPath))
+		if (!IO::Exists(jsonThemesPath))
 		{
-			fs::create_directory(jsonThemesPath);
+			IO::CreateFolder(jsonThemesPath);
 			std::ofstream f(jsonThemesPath / "readme.txt");
 			if (!f.is_open())
 				return;
@@ -65,7 +68,7 @@ namespace YLP::Frontend
 				if (name.empty())
 					continue;
 
-				Theme theme = j.get<Theme>();
+				Theme theme      = j.get<Theme>();
 				theme.m_FilePath = entry.path();
 				m_Themes.emplace(theme.m_Name, std::move(theme));
 			}
@@ -79,9 +82,6 @@ namespace YLP::Frontend
 
 	void ThemeManager::LoadThemesImpl()
 	{
-		namespace fs = std::filesystem;
-		using json = nlohmann::json;
-
 		// PirateSoftware much?
 		m_Themes.emplace("Nord", DefaultThemes::Nord());
 		m_Themes.emplace("Catppuccin Mocha", DefaultThemes::CatppuccinMocha());
@@ -105,10 +105,10 @@ namespace YLP::Frontend
 		if (!theme.Apply())
 			return false;
 
-		auto& savedTheme = Config().savedTheme;
-		savedTheme.first = theme.m_Name;
+		auto& savedTheme  = Config().savedTheme;
+		savedTheme.first  = theme.m_Name;
 		savedTheme.second = theme.m_FilePath;
-		m_CurrentTheme = &theme;
+		m_CurrentTheme    = &theme;
 		return true;
 	}
 }

@@ -66,8 +66,11 @@ namespace ImGui
 	    bool delayed = true,
 	    float textWrapWidth = -1.0f);
 
-	bool SelectableLabel(const char* label, bool selected);
+	bool SelectableLabel(const char* label, bool selected = false);
+	void TooltipIcon(const char* icon, const char* text, ImFont* font = nullptr);
 	void HelpMarker(const char* text, ImFont* font = nullptr);
+	void WarningMarker(const char* text, ImFont* font = nullptr);
+	void ErrorMarker(const char* text, ImFont* font = nullptr);
 	void WarningMessage(const char* text);
 	void TitleText(const char* text, bool separator = false);
 	void TextCentered(const char* text, ImFont* font = nullptr, float availWidth = 0.0f);
@@ -88,4 +91,7 @@ namespace ImGui
 
 	ImFont* GetScaledFont();
 
+	bool SearchBar(const char* label, char* searchBuffer, ImGuiInputTextFlags flags = ImGuiInputTextFlags_None);
+	float GetFrameWidth();
+	float GetFrameWidthWithSpacing();
 }

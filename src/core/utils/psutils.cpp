@@ -20,23 +20,6 @@
 
 namespace YLP::PsUtils
 {
-	InjectResult InjectResult::Ok() noexcept
-	{
-		InjectResult r;
-		r.success = true;
-		r.message = "Success";
-		r.win_error = 0;
-		return r;
-	}
-
-	InjectResult InjectResult::Err(std::string msg, DWORD err) noexcept
-	{
-		InjectResult r;
-		r.success = false;
-		r.message = std::move(msg);
-		r.win_error = err;
-		return r;
-	}
 
 	void ProcessList::StartUpdatingImpl()
 	{
@@ -130,84 +113,7 @@ namespace YLP::PsUtils
 			return std::nullopt;
 		}
 	}
-
-	DllInfo ValidateDLL(const std::filesystem::path& file)
-	{
-		if (!IO::Exists(file))
-			return {.error = "File not found"};
-
-		HANDLE hFile = CreateFileW(file.wstring().c_str(),
-		    GENERIC_READ,
-		    FILE_SHARE_READ,
-		    nullptr,
-		    OPEN_EXISTING,
-		    FILE_ATTRIBUTE_NORMAL,
-		    nullptr);
-
-		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			CloseHandle(hFile);
-			return {.error = "CreateFile failed"};
-		}
-
-		HANDLE hMap = CreateFileMappingW(hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
-		if (!hMap)
-		{
-			CloseHandle(hFile);
-			return {.error = "CreateFileMapping failed"};
-		}
-
-		LPVOID base = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
-		if (!base)
-		{
-			CloseHandle(hMap);
-			CloseHandle(hFile);
-			return {.error = "MapViewOfFile failed"};
-		}
-
-		auto dos = reinterpret_cast<IMAGE_DOS_HEADER*>(base);
-		if (dos->e_magic != IMAGE_DOS_SIGNATURE)
-		{
-			UnmapViewOfFile(base);
-			CloseHandle(hMap);
-			CloseHandle(hFile);
-			return {.error = "Invalid DOS signature"};
-		}
-
-		auto nt = reinterpret_cast<IMAGE_NT_HEADERS*>((BYTE*)base + dos->e_lfanew);
-		if (nt->Signature != IMAGE_NT_SIGNATURE)
-		{
-			UnmapViewOfFile(base);
-			CloseHandle(hMap);
-			CloseHandle(hFile);
-			return {.error = "Invalid NT signature"};
-		}
-
-		DllInfo info{};
-		info.is64bit	= (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64);
-		auto entryExport = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-		info.hasExports  = entryExport.Size > 0 && entryExport.VirtualAddress != 0;
-		info.ok			= true;
-
-		UnmapViewOfFile(base);
-		CloseHandle(hMap);
-		CloseHandle(hFile);
-		return info;
-	}
-
-	DllInfo AddDLL()
-	{
-		auto dllPath = IO::OpenFileDialog({{L"Dynamic Link Library", L"*.dll"}}, L"Select a DLL");
-		if (dllPath.empty())
-			return {.error = "Canceled by user"};
-
-		DllInfo info = ValidateDLL(dllPath);
-		info.checksum = Utils::CalcSha256(dllPath);
-		info.filepath = dllPath;
-		info.name = dllPath.filename().string();
-		return info;
-	}
-
+	
 	std::optional<DWORD> GetProcessId(std::string_view name)
 	{
 		ProcessList::UpdateProcesses();
@@ -231,102 +137,6 @@ namespace YLP::PsUtils
 			return false;
 
 		return (targetIsWow == selfIsWow);
-	}
-
-	HANDLE RemoteLoadLibraryW(HANDLE hProcess, LPVOID lpRemoteWstr)
-	{
-		HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
-		if (!hKernel32)
-			return nullptr;
-
-		FARPROC proc = GetProcAddress(hKernel32, "LoadLibraryW");
-		if (!proc)
-			return nullptr;
-
-		return CreateRemoteThread(hProcess, nullptr, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(proc), lpRemoteWstr, 0, nullptr);
-	}
-
-	InjectResult Inject(std::string_view processName, std::filesystem::path dllPath, bool manualMap)
-	{
-		auto dllInfo = ValidateDLL(dllPath);
-		if (!dllInfo.ok)
-			return InjectResult::Err(std::string("PE validation failed: ") + dllInfo.error);
-
-		if (!dllPath.is_absolute())
-			dllPath = std::filesystem::absolute(dllPath);
-
-		auto maybepid = GetProcessId(processName);
-		if (!maybepid.has_value())
-			return InjectResult::Err(std::string("Process not found: ") + std::string(processName));
-
-		DWORD pid = maybepid.value();
-		const DWORD acc = PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE;
-		ScopedHandle hProcess(OpenProcess(acc, FALSE, pid));
-		if (!hProcess)
-			return InjectResult::Err("OpenProcess failed", GetLastError());
-
-		if (!IsSameArch(hProcess.Get()))
-			return InjectResult::Err("Process mismatch (YLP and target process must be the same architecture).");
-
-		//return manualMap ? ManualMapInject(hProcess, dllPath) : NativeInject(hProcess, dllPath);
-
-		std::wstring dllW  = dllPath.wstring();
-		const SIZE_T bytes = (dllW.size() + 1) * sizeof(wchar_t);
-
-		LPVOID remoteMem = VirtualAllocEx(hProcess.Get(), nullptr, bytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-		if (!remoteMem)
-			return InjectResult::Err("VirtualAllocEx failed", GetLastError());
-
-		SIZE_T written = 0;
-		if (!WriteProcessMemory(hProcess.Get(), remoteMem, dllW.c_str(), bytes, &written) || written != bytes)
-		{
-			const DWORD err = GetLastError();
-			VirtualFreeEx(hProcess.Get(), remoteMem, 0, MEM_RELEASE);
-			return InjectResult::Err("WriteProcessMemory failed", err);
-		}
-
-		ScopedHandle hThread(RemoteLoadLibraryW(hProcess.Get(), remoteMem));
-		if (!hThread)
-		{
-			const DWORD err = GetLastError();
-			VirtualFreeEx(hProcess.Get(), remoteMem, 0, MEM_RELEASE);
-			return InjectResult::Err("CreateRemoteThread (LoadLibraryW) failed", err);
-		}
-
-		const DWORD wait = WaitForSingleObject(hThread.Get(), 10'000);
-		if (wait == WAIT_FAILED)
-		{
-			const DWORD err = GetLastError();
-			LOG_WARN("[PsUtils]: WaitForSingleObject failed with error {}", std::system_category().message(err));
-		}
-		else if (wait == WAIT_TIMEOUT)
-		{
-			LOG_WARN("[PsUtils]: Remote thread timed out after 10 seconds.");
-		}
-
-		DWORD exitCode = 0;
-		if (!GetExitCodeThread(hThread.Get(), &exitCode))
-		{
-			const DWORD err = GetLastError();
-			VirtualFreeEx(hProcess.Get(), remoteMem, 0, MEM_RELEASE);
-			return InjectResult::Err("GetExitCodeThread failed", err);
-		}
-
-		if (exitCode == 0)
-		{
-			VirtualFreeEx(hProcess.Get(), remoteMem, 0, MEM_RELEASE);
-			return InjectResult::Err("Remote LoadLibraryW returned NULL (load failed inside target).");
-		}
-
-		if (!VirtualFreeEx(hProcess.Get(), remoteMem, 0, MEM_RELEASE))
-		{
-			LOG_WARN("[PsUtils]: VirtualFreeEx failed during cleanup with error {}", std::system_category().message(GetLastError()));
-		}
-
-		char buf[265];
-		sprintf_s(buf, "Successfully injected %s into %s. Remote module handle: 0x%08X", dllPath.filename().string().c_str(), processName.data(), static_cast<unsigned int>(exitCode));
-		LOG_DEBUG("[PsUtils]: {}", buf);
-		return InjectResult::Ok();
 	}
 
 	std::string TranslateError(DWORD exitCode)

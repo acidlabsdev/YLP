@@ -1,9 +1,27 @@
+/*
+Copyright (C) 2025 SAMURAI (xesdoog) & Contributors
+This file is part of YLP.
+
+YLP is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+YLP is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with YLP.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+
 #pragma once
 
 #define ICON_MIN_MS 0xE037
 #define ICON_MAX_MS 0xF8B6
 
-#define ICON_MS_ADD                                      "\xEE\x85\x85" // U+E145
 #define ICON_MS_BACKGROUND_REPLACE                       "\xEF\x88\x8A" // U+F20A
 #define ICON_MS_BACKSPACE                                "\xEE\x85\x8A" // U+E14A
 #define ICON_MS_BLOCK                                    "\xEF\x82\x8C" // U+F08C
@@ -21,6 +39,7 @@
 #define ICON_MS_DISPLAY_SETTINGS                         "\xEE\xAE\x97" // U+EB97
 #define ICON_MS_DOWNLOAD                                 "\xEF\x82\x90" // U+F090
 #define ICON_MS_ERROR                                    "\xEF\xA2\xB6" // U+F8B6
+#define ICON_MS_EXCLAMATION                              "\xEF\x88\xAF" // U+F22F
 #define ICON_MS_EXTENSION                                "\xEE\xA1\xBB" // U+E87B
 #define ICON_MS_FILE_COPY                                "\xEE\x85\xB3" // U+E173
 #define ICON_MS_FILTER_LIST                              "\xEE\x85\x92" // U+E152
@@ -39,6 +58,7 @@
 #define ICON_MS_NOTIFICATIONS_ACTIVE                     "\xEE\x9F\xB7" // U+E7F7
 #define ICON_MS_NOTIFICATIONS_OFF                        "\xEE\x9F\xB6" // U+E7F6
 #define ICON_MS_NOTIFICATIONS_PAUSED                     "\xEE\x9F\xB8" // U+E7F8
+#define ICON_MS_NOTIFICATIONS_UNREAD                     "\xEF\x93\xBE" // U+F4FE
 #define ICON_MS_OPACITY                                  "\xEE\xA4\x9C" // U+E91C
 #define ICON_MS_OPEN_IN_NEW                              "\xEE\xA2\x9E" // U+E89E
 #define ICON_MS_PALETTE                                  "\xEE\x90\x8A" // U+E40A
@@ -47,6 +67,8 @@
 #define ICON_MS_RADIO_BUTTON_CHECKED                     "\xEE\xA0\xB7" // U+E837
 #define ICON_MS_RADIO_BUTTON_UNCHECKED                   "\xEE\xA0\xB6" // U+E836
 #define ICON_MS_REFRESH                                  "\xEE\x97\x95" // U+E5D5
+#define ICON_MS_RUNNING_WITH_ERRORS                      "\xEE\x94\x9D" // U+E51D
+#define ICON_MS_SDK                                      "\xEE\x9C\xA0" // U+E720
 #define ICON_MS_SEARCH                                   "\xEE\xBD\xBA" // U+EF7A
 #define ICON_MS_SETTINGS                                 "\xEE\xA2\xB8" // U+E8B8
 #define ICON_MS_STAR                                     "\xEF\x82\x9A" // U+F09A
@@ -57,6 +79,8 @@
 #define ICON_MS_TOGGLE_ON                                "\xEE\xA7\xB6" // U+E9F6
 #define ICON_MS_TUNE                                     "\xEE\x90\xA9" // U+E429
 #define ICON_MS_UPDATE                                   "\xEE\xA4\xA3" // U+E923
+#define ICON_MS_UPLOAD_FILE                              "\xEE\xA7\xBC" // U+E9FC
 #define ICON_MS_VOLUME_MUTE                              "\xEE\x81\x8E" // U+E04E
 #define ICON_MS_VOLUME_UP                                "\xEE\x81\x90" // U+E050
 #define ICON_MS_WARNING                                  "\xEF\x82\x83" // U+F083
+

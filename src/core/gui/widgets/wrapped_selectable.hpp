@@ -19,26 +19,27 @@
 
 namespace ImGui
 {
-	inline bool WrappedSelectable(const char* label)
+	inline bool WrappedSelectable(const char* label, bool selected = false)
 	{
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		if (window->SkipItems)
 			return false;
 
-		ImGuiStyle& style = ImGui::GetStyle();
-		ImVec4 hoverColor = style.Colors[ImGuiCol_HeaderHovered];
+		ImGuiStyle& style  = ImGui::GetStyle();
+		ImVec4 hoverColor  = style.Colors[ImGuiCol_HeaderHovered];
 		ImVec4 activeColor = style.Colors[ImGuiCol_HeaderActive];
-		float wrapX = ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x;
+		float wrapX        = ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x;
 		ImGui::PushTextWrapPos(wrapX);
 
-		ImVec2 textPos = ImGui::GetCursorScreenPos();
-		ImVec2 labelSize = ImGui::CalcTextSize(label, nullptr, false, wrapX - textPos.x);
-		labelSize.x += style.FramePadding.x * 2;
-		labelSize.y += style.FramePadding.y * 2;
+		ImVec2 textPos    = ImGui::GetCursorScreenPos();
+		ImVec2 labelSize  = ImGui::CalcTextSize(label, nullptr, false, wrapX - textPos.x);
+		labelSize.x      += style.FramePadding.x * 2;
+		labelSize.y      += style.FramePadding.y * 2;
 		ImRect rect(textPos, textPos + labelSize);
+
 		bool hovered = ImGui::IsMouseHoveringRect(rect.Min, rect.Max);
 		bool clicked = hovered && ImGui::IsMouseClicked(0);
-		bool held = hovered && ImGui::IsMouseDown(0);
+		bool held    = selected || (hovered && ImGui::IsMouseDown(0));
 		if (hovered)
 			ImGui::GetWindowDrawList()->AddRectFilled(rect.Min, rect.Max, ImGui::ColorConvertFloat4ToU32(held ? activeColor : hoverColor), 4.f);
 

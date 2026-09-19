@@ -5,7 +5,7 @@
 #include "pointers.hpp"
 
 
-namespace YLP
+namespace YLP::Memory
 {
 	std::shared_ptr<ProcessMonitor> g_ProcLegacy = nullptr;
 	std::shared_ptr<ProcessMonitor> g_ProcEnhanced = nullptr;

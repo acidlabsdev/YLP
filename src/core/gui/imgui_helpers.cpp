@@ -19,71 +19,98 @@
 
 namespace ImGui
 {
+	using namespace YLP;
+
 	void SameLineIfAvail(float itemwidth, float region)
 	{
 		if (region <= 0.f)
-			region = ImGui::GetContentRegionAvail().x;
+			region = GetContentRegionAvail().x;
 
-		ImGui::SameLine();
-		if (itemwidth >= ImGui::GetContentRegionAvail().x)
-			ImGui::NewLine();
+		SameLine();
+		if (itemwidth >= GetContentRegionAvail().x)
+			NewLine();
 	}
 
 	void ToolTip(const char* text, ImFont* font, bool delayed, float textWrapWidth)
 	{
+		if (Config().disableTooltips)
+			return;
+
 		ImGuiHoveredFlags flags = ImGuiHoveredFlags_AllowWhenDisabled;
 
 		if (delayed)
 			flags |= ImGuiHoveredFlags_DelayNormal;
 
-		if (!ImGui::IsItemHovered(flags))
+		if (!IsItemHovered(flags))
 			return;
 
 		if (!font)
 			font = Fonts::Regular;
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
-		ImGui::SetNextWindowBgAlpha(0.848f);
-		ImGui::PushFont(font);
-		ImGui::BeginTooltip();
-		ImGui::PushTextWrapPos(textWrapWidth >= 0.f ? textWrapWidth : ImGui::GetFontSize() * 25);
-		ImGui::Text(text);
-		ImGui::PopTextWrapPos();
-		ImGui::EndTooltip();
-		ImGui::PopFont();
-		ImGui::PopStyleVar();
+		PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+		SetNextWindowBgAlpha(0.848f);
+		PushFont(font);
+		BeginTooltip();
+		PushTextWrapPos(textWrapWidth >= 0.f ? textWrapWidth : GetFontSize() * 25);
+		Text(text);
+		PopTextWrapPos();
+		EndTooltip();
+		PopFont();
+		PopStyleVar();
+	}
+
+	void TooltipIcon(const char* icon, const char* text, ImFont* font)
+	{
+		if (Config().disableTooltips)
+			return;
+
+		SameLine();
+		TextDisabled(icon);
+		ToolTip(text, font, false);
 	}
 
 	void HelpMarker(const char* text, ImFont* font)
 	{
-		ImGui::SameLine();
-		ImGui::TextDisabled(ICON_MS_HELP);
-		ToolTip(text, font, false);
+		TooltipIcon(ICON_MS_HELP, text);
+	}
+
+	void WarningMarker(const char* text, ImFont* font)
+	{
+		ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(0.5, 0.5, 0, 0.75));
+		TooltipIcon(ICON_MS_WARNING, text);
+		ImGui::PopStyleColor();
+	}
+
+	void ErrorMarker(const char* text, ImFont* font)
+	{
+		ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(0.9, 0, 0, 0.75));
+		TooltipIcon(ICON_MS_ERROR, text);
+		ImGui::PopStyleColor();
 	}
 
 	void WarningMessage(const char* text)
 	{
-		ImGui::PushFont(Fonts::Title);
-		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35);
-		ImGui::TextColored(ImVec4(1.0f, 0.7568, 0.027f, 1.0f), ICON_MS_WARNING);
-		ImGui::SameLine();
-		ImGui::Text("Warning");
-		ImGui::PopFont();
-		ImGui::PopTextWrapPos();
+		PushFont(Fonts::Title);
+		PushTextWrapPos(GetFontSize() * 35);
+		TextColored(ImVec4(1.0f, 0.7568, 0.027f, 1.0f), ICON_MS_WARNING);
+		SameLine();
+		Text("Warning");
+		PopFont();
+		PopTextWrapPos();
 
-		ImGui::Dummy(ImVec2(0, 2.f));
-		ImGui::TextWrapped(text);
-		ImGui::Spacing();
+		Dummy(ImVec2(0, 2.f));
+		TextWrapped(text);
+		Spacing();
 	}
 
 	void TitleText(const char* text, bool separator)
 	{
-		ImGui::PushFont(Fonts::Title);
+		PushFont(Fonts::Title);
 		if (separator)
-			ImGui::SeparatorText(text);
+			SeparatorText(text);
 		else
-			ImGui::Text(text);
-		ImGui::PopFont();
+			Text(text);
+		PopFont();
 	}
 
 	ImButtonColorScheme MakeButtonColors(ImVec4 baseColor, float hoverFactor, float activeFactor)
@@ -93,8 +120,8 @@ namespace ImGui
 		};
 
 		ImButtonColorScheme s;
-		s.Base = baseColor;
-		s.Hover = Mul(baseColor, hoverFactor);
+		s.Base   = baseColor;
+		s.Hover  = Mul(baseColor, hoverFactor);
 		s.Active = Mul(baseColor, activeFactor);
 		return s;
 	}
@@ -104,11 +131,11 @@ namespace ImGui
 		bool ret = false;
 		ImButtonColorScheme scheme = MakeButtonColors(baseColor);
 
-		ImGui::PushStyleColor(ImGuiCol_Button, scheme.Base);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, scheme.Hover);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, scheme.Active);
-		ret = ImGui::Button(label);
-		ImGui::PopStyleColor(3);
+		PushStyleColor(ImGuiCol_Button, scheme.Base);
+		PushStyleColor(ImGuiCol_ButtonHovered, scheme.Hover);
+		PushStyleColor(ImGuiCol_ButtonActive, scheme.Active);
+		ret = Button(label);
+		PopStyleColor(3);
 
 		return ret;
 	}
@@ -120,10 +147,10 @@ namespace ImGui
 	    const ImVec2& uv1,
 	    const ImVec4& tint_col)
 	{
-		ImVec2 p_min = ImGui::GetCursorScreenPos();
+		ImVec2 p_min = GetCursorScreenPos();
 		ImVec2 p_max = ImVec2(p_min.x + diameter, p_min.y + diameter);
-		ImGui::GetWindowDrawList()->AddImageRounded(texture_id, p_min, p_max, uv0, uv1, ImGui::GetColorU32(tint_col), diameter * 0.5f);
-		ImGui::Dummy(ImVec2(diameter, diameter));
+		GetWindowDrawList()->AddImageRounded(texture_id, p_min, p_max, uv0, uv1, GetColorU32(tint_col), diameter * 0.5f);
+		Dummy(ImVec2(diameter, diameter));
 	}
 
 	void TextCentered(const char* text, ImFont* font, float availWidth)
@@ -131,33 +158,34 @@ namespace ImGui
 		if (!font)
 			font = Fonts::Regular;
 
-		ImGui::PushFont(font);
-		float windowWidth = availWidth ? availWidth : ImGui::GetWindowSize().x;
-		float textWidth = ImGui::CalcTextSize(text).x;
-		float textPosX = (windowWidth - textWidth) * 0.5f;
-		ImGui::SetCursorPosX(textPosX > 0 ? textPosX : 0);
-		ImGui::Text(text);
-		ImGui::PopFont();
+		PushFont(font);
+		float windowWidth = availWidth ? availWidth : GetWindowSize().x;
+		float textWidth   = CalcTextSize(text).x;
+		float textPosX    = (windowWidth - textWidth) * 0.5f;
+		SetCursorPosX(textPosX > 0 ? textPosX : 0);
+		Text(text);
+		PopFont();
 	}
 
 	bool SelectableLabel(const char* icon, bool selected)
 	{
-		ImGui::BeginGroup();
-		const ImVec2 framePadding = ImGui::GetStyle().FramePadding;
-		const ImVec2 cursorPos = ImGui::GetCursorPos();
-		float frameHeight = ImGui::GetFrameHeight();
-		bool clicked = ImGui::InvisibleButton(icon, ImVec2(frameHeight, frameHeight));
-		bool hovered = ImGui::IsItemHovered();
-		auto colIdx = selected ? ImGuiCol_ButtonActive : (hovered ? ImGuiCol_ButtonHovered : (clicked ? ImGuiCol_Button : ImGuiCol_Text));
-		if (hovered and ImGui::IsMouseDown(0))
+		BeginGroup();
+		const ImVec2 framePadding = GetStyle().FramePadding;
+		const ImVec2 cursorPos    = GetCursorPos();
+		float frameHeight         = GetFrameHeight();
+		bool clicked              = InvisibleButton(icon, ImVec2(frameHeight, frameHeight));
+		bool hovered              = IsItemHovered();
+		auto colIdx               = selected ? ImGuiCol_ButtonActive : (hovered ? ImGuiCol_ButtonHovered : (clicked ? ImGuiCol_Button : ImGuiCol_Text));
+
+		if (hovered and IsMouseDown(0))
 			colIdx = ImGuiCol_Button;
 
-		ImGui::SameLine();
-		ImGui::SetCursorPos(ImVec2(cursorPos.x + framePadding.x, cursorPos.y + framePadding.y));
-		ImGui::TextColored(ImGui::GetStyleColorVec4(colIdx), icon);
-		ImGui::EndGroup();
-		if (ImGui::IsItemHovered())
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		SameLine();
+		SetCursorPos(ImVec2(cursorPos.x + framePadding.x, cursorPos.y + framePadding.y));
+		TextColored(GetStyleColorVec4(colIdx), icon);
+		EndGroup();
+		if (IsItemHovered())
+			SetMouseCursor(ImGuiMouseCursor_Hand);
 
 		return clicked;
 	}
@@ -169,37 +197,53 @@ namespace ImGui
 	    ImKVflags valueDrawFlags,
 	    std::string optionalUrl)
 	{
-		ImGui::TextUnformatted(key);
-		auto valsize = ImGui::CalcTextSize(value.c_str());
-		ImGui::SameLine(ImGui::GetContentRegionAvail().x - valsize.x - (copyable ? 40 : 5));
-		ImGui::PushStyleColor(ImGuiCol_Text, valueColor);
+		TextUnformatted(key);
+		auto valsize = CalcTextSize(value.c_str());
+		auto offset  = GetContentRegionAvail().x - valsize.x - (copyable ? 40 : 5);
+		if (offset > 0)
+			SameLine(offset);
+		else
+			Indent();
+
+		PushStyleColor(ImGuiCol_Text, valueColor);
 
 		switch (valueDrawFlags)
 		{
 		case KVflagsHyperlink:
-			ImGui::TextLinkOpenURL(value.c_str(), optionalUrl.c_str());
+			TextLinkOpenURL(value.c_str(), optionalUrl.c_str());
 			break;
 		case KVflagsBullet:
-			ImGui::BulletText(value.c_str());
+			BulletText(value.c_str());
 			break;
 		default:
-			ImGui::TextUnformatted(value.c_str());
+			TextUnformatted(value.c_str());
 			break;
 		}
 
-		ImGui::PopStyleColor();
+		PopStyleColor();
 		if (copyable)
 		{
-			ImGui::SameLine();
-			if (ImGui::SmallButton(ICON_MS_FILE_COPY))
-				ImGui::SetClipboardText(value.c_str());
-			ImGui::ToolTip("Copy");
+			SameLine();
+			if (SmallButton(ICON_MS_FILE_COPY))
+				SetClipboardText(value.c_str());
+			ToolTip("Copy");
 		}
+		if (offset <= 0)
+			Unindent();
 	};
 
 	ImFont* GetScaledFont()
 	{
-		return YLP::Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
+		return Renderer::GetWindowSize().x >= 1200 ? Fonts::Regular : Fonts::Small;
+	}
+
+	bool SearchBar(const char* label, char* searchBuffer, ImGuiInputTextFlags flags)
+	{
+		Utils::CharToLower(searchBuffer);
+		PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(16, 8));
+		bool out = InputTextWithHint("##SearchBox", ICON_MS_SEARCH, searchBuffer, sizeof(searchBuffer), flags);
+		PopStyleVar();
+		return out;
 	}
 
 	void DrawRotatingImage(ImDrawList* drawList, ImTextureID texture, ImVec2 centrePos, ImVec2 size, float angle)
@@ -233,5 +277,17 @@ namespace ImGui
 		    {1, 0},
 		    {1, 1},
 		    {0, 1});
+	}
+
+	float GetFrameWidth()
+	{
+		ImGuiContext& g = *GImGui;
+		return g.FontSize + g.Style.FramePadding.x * 2.0f;
+	}
+
+	float GetFrameWidthWithSpacing()
+	{
+		ImGuiContext& g = *GImGui;
+		return g.FontSize + g.Style.FramePadding.x * 2.0f + g.Style.ItemSpacing.x;
 	}
 }

@@ -26,7 +26,7 @@
 namespace YLP::Frontend
 {
 	using namespace YLP;
-	using LuaManager = YLP::LuaJIT::LuaManager;
+	using namespace LuaJIT;
 
 	class SettingsTab final : public GuiTab
 	{
@@ -36,7 +36,8 @@ namespace YLP::Frontend
 		{
 		}
 
-		static inline void DrawGeneral(Settings::Config& cfg)
+	private:
+		void DrawGeneral(Settings::Config& cfg)
 		{
 			auto updateState = YLPUpdater.GetState();
 			ImGui::BeginDisabled(updateState == Updater::UpdateState::Error);
@@ -83,13 +84,16 @@ namespace YLP::Frontend
 			ImGui::Checkbox("Restore Last Tab", &cfg.restoreLastTab);
 			ImGui::HelpMarker("Your last selected tab will be restored when the program starts.");
 
+			ImGui::Checkbox("Disable Tooltips", &cfg.disableTooltips);
+			ImGui::HelpMarker("Disables... Well, this.");
+
 			ImGui::BeginDisabled(cfg.autoMonitorFlags == MonitorNone);
 			ImGui::Checkbox("Auto-Exit", &cfg.autoExit);
 			ImGui::HelpMarker("Automatically exit after injecting a dll. This only works if Auto-Inject is enabled for either YimMenu Legacy or V2 or both; does nothing otherwise.");
 			ImGui::EndDisabled();
 		}
 
-		static inline void DrawUISettings(Settings::Config& cfg)
+		void DrawUISettings(Settings::Config& cfg)
 		{
 			ImGui::Text(ICON_MS_OPACITY " Global Opacity");
 			ImGui::HelpMarker("Overrides window opacity across the entire application. When selecting a window blur or acrylic effect, this must be lowered in order to see those effects.");
@@ -115,8 +119,8 @@ namespace YLP::Frontend
 			ImGui::Spacing();
 			ImGui::SeparatorText(ICON_MS_PALETTE " Themes");
 			ImVec2 previewSize(200, 220);
-			Theme* currentTheme = ThemeManager::GetCurrentTheme();
-			auto& themes = ThemeManager::GetThemes();
+			Theme* currentTheme      = ThemeManager::GetCurrentTheme();
+			auto& themes             = ThemeManager::GetThemes();
 			std::string_view preview = currentTheme ? currentTheme->m_Name : "";
 			for (auto& [name, theme] : themes)
 			{
@@ -129,7 +133,7 @@ namespace YLP::Frontend
 			}
 		}
 
-		static inline void DrawPlugins(Settings::Config& cfg)
+		void DrawPlugins(Settings::Config& cfg)
 		{
 			if (ImGui::Checkbox("Enable Lua Scripting", &cfg.enableScripting))
 			{
@@ -139,9 +143,8 @@ namespace YLP::Frontend
 				}
 				else if (cfg.enableScripting = MsgBox::Confirm("YLP", "This will allow YLP to run Lua scripts. Are you sure you would like to enable this feature?"); cfg.enableScripting)
 				{
-					Notifier::Add(
-					    "Scripting",
-					    "Warning! This feature can be harmless if not handled properly. Please make sure to only execute Lua code from trusted sources.",
+					Notifier::Add("Scripting",
+					    "Warning! This feature can be harmful if not handled properly. Please make sure to only execute Lua code from trusted sources.",
 					    Notifier::Warning);
 					LuaManager::Init(g_ProjectPath);
 				}
@@ -150,11 +153,14 @@ namespace YLP::Frontend
 			if (!cfg.enableScripting)
 				return;
 
+			ImGui::Checkbox("Auto-Reload Modules", &cfg.autoReloadLuaModules);
+			ImGui::HelpMarker("Automatically reload a Lua module when changes are detected in its root folder.");
+
 			ImGui::Dummy(ImVec2(0, 5));
 
-			auto& modules = LuaManager::GetModules();
+			auto& modules         = LuaManager::GetModules();
 			auto& disabledModules = LuaManager::GetDisabledModules();
-			ImVec2 region = ImGui::GetContentRegionAvail();
+			ImVec2 region         = ImGui::GetContentRegionAvail();
 			ImGui::BeginChild("##enabledPlugins", ImVec2(region.x * 0.5, 0), ImGuiChildFlags_Borders);
 			if (ImGui::SmallButton(ICON_MS_REFRESH))
 				LuaManager::ReloadAllModules();
@@ -173,9 +179,24 @@ namespace YLP::Frontend
 					auto pathName = m->GetRoot().string();
 
 					ImGui::PushID(&m);
-					ImGui::BeginDisabled(m == dragSourcePtr);
-					if (ImGui::Selectable(m->GetName().data(), m == selectedModule))
-						selectedModule = m;
+					ImGui::BeginDisabled(dragSourcePtr && m == dragSourcePtr);
+					bool isBroken = m->GetLoadState() == LuaModule::BROKEN;
+					auto icon     = isBroken ? ICON_MS_RUNNING_WITH_ERRORS : ICON_MS_SDK;
+
+					if (isBroken)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9, 0, 0, 1.0));
+						ImGui::PushStyleColor(ImGuiCol_TextDisabled, ImVec4(0.9, 0, 0, 0.5));
+					}
+					ImGui::Selectable(std::format("{} {}", icon, m->GetName()).c_str(), (selectedModule && m == selectedModule));
+
+					if (isBroken)
+					{
+						ImGui::PopStyleColor(2);
+						std::string lastErr = m->GetErrorMsg();
+						ImGui::ToolTip(std::format("Unloaded due to a malfunction: '{}'", lastErr.empty() ? "Unknown error." : lastErr).c_str());
+					}
+
 					ImGui::EndDisabled();
 					ImGui::PopID();
 					ImGui::ToolTip("Right click to open the context menu or drag to move to the disabled list.");
@@ -191,6 +212,7 @@ namespace YLP::Frontend
 						dragSourcePtr = m;
 						ImGui::SetDragDropPayload("ENABLED_MODULE", &m, sizeof(m));
 						ImGui::Selectable(m->GetName().data(), true);
+						ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 						ImGui::EndDragDropSource();
 					}
 					else
@@ -202,7 +224,7 @@ namespace YLP::Frontend
 							m->Reload();
 
 						if (ImGui::MenuItem(ICON_MS_TOGGLE_ON " Disable"))
-							m->Unload();
+							m->Disable();
 
 						ImGui::EndPopup();
 					}
@@ -273,13 +295,14 @@ namespace YLP::Frontend
 				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENABLED_MODULE"))
 				{
 					LuaJIT::LuaModule* droppedModule = *static_cast<LuaJIT::LuaModule**>(payload->Data);
-					droppedModule->Unload();
+					droppedModule->Disable();
 					dragSourcePtr = nullptr;
 				}
 				ImGui::EndDragDropTarget();
 			}
 		}
 
+	public:
 		void Draw() override
 		{
 			auto& style = ImGui::GetStyle();
@@ -331,19 +354,21 @@ namespace YLP::Frontend
 		}
 
 	private:
-		static inline std::shared_ptr<LuaJIT::LuaModule> selectedModule{nullptr};
-		static inline std::shared_ptr<LuaJIT::LuaModule> dragSourcePtr{nullptr};
-		static inline std::string selectedDisabledPath{};
-		static inline std::string dragSourceStr{};
-		static inline const int tabCount = 3;
+		std::shared_ptr<LuaJIT::LuaModule> selectedModule{nullptr};
+		std::shared_ptr<LuaJIT::LuaModule> dragSourcePtr{nullptr};
 
-		static inline const char* tabs[] = {
-			ICON_MS_TUNE " General",
+		std::string selectedDisabledPath{};
+		std::string dragSourceStr{};
+
+		const int tabCount = 3;
+
+		std::array<const char*, 3> tabs {
+			ICON_MS_TUNE			 " General",
 			ICON_MS_DISPLAY_SETTINGS " User Interface",
-			ICON_MS_CODE " Scripting"
+			ICON_MS_CODE			 " Scripting"
 		};
 
-		static inline const char* accentStates[] = {
+		std::array<const char*, 6> accentStates {
 		    "None",
 		    "Gradient",
 		    "Transparent Gradient",

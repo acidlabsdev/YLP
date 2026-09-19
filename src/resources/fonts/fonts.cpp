@@ -66,7 +66,7 @@ void Fonts::Load(ImGuiIO& io)
 	ImFontConfig cfg;
 	cfg.OversampleH = 2;
 	cfg.OversampleV = 2;
-	cfg.PixelSnapH = true;
+	cfg.PixelSnapH  = true;
 
 	auto& fonts = io.Fonts;
 	fonts->Clear();

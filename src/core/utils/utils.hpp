@@ -66,6 +66,8 @@ namespace YLP::Utils
 
 	std::optional<uint8_t> CharToHex(char const c);
 
+	void CharToLower(char* c);
+
 	IconData HICONToRGBA(HICON hIcon); // useless
 
 	const std::string RegexMatchHtml(const std::wstring& host, const std::wstring& path, const std::string& ptrn, const int& index = 0);

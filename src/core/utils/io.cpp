@@ -28,11 +28,6 @@ namespace YLP::IO
 			LOG_ERROR("I/O Error: [{}]: {}", ec.category().name(), ec.message());
 	}
 
-	fs::path Path(const fs::path& _path)
-	{
-		return fs::path(_path);
-	}
-
 	bool Exists(const fs::path& _path)
 	{
 		std::error_code ec{};
@@ -185,7 +180,7 @@ namespace YLP::IO
 		ShellExecuteA(nullptr, "open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	}
 
-	void OpenW(const std::wstring& path)
+	void Open(const std::wstring& path)
 	{
 #pragma warning(suppress : 4311)
 		auto result = reinterpret_cast<int>(ShellExecuteW(nullptr, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
@@ -214,6 +209,18 @@ namespace YLP::IO
 		}
 	}
 
+	void HighlightFile(const std::string& filePath)
+	{
+		std::string args = "/select,\"" + filePath + "\"";
+		ShellExecuteA(nullptr, "open", "explorer.exe", args.c_str(), nullptr, SW_SHOW);
+	}
+
+	void HighlightFile(const std::wstring& filePath)
+	{
+		std::wstring args = L"/select,\"" + filePath + L"\"";
+		ShellExecuteW(nullptr, L"open", L"explorer.exe", args.c_str(), nullptr, SW_SHOW);
+	}
+
 	// https://learn.microsoft.com/en-us/windows/win32/shell/common-file-dialog#ifiledialog-ifileopendialog-and-ifilesavedialog
 	fs::path _OpenFileDialog(
 	    const std::vector<COMDLG_FILTERSPEC>& filters,
@@ -223,19 +230,12 @@ namespace YLP::IO
 	    const wchar_t* defaultName,
 	    const wchar_t* defaultExtension)
 	{
-		HRESULT hInitResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		HRESULT hInitResult        = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		IFileOpenDialog* pFileOpen = nullptr;
-		HRESULT hr = CoCreateInstance(
-		    CLSID_FileOpenDialog,
-		    nullptr,
-		    CLSCTX_INPROC_SERVER,
-		    IID_PPV_ARGS(&pFileOpen));
+		HRESULT hr                 = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileOpen));
 
 		if (FAILED(hr))
-		{
-			CoUninitialize();
 			return {};
-		}
 
 		DWORD dwFlags;
 		hr = pFileOpen->GetOptions(&dwFlags);
@@ -246,7 +246,7 @@ namespace YLP::IO
 			return {};
 		}
 
-		hr = pFileOpen->SetOptions(dwFlags | flags | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+		hr = pFileOpen->SetOptions(dwFlags | flags | FOS_FORCEFILESYSTEM);
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
@@ -266,21 +266,36 @@ namespace YLP::IO
 		}
 
 		if (title)
-			pFileOpen->SetTitle(title);
+		{
+			hr = pFileOpen->SetTitle(title);
+			if (FAILED(hr))
+				LOG_DEBUG("Invalid title parameter!");
+		}
 
 		if (defaultName)
-			pFileOpen->SetFileName(defaultName);
+		{
+			hr = pFileOpen->SetFileName(defaultName);
+			if (FAILED(hr))
+				LOG_DEBUG("Invalid default name parameter!");
+		}
 
 		if (defaultExtension)
-			pFileOpen->SetDefaultExtension(defaultExtension);
+		{
+			hr = pFileOpen->SetDefaultExtension(defaultExtension);
+			if (FAILED(hr))
+				LOG_DEBUG("Invalid default extension parameter!");
+		}
 
 		if (Exists(defaultFolder))
 		{
 			IShellItem* pFolderItem = nullptr;
-			HRESULT res = SHCreateItemFromParsingName(defaultFolder.c_str(), nullptr, IID_PPV_ARGS(&pFolderItem));
+			HRESULT res             = SHCreateItemFromParsingName(defaultFolder.c_str(), nullptr, IID_PPV_ARGS(&pFolderItem));
 			if (SUCCEEDED(res))
 			{
-				pFileOpen->SetFolder(pFolderItem);
+				hr = pFileOpen->SetFolder(pFolderItem);
+				if (FAILED(hr))
+					LOG_DEBUG("Invalid default folder parameter!");
+
 				pFolderItem->Release();
 			}
 		}
@@ -326,7 +341,7 @@ namespace YLP::IO
 		bool multiselect,
 		const fs::path& defaultFolder)
 	{
-		DWORD flags = FOS_STRICTFILETYPES | FOS_FILEMUSTEXIST;
+		DWORD flags = FOS_STRICTFILETYPES | FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST;
 		if (multiselect)
 			flags |= FOS_ALLOWMULTISELECT;
 
@@ -356,6 +371,98 @@ namespace YLP::IO
 			defaultFolder,
 			defaultName,
 			defaultExtension);
+	}
+
+	std::optional<std::filesystem::path> MakeAbsPath(const fs::path& root, const fs::path& other)
+	{
+		if (other.is_absolute())
+			return std::nullopt;
+
+		auto canon        = std::filesystem::weakly_canonical(root);
+		auto final        = std::filesystem::weakly_canonical(canon / other);
+		auto [rootEnd, _] = std::mismatch(canon.begin(), canon.end(), final.begin());
+
+		if (rootEnd != canon.end())
+			return std::nullopt;
+
+		return final;
+	};
+
+	DllInfo ValidateDLL(const fs::path& file)
+	{
+		if (!Exists(file))
+			return {.error = "File not found"};
+
+		HANDLE hFile = CreateFileW(file.wstring().c_str(),
+		    GENERIC_READ,
+		    FILE_SHARE_READ,
+		    nullptr,
+		    OPEN_EXISTING,
+		    FILE_ATTRIBUTE_NORMAL,
+		    nullptr);
+
+		if (hFile == INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(hFile);
+			return {.error = "CreateFile failed"};
+		}
+
+		HANDLE hMap = CreateFileMappingW(hFile, nullptr, PAGE_READONLY, 0, 0, nullptr);
+		if (!hMap)
+		{
+			CloseHandle(hFile);
+			return {.error = "CreateFileMapping failed"};
+		}
+
+		LPVOID base = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+		if (!base)
+		{
+			CloseHandle(hMap);
+			CloseHandle(hFile);
+			return {.error = "MapViewOfFile failed"};
+		}
+
+		auto dos = reinterpret_cast<IMAGE_DOS_HEADER*>(base);
+		if (dos->e_magic != IMAGE_DOS_SIGNATURE)
+		{
+			UnmapViewOfFile(base);
+			CloseHandle(hMap);
+			CloseHandle(hFile);
+			return {.error = "Invalid DOS signature"};
+		}
+
+		auto nt = reinterpret_cast<IMAGE_NT_HEADERS*>((BYTE*)base + dos->e_lfanew);
+		if (nt->Signature != IMAGE_NT_SIGNATURE)
+		{
+			UnmapViewOfFile(base);
+			CloseHandle(hMap);
+			CloseHandle(hFile);
+			return {.error = "Invalid NT signature"};
+		}
+
+		DllInfo info{};
+		auto entryExport = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+		info.hasExports  = entryExport.Size > 0 && entryExport.VirtualAddress != 0;
+		info.is64bit     = (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64);
+		info.ok          = true;
+
+		UnmapViewOfFile(base);
+		CloseHandle(hMap);
+		CloseHandle(hFile);
+		return info;
+	}
+
+	DllInfo AddDLL()
+	{
+		auto dllPath = OpenFileDialog({{L"Dynamic Link Library", L"*.dll"}}, L"Select a DLL");
+		if (dllPath.empty())
+			return {.error = "Canceled by user"};
+
+		DllInfo info  = ValidateDLL(dllPath);
+		info.checksum = Utils::CalcSha256(dllPath);
+		info.filepath = dllPath;
+		info.name     = dllPath.filename().string();
+		return info;
 	}
 
 	std::wstring ReadRegistryKey(HKEY rootPath, const wchar_t* subkeyPath, const wchar_t* subkeyValue)

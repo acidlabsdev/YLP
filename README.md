@@ -37,15 +37,22 @@ A launchpad for YimMenu Legacy and YimMenuV2 with opt-in automatic injection and
 
 ### Standalone DLL Injector
 
-- Add custom DLL files and inject them into any process *(standard `LoadLibrary`, no manual mapping)*.
-- Any injected file will remember its last target process and automatically select it if it's running.
+- Add custom DLL files and inject them into any process.
+- Offers standard WinAPI `LoadLibrary` as well as manual mapping.
+- Successfully injected files will remember their last target process and automatically select it if it's running.
+- The DLL list can be interacted with in a similar way to any other regular window, not necessarily ImGui list behavior:
+  - Hold and drag items to reorder the list.
+  - Left click an item to highlight it.
+  - Right click an item to bring up its context menu.
+  - Left click an empty space to reset your currently selected item.
+  - Right click an empty space to bring up the list's context menu.
 
-### Builtin Lua Scripting
+### Built-in Lua Scripting
 
 - Provides an optional (opt-in) LuaJIT scripting environment.
 - Feature can be toggled on/off at any time.
 - All scripts placed in the `/Plugins` folder (`%AppData%\YLP\Plugins`) are automatically loaded on program start if the scripting feature is toggled on. Scripts must be placed in their own subfolders and have a main entry file named exactly `main.lua` *(case-insensitive)*.
-- Lua code can be typed and executed directly in the UI as well.
+- Lua code can also be directly typed and executed directly in the `Lua Scripting` UI tab.
 - More info can be found in the [LuaAPI](./docs/Lua%20API/Readme.md) docs section.
 
 ## Themes
@@ -76,7 +83,7 @@ A huge thanks to the open source community and their immense contributions. You 
         <img height="256" width="256" alt="Settings" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/5.jpg">&nbsp;&nbsp;
     </a>
     <a href="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">
-        <img height="512" width="512" alt="Code Executor" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">&nbsp;&nbsp;
+        <img height="256" width="256" alt="Code Executor" src="https://github.com/xesdoog/YLP/blob/main/docs/img/screenshots/4.jpg">&nbsp;&nbsp;
     </a>
 </div>
 

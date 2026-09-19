@@ -103,7 +103,7 @@ end)
 >[!Note]
 >The example code above is GTA V-specific but the underlying API is not. [Process](./Docs/Process.md) and [Pointer](./Docs/Pointer.md) operate on arbitrary processes so Lua scripts can be used to extend YLP for other applications and modding frameworks as well.
 
-For advanced users, the `JIT` and `FFI` libs are open. `os`, `io`, and `debug` are not.
+For advanced users, the `JIT` and `FFI` libs are open. `debug` is not. If you experience crashes/instability with certain shared modules *(JSON/XML parsers, web scrapers, etc.)* try disabling jit either for those specific modules only or for your entire module.
 
 ## Language Server
 
@@ -128,9 +128,7 @@ To have type hints in your code editor, follow these steps:
                 "../shared"
             ],
             "Lua.runtime.builtin": {
-                "debug": "disable",
-                "os": "disable",
-                "io": "disable",
+                "debug": "disable"
             },
         }
     }
@@ -196,4 +194,4 @@ The embedded version is v2.1 with 3.0 extensions backport. These extensions incl
     local n = 1_000_000
     ```
 
-You can learn more about 3.0 extensions on [LuaJIT#1475](https://github.com/LuaJIT/LuaJIT/issues/1475).
+You can learn more about 3.0 extensions at [LuaJIT#1475](https://github.com/LuaJIT/LuaJIT/issues/1475).
