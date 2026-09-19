@@ -31,10 +31,10 @@ namespace YLP::LuaJIT
 		void Register(sol::state& L) override
 		{
 			/*@ylp.enum ImGuiSeparatorFlags
-			* field None
-			* field Horizontal
-			* field Vertical
-			* field SpanAllColumns
+			* field None<integer>
+			* field Horizontal<integer>
+			* field Vertical<integer>
+			* field SpanAllColumns<integer>
 			@*/
 			L.new_enum("ImGuiSeparatorFlags",
 			    "None",
@@ -47,18 +47,18 @@ namespace YLP::LuaJIT
 			    ImGuiSeparatorFlags_SpanAllColumns);
 
 			/*@ylp.enum ImGuiMouseCursor
-			* field None
-			* field Arrow
-			* field TextInput
-			* field ResizeAll
-			* field ResizeNS
-			* field ResizeEW
-			* field ResizeNESW
-			* field ResizeNWSE
-			* field Hand
-			* field Wait
-			* field Progress
-			* field NotAllowed
+			* field None<integer>
+			* field Arrow<integer>
+			* field TextInput<integer>
+			* field ResizeAll<integer>
+			* field ResizeNS<integer>
+			* field ResizeEW<integer>
+			* field ResizeNESW<integer>
+			* field ResizeNWSE<integer>
+			* field Hand<integer>
+			* field Wait<integer>
+			* field Progress<integer>
+			* field NotAllowed<integer>
 			@*/
 			L.new_enum("ImGuiMouseCursor",
 			    "None",
@@ -87,11 +87,11 @@ namespace YLP::LuaJIT
 			    ImGuiMouseCursor_NotAllowed);
 
 			/*@ylp.enum ImGuiDir
-			* field None
-			* field Left
-			* field Right
-			* field Up
-			* field Down
+			* field None<integer>
+			* field Left<integer>
+			* field Right<integer>
+			* field Up<integer>
+			* field Down<integer>
 			@*/
 			L.new_enum("ImGuiDir",
 			    "None",
@@ -106,15 +106,15 @@ namespace YLP::LuaJIT
 			    ImGuiDir_Down);
 
 			/*@ylp.enum ImGuiComboFlags
-			* field None
-			* field PopupAlignLeft
-			* field HeightSmall
-			* field HeightRegular
-			* field HeightHeightLarge
-			* field HeightHeightLargest
-			* field NoArrowButton
-			* field NoPreview
-			* field WidthFitPreview
+			* field None<integer>
+			* field PopupAlignLeft<integer>
+			* field HeightSmall<integer>
+			* field HeightRegular<integer>
+			* field HeightHeightLarge<integer>
+			* field HeightHeightLargest<integer>
+			* field NoArrowButton<integer>
+			* field NoPreview<integer>
+			* field WidthFitPreview<integer>
 			@*/
 			L.new_enum("ImGuiComboFlags",
 			    "None",
@@ -137,14 +137,14 @@ namespace YLP::LuaJIT
 			    ImGuiComboFlags_WidthFitPreview);
 
 			/*@ylp.enum ImGuiChildFlags
-			* field None
-			* field Borders
-			* field AlwaysUseWindowPadding
-			* field ResizeX
-			* field ResizeY
-			* field AlwaysAutoResize
-			* field FrameStyle
-			* field NavFlattened
+			* field None<integer>
+			* field Borders<integer>
+			* field AlwaysUseWindowPadding<integer>
+			* field ResizeX<integer>
+			* field ResizeY<integer>
+			* field AlwaysAutoResize<integer>
+			* field FrameStyle<integer>
+			* field NavFlattened<integer>
 			@*/
 			L.new_enum("ImGuiChildFlags",
 			    "None",
@@ -165,29 +165,29 @@ namespace YLP::LuaJIT
 			    ImGuiChildFlags_NavFlattened);
 
 			/*@ylp.enum ImGuiWindowFlags
-			* field None
-			* field NoTitleBar
-			* field NoResize
-			* field NoMove
-			* field NoScrollbar
-			* field NoScrollWithMouse
-			* field NoCollapse
-			* field AlwaysAutoResize
-			* field NoBackground
-			* field NoSavedSettings
-			* field NoMouseInputs
-			* field MenuBar
-			* field HorizontalScrollbar
-			* field NoFocusOnAppearing
-			* field NoBringToFrontOnFocus
-			* field AlwaysVerticalScrollbar
-			* field AlwaysHorizontalScrollbar
-			* field NoNavInputs
-			* field NoNavFocus
-			* field UnsavedDocument
-			* field NoNav
-			* field NoDecoration
-			* field NoInputs
+			* field None<integer>
+			* field NoTitleBar<integer>
+			* field NoResize<integer>
+			* field NoMove<integer>
+			* field NoScrollbar<integer>
+			* field NoScrollWithMouse<integer>
+			* field NoCollapse<integer>
+			* field AlwaysAutoResize<integer>
+			* field NoBackground<integer>
+			* field NoSavedSettings<integer>
+			* field NoMouseInputs<integer>
+			* field MenuBar<integer>
+			* field HorizontalScrollbar<integer>
+			* field NoFocusOnAppearing<integer>
+			* field NoBringToFrontOnFocus<integer>
+			* field AlwaysVerticalScrollbar<integer>
+			* field AlwaysHorizontalScrollbar<integer>
+			* field NoNavInputs<integer>
+			* field NoNavFocus<integer>
+			* field UnsavedDocument<integer>
+			* field NoNav<integer>
+			* field NoDecoration<integer>
+			* field NoInputs<integer>
 			@*/
 			L.new_enum("ImGuiWindowFlags",
 			    "None",
@@ -234,44 +234,44 @@ namespace YLP::LuaJIT
 			    ImGuiWindowFlags_NoInputs);
 
 			/*@ylp.enum ImGuiStyleVar
-			* field DisabledAlpha
-			* field WindowPadding
-			* field WindowRounding
-			* field WindowBorderSize
-			* field WindowMinSize
-			* field WindowTitleAlign
-			* field ChildRounding
-			* field ChildBorderSize
-			* field PopupRounding
-			* field PopupBorderSize
-			* field FramePadding
-			* field FrameRounding
-			* field FrameBorderSize
-			* field ItemSpacing
-			* field ItemInnerSpacing
-			* field IndentSpacing
-			* field CellPadding
-			* field ScrollbarSize
-			* field ScrollbarRounding
-			* field ScrollbarPadding
-			* field GrabMinSize
-			* field GrabRounding
-			* field ImageBorderSize
-			* field TabRounding
-			* field TabBorderSize
-			* field TabMinWidthBase
-			* field TabMinWidthShrink
-			* field TabBarBorderSize
-			* field TabBarOverlineSize
-			* field TableAngledHeadersAngle
-			* field TableAngledHeadersTextAlign
-			* field TreeLinesSize
-			* field TreeLinesRounding
-			* field ButtonTextAlign
-			* field SelectableTextAlign
-			* field SeparatorTextBorderSize
-			* field SeparatorTextAlign
-			* field SeparatorTextPadding
+			* field DisabledAlpha<integer>
+			* field WindowPadding<integer>
+			* field WindowRounding<integer>
+			* field WindowBorderSize<integer>
+			* field WindowMinSize<integer>
+			* field WindowTitleAlign<integer>
+			* field ChildRounding<integer>
+			* field ChildBorderSize<integer>
+			* field PopupRounding<integer>
+			* field PopupBorderSize<integer>
+			* field FramePadding<integer>
+			* field FrameRounding<integer>
+			* field FrameBorderSize<integer>
+			* field ItemSpacing<integer>
+			* field ItemInnerSpacing<integer>
+			* field IndentSpacing<integer>
+			* field CellPadding<integer>
+			* field ScrollbarSize<integer>
+			* field ScrollbarRounding<integer>
+			* field ScrollbarPadding<integer>
+			* field GrabMinSize<integer>
+			* field GrabRounding<integer>
+			* field ImageBorderSize<integer>
+			* field TabRounding<integer>
+			* field TabBorderSize<integer>
+			* field TabMinWidthBase<integer>
+			* field TabMinWidthShrink<integer>
+			* field TabBarBorderSize<integer>
+			* field TabBarOverlineSize<integer>
+			* field TableAngledHeadersAngle<integer>
+			* field TableAngledHeadersTextAlign<integer>
+			* field TreeLinesSize<integer>
+			* field TreeLinesRounding<integer>
+			* field ButtonTextAlign<integer>
+			* field SelectableTextAlign<integer>
+			* field SeparatorTextBorderSize<integer>
+			* field SeparatorTextAlign<integer>
+			* field SeparatorTextPadding<integer>
 			@*/
 			L.new_enum("ImGuiStyleVar",
 			    "DisabledAlpha",
@@ -352,64 +352,64 @@ namespace YLP::LuaJIT
 			    ImGuiStyleVar_SeparatorTextPadding);
 
 			/*@ylp.enum ImGuiCol
-			* field TextDisabled
-			* field WindowBg
-			* field ChildBg
-			* field PopupBg
-			* field Border
-			* field BorderShadow
-			* field FrameBg
-			* field FrameBgHovered
-			* field FrameBgActive
-			* field TitleBg
-			* field TitleBgActive
-			* field TitleBgCollapsed
-			* field MenuBarBg
-			* field ScrollbarBg
-			* field ScrollbarGrab
-			* field ScrollbarGrabHovered
-			* field ScrollbarGrabActive
-			* field CheckMark
-			* field SliderGrab
-			* field SliderGrabActive
-			* field Button
-			* field ButtonHovered
-			* field ButtonActive
-			* field Header
-			* field HeaderHovered
-			* field HeaderActive
-			* field Separator
-			* field SeparatorHovered
-			* field SeparatorActive
-			* field ResizeGrip
-			* field ResizeGripHovered
-			* field ResizeGripActive
-			* field InputTextCursor
-			* field TabHovered
-			* field Tab
-			* field TabSelected
-			* field TabSelectedOverline
-			* field TabDimmed
-			* field TabDimmedSelected
-			* field TabDimmedSelectedOverline
-			* field PlotLines
-			* field PlotLinesHovered
-			* field PlotHistogram
-			* field PlotHistogramHovered
-			* field TableHeaderBg
-			* field TableBorderStrong
-			* field TableBorderLight
-			* field TableRowBg
-			* field TableRowBgAlt
-			* field TextLink
-			* field TextSelectedBg
-			* field TreeLines
-			* field DragDropTarget
-			* field UnsavedMarker
-			* field NavCursor
-			* field NavWindowingHighlight
-			* field NavWindowingDimBg
-			* field ModalWindowDimBg
+			* field TextDisabled<integer>
+			* field WindowBg<integer>
+			* field ChildBg<integer>
+			* field PopupBg<integer>
+			* field Border<integer>
+			* field BorderShadow<integer>
+			* field FrameBg<integer>
+			* field FrameBgHovered<integer>
+			* field FrameBgActive<integer>
+			* field TitleBg<integer>
+			* field TitleBgActive<integer>
+			* field TitleBgCollapsed<integer>
+			* field MenuBarBg<integer>
+			* field ScrollbarBg<integer>
+			* field ScrollbarGrab<integer>
+			* field ScrollbarGrabHovered<integer>
+			* field ScrollbarGrabActive<integer>
+			* field CheckMark<integer>
+			* field SliderGrab<integer>
+			* field SliderGrabActive<integer>
+			* field Button<integer>
+			* field ButtonHovered<integer>
+			* field ButtonActive<integer>
+			* field Header<integer>
+			* field HeaderHovered<integer>
+			* field HeaderActive<integer>
+			* field Separator<integer>
+			* field SeparatorHovered<integer>
+			* field SeparatorActive<integer>
+			* field ResizeGrip<integer>
+			* field ResizeGripHovered<integer>
+			* field ResizeGripActive<integer>
+			* field InputTextCursor<integer>
+			* field TabHovered<integer>
+			* field Tab<integer>
+			* field TabSelected<integer>
+			* field TabSelectedOverline<integer>
+			* field TabDimmed<integer>
+			* field TabDimmedSelected<integer>
+			* field TabDimmedSelectedOverline<integer>
+			* field PlotLines<integer>
+			* field PlotLinesHovered<integer>
+			* field PlotHistogram<integer>
+			* field PlotHistogramHovered<integer>
+			* field TableHeaderBg<integer>
+			* field TableBorderStrong<integer>
+			* field TableBorderLight<integer>
+			* field TableRowBg<integer>
+			* field TableRowBgAlt<integer>
+			* field TextLink<integer>
+			* field TextSelectedBg<integer>
+			* field TreeLines<integer>
+			* field DragDropTarget<integer>
+			* field UnsavedMarker<integer>
+			* field NavCursor<integer>
+			* field NavWindowingHighlight<integer>
+			* field NavWindowingDimBg<integer>
+			* field ModalWindowDimBg<integer>
 			@*/
 			L.new_enum("ImGuiCol",
 			    "TextDisabled",

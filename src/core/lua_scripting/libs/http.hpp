@@ -63,13 +63,13 @@ namespace YLP::LuaJIT
 			* description
 				Stores response data from the [HTTP](lua://HTTP) table.
 
-			* field body string
+			* field body<string>
 			
-			* field eTag string
+			* field eTag<string>
 			
-			* field status integer
+			* field status<integer>
 			
-			* field success boolean
+			* field success<boolean>
 			@*/
 			auto respTable = httpTable.new_usertype<HttpResponse>("HttpResponse",
 			    sol::no_constructor,

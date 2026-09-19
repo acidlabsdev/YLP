@@ -63,7 +63,7 @@ namespace YLP::LuaJIT
 			* description
 				Provides file system functions. Paths are limited to the `/Plugins` folder only.
 
-			* field Path Path
+			* field Path<Path> The Path class.
 			
 			* function MyRoot Returns the module's root path.
 			* return Path
