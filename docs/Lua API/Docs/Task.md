@@ -6,13 +6,11 @@ Provides functions to run tasks in YLP's thread.
 
 ## Methods
 
-## ``
+## `Run`
 
 ```lua
-function Task.(callback) end
+function Task.Run(callback) end
 ```
-
-Run
 
 ### Parameters
 
@@ -20,13 +18,13 @@ Run
 | --- | --- | --- |
 | `callback` | `function` | The callback to execute |
 
-## ``
+## `RunDelayed`
 
 ```lua
-function Task.(delay, callback) end
+function Task.RunDelayed(delay, callback) end
 ```
 
-RunDelayed Execute a callback after a delay
+Execute a callback after a delay
 
 ### Parameters
 
@@ -35,13 +33,11 @@ RunDelayed Execute a callback after a delay
 | `delay` | `integer` | Delay in milliseconds |
 | `callback` | `function` | The function to execute |
 
-## ``
+## `Sleep`
 
 ```lua
-function Task.(ms) end
+function Task.Sleep(ms) end
 ```
-
-Sleep
 
 ### Parameters
 
@@ -49,13 +45,11 @@ Sleep
 | --- | --- | --- |
 | `ms` | `integer` | Sleep time in milliseconds |
 
-## ``
+## `Yield`
 
 ```lua
-function Task.(ms) end
+function Task.Yield(ms) end
 ```
-
-Yield
 
 ### Parameters
 

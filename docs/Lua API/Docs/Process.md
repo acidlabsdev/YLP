@@ -6,21 +6,9 @@ A process abstraction providing basic process interactions.
 
 ## Constructors
 
-## ``
-
 ```lua
-function Process:(processName) end
+Process(processName)
 ```
-
-__call
-
-### Parameters
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `processName` | `string` |  |
-
-__call
 
 ### Parameters
 
@@ -29,13 +17,11 @@ __call
 | `processName` | `string` |  |
 ## Methods
 
-## ``
+## `IsRunning`
 
 ```lua
-function Process:() end
+function Process:IsRunning() end
 ```
-
-IsRunning
 
 ### Returns
 
@@ -43,13 +29,11 @@ IsRunning
 | --- | --- |
 | `boolean` |  |
 
-## ``
+## `IsModuleLoaded`
 
 ```lua
-function Process:(moduleName) end
+function Process:IsModuleLoaded(moduleName) end
 ```
-
-IsModuleLoaded
 
 ### Parameters
 
@@ -63,13 +47,11 @@ IsModuleLoaded
 | --- | --- |
 | `boolean` |  |
 
-## ``
+## `GetModuleSize`
 
 ```lua
-function Process:() end
+function Process:GetModuleSize() end
 ```
-
-GetModuleSize
 
 ### Returns
 
@@ -77,13 +59,11 @@ GetModuleSize
 | --- | --- |
 | `integer` |  |
 
-## ``
+## `GetModuleBase`
 
 ```lua
-function Process:() end
+function Process:GetModuleBase() end
 ```
-
-GetModuleBase
 
 ### Returns
 
@@ -91,21 +71,19 @@ GetModuleBase
 | --- | --- |
 | `integer` | -- The module's base address |
 
-## ``
+## `Update`
 
 ```lua
-function Process:() end
+function Process:Update() end
 ```
 
-Update Updates the process object's internal state. This is useful because the `Process` class does not poll for status on its own.
+Updates the process object's internal state. This is useful because the `Process` class does not poll for status on its own.
 
-## ``
+## `FindPattern`
 
 ```lua
-function Process:(pattern, name, chunkSize) end
+function Process:FindPattern(pattern, name, chunkSize) end
 ```
-
-FindPattern
 
 ### Parameters
 

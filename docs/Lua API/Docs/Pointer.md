@@ -8,31 +8,25 @@ It is exclusively returned by [Process](./Process.md) and can not be explicitly 
 
 ## Operators
 
-### ``
+### `add`
 
 ```lua
----@operator __(integer): Pointer
+---@operator __add(integer): Pointer
 ```
 
-add
-
-### ``
+### `sub`
 
 ```lua
----@operator __(integer): Pointer
+---@operator __sub(integer): Pointer
 ```
-
-sub
 
 ## Methods
 
-## ``
+## `Add`
 
 ```lua
-function Pointer:(offset) end
+function Pointer:Add(offset) end
 ```
-
-Add
 
 ### Parameters
 
@@ -46,13 +40,11 @@ Add
 | --- | --- |
 | `Pointer` | ptr A new pointer at the new address. |
 
-## ``
+## `Sub`
 
 ```lua
-function Pointer:(offset) end
+function Pointer:Sub(offset) end
 ```
-
-Sub
 
 ### Parameters
 
@@ -66,13 +58,11 @@ Sub
 | --- | --- |
 | `Pointer` | ptr A new pointer at the new address. |
 
-## ``
+## `Rip`
 
 ```lua
-function Pointer:() end
+function Pointer:Rip() end
 ```
-
-Rip
 
 ### Returns
 
@@ -80,13 +70,11 @@ Rip
 | --- | --- |
 | `Pointer` | ptr A new pointer at the resolved RIP-relative address. |
 
-## ``
+## `Dereference`
 
 ```lua
-function Pointer:() end
+function Pointer:Dereference() end
 ```
-
-Dereference
 
 ### Returns
 
@@ -94,13 +82,11 @@ Dereference
 | --- | --- |
 | `Pointer` | ptr A new pointer at the dereferenced address. |
 
-## ``
+## `GetAddress`
 
 ```lua
-function Pointer:() end
+function Pointer:GetAddress() end
 ```
-
-GetAddress
 
 ### Returns
 
@@ -108,13 +94,11 @@ GetAddress
 | --- | --- |
 | `integer` | address The pointer's memory address. |
 
-## ``
+## `IsNull`
 
 ```lua
-function Pointer:() end
+function Pointer:IsNull() end
 ```
-
-IsNull
 
 ### Returns
 
@@ -122,13 +106,13 @@ IsNull
 | --- | --- |
 | `boolean` |  |
 
-## ``
+## `AddBytePatch`
 
 ```lua
-function Pointer:(byteArray, applyImmediately) end
+function Pointer:AddBytePatch(byteArray, applyImmediately) end
 ```
 
-AddBytePatch Creates a `BytePatch` object.
+Creates a `BytePatch` object.
 
 ### Parameters
 
@@ -143,13 +127,13 @@ AddBytePatch Creates a `BytePatch` object.
 | --- | --- |
 | `BytePatch?` | patch A `BytePatch` object or nil |
 
-## ``
+## `ReadBytes`
 
 ```lua
-function Pointer:(numOfBytes) end
+function Pointer:ReadBytes(numOfBytes) end
 ```
 
-ReadBytes Reads up to `n` number of bytes
+Reads up to `n` number of bytes
 
 ### Parameters
 
@@ -163,13 +147,11 @@ ReadBytes Reads up to `n` number of bytes
 | --- | --- |
 | `{[integer]:` | integer} byteArray An array of bytes |
 
-## ``
+## `ReadString`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadString() end
 ```
-
-ReadString
 
 ### Returns
 
@@ -177,13 +159,13 @@ ReadString
 | --- | --- |
 | `string` |  |
 
-## ``
+## `ReadInt8`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt8() end
 ```
 
-ReadInt8 Reads a signed 8bit integer
+Reads a signed 8bit integer
 
 ### Returns
 
@@ -191,13 +173,13 @@ ReadInt8 Reads a signed 8bit integer
 | --- | --- |
 | `integer` | s8 value |
 
-## ``
+## `ReadUint8`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadUint8() end
 ```
 
-ReadUint8 Reads an unsigned 8bit integer
+Reads an unsigned 8bit integer
 
 ### Returns
 
@@ -205,13 +187,13 @@ ReadUint8 Reads an unsigned 8bit integer
 | --- | --- |
 | `integer` | u8 value |
 
-## ``
+## `ReadInt16`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt16() end
 ```
 
-ReadInt16 Reads a signed 16bit integer
+Reads a signed 16bit integer
 
 ### Returns
 
@@ -219,13 +201,13 @@ ReadInt16 Reads a signed 16bit integer
 | --- | --- |
 | `integer` | s16 value |
 
-## ``
+## `ReadUint16`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadUint16() end
 ```
 
-ReadUint16 Reads an unsigned 16bit integer
+Reads an unsigned 16bit integer
 
 ### Returns
 
@@ -233,13 +215,13 @@ ReadUint16 Reads an unsigned 16bit integer
 | --- | --- |
 | `integer` | u16 value |
 
-## ``
+## `ReadInt32`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt32() end
 ```
 
-ReadInt32 Reads a signed 32bit integer
+Reads a signed 32bit integer
 
 ### Returns
 
@@ -247,13 +229,13 @@ ReadInt32 Reads a signed 32bit integer
 | --- | --- |
 | `integer` | s32 value |
 
-## ``
+## `ReadUint32`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadUint32() end
 ```
 
-ReadUint32 Reads an unsigned 32bit integer
+Reads an unsigned 32bit integer
 
 ### Returns
 
@@ -261,13 +243,13 @@ ReadUint32 Reads an unsigned 32bit integer
 | --- | --- |
 | `integer` | u32 value |
 
-## ``
+## `ReadInt64`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadInt64() end
 ```
 
-ReadInt64 Reads a signed 64bit integer
+Reads a signed 64bit integer
 
 ### Returns
 
@@ -275,13 +257,13 @@ ReadInt64 Reads a signed 64bit integer
 | --- | --- |
 | `integer` | s64 value |
 
-## ``
+## `ReadUint64`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadUint64() end
 ```
 
-ReadUint64 Reads an unsigned 64bit integer
+Reads an unsigned 64bit integer
 
 ### Returns
 
@@ -289,13 +271,13 @@ ReadUint64 Reads an unsigned 64bit integer
 | --- | --- |
 | `integer` | u64 value |
 
-## ``
+## `ReadFloat`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadFloat() end
 ```
 
-ReadFloat Reads a float
+Reads a float
 
 ### Returns
 
@@ -303,13 +285,13 @@ ReadFloat Reads a float
 | --- | --- |
 | `number` |  |
 
-## ``
+## `ReadDouble`
 
 ```lua
-function Pointer:() end
+function Pointer:ReadDouble() end
 ```
 
-ReadDouble Reads a double
+Reads a double
 
 ### Returns
 
@@ -317,13 +299,11 @@ ReadDouble Reads a double
 | --- | --- |
 | `number` |  |
 
-## ``
+## `WriteBytes`
 
 ```lua
-function Pointer:(byteArray) end
+function Pointer:WriteBytes(byteArray) end
 ```
-
-WriteBytes
 
 ### Parameters
 
@@ -337,13 +317,11 @@ WriteBytes
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteString`
 
 ```lua
-function Pointer:(str) end
+function Pointer:WriteString(str) end
 ```
-
-WriteString
 
 ### Parameters
 
@@ -357,13 +335,11 @@ WriteString
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteInt8`
 
 ```lua
-function Pointer:(s8) end
+function Pointer:WriteInt8(s8) end
 ```
-
-WriteInt8
 
 ### Parameters
 
@@ -377,13 +353,11 @@ WriteInt8
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteUint8`
 
 ```lua
-function Pointer:(u8) end
+function Pointer:WriteUint8(u8) end
 ```
-
-WriteUint8
 
 ### Parameters
 
@@ -397,13 +371,11 @@ WriteUint8
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteInt16`
 
 ```lua
-function Pointer:(s16) end
+function Pointer:WriteInt16(s16) end
 ```
-
-WriteInt16
 
 ### Parameters
 
@@ -417,13 +389,11 @@ WriteInt16
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteUint16`
 
 ```lua
-function Pointer:(u16) end
+function Pointer:WriteUint16(u16) end
 ```
-
-WriteUint16
 
 ### Parameters
 
@@ -437,13 +407,11 @@ WriteUint16
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteInt32`
 
 ```lua
-function Pointer:(s32) end
+function Pointer:WriteInt32(s32) end
 ```
-
-WriteInt32
 
 ### Parameters
 
@@ -457,13 +425,11 @@ WriteInt32
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteUint32`
 
 ```lua
-function Pointer:(u32) end
+function Pointer:WriteUint32(u32) end
 ```
-
-WriteUint32
 
 ### Parameters
 
@@ -477,13 +443,11 @@ WriteUint32
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteInt64`
 
 ```lua
-function Pointer:(s64) end
+function Pointer:WriteInt64(s64) end
 ```
-
-WriteInt64
 
 ### Parameters
 
@@ -497,13 +461,11 @@ WriteInt64
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteUint64`
 
 ```lua
-function Pointer:(u64) end
+function Pointer:WriteUint64(u64) end
 ```
-
-WriteUint64
 
 ### Parameters
 
@@ -517,13 +479,11 @@ WriteUint64
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteFloat`
 
 ```lua
-function Pointer:(v) end
+function Pointer:WriteFloat(v) end
 ```
-
-WriteFloat
 
 ### Parameters
 
@@ -537,13 +497,11 @@ WriteFloat
 | --- | --- |
 | `boolean` | success |
 
-## ``
+## `WriteDouble`
 
 ```lua
-function Pointer:(v) end
+function Pointer:WriteDouble(v) end
 ```
-
-WriteDouble
 
 ### Parameters
 

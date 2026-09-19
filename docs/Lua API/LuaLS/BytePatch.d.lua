@@ -6,14 +6,14 @@
 ---@class BytePatch
 BytePatch = {}
 
--- Apply Applies the patch to the target pointer's memory.
+-- Applies the patch to the target pointer's memory.
 ---@return boolean success Success or failure.
-function BytePatch:() end
+function BytePatch:Apply() end
 
--- Restore Restores the target pointer's original bytes.
+-- Restores the target pointer's original bytes.
 ---@return boolean success Success or failure.
-function BytePatch:() end
+function BytePatch:Restore() end
 
--- IsApplied Whether this patch is currently applied.
+-- Whether this patch is currently applied.
 ---@return boolean 
-function BytePatch:() end
+function BytePatch:IsApplied() end

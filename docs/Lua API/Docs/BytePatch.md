@@ -8,13 +8,13 @@ It is exclusively returned by [Pointer](./Pointer.md) and can not be explicitly 
 
 ## Methods
 
-## ``
+## `Apply`
 
 ```lua
-function BytePatch:() end
+function BytePatch:Apply() end
 ```
 
-Apply Applies the patch to the target pointer's memory.
+Applies the patch to the target pointer's memory.
 
 ### Returns
 
@@ -22,13 +22,13 @@ Apply Applies the patch to the target pointer's memory.
 | --- | --- |
 | `boolean` | success Success or failure. |
 
-## ``
+## `Restore`
 
 ```lua
-function BytePatch:() end
+function BytePatch:Restore() end
 ```
 
-Restore Restores the target pointer's original bytes.
+Restores the target pointer's original bytes.
 
 ### Returns
 
@@ -36,13 +36,13 @@ Restore Restores the target pointer's original bytes.
 | --- | --- |
 | `boolean` | success Success or failure. |
 
-## ``
+## `IsApplied`
 
 ```lua
-function BytePatch:() end
+function BytePatch:IsApplied() end
 ```
 
-IsApplied Whether this patch is currently applied.
+Whether this patch is currently applied.
 
 ### Returns
 

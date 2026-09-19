@@ -6,13 +6,11 @@
 
 ## Methods
 
-## ``
+## `GetVersion`
 
 ```lua
-function YLP.() end
+function YLP.GetVersion() end
 ```
-
-GetVersion
 
 ### Returns
 
@@ -20,13 +18,13 @@ GetVersion
 | --- | --- |
 | `string` | version The current YLP version. |
 
-## ``
+## `RegisterProcessWatcher`
 
 ```lua
-function YLP.(processName, callback, delay) end
+function YLP.RegisterProcessWatcher(processName, callback, delay) end
 ```
 
-RegisterProcessWatcher Registers a callback to be executed once when a process is first seen.
+Registers a callback to be executed once when a process is first seen.
 
 You can call `Task.Yield` and `Task.Sleep` in your callback function.
 
@@ -44,13 +42,13 @@ You can call `Task.Yield` and `Task.Sleep` in your callback function.
 | --- | --- |
 | `boolean` | success Whether the registration was successful or not. |
 
-## ``
+## `RegisterGui`
 
 ```lua
-function YLP.(callback) end
+function YLP.RegisterGui(callback) end
 ```
 
-RegisterGui Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
+Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
 
 ### Parameters
 
@@ -58,13 +56,13 @@ RegisterGui Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
 | --- | --- | --- |
 | `callback` | `function` | The UI to draw. ImGui functions can only be called here. |
 
-## ``
+## `InjectDll`
 
 ```lua
-function YLP.(dllPath, processName, manualMap, manualMapArgs) end
+function YLP.InjectDll(dllPath, processName, manualMap, manualMapArgs) end
 ```
 
-InjectDll Injects a dynamic link library into a target process.
+Injects a dynamic link library into a target process.
 
 ### Parameters
 
@@ -82,13 +80,13 @@ InjectDll Injects a dynamic link library into a target process.
 | `boolean` | status Success or failure. |
 | `string?` | failReason Optional error message if injection fails. |
 
-## ``
+## `OnShutdown`
 
 ```lua
-function YLP.(callback) end
+function YLP.OnShutdown(callback) end
 ```
 
-OnShutdown Registers a function to be executed when YLP is shutting down.
+Registers a function to be executed when YLP is shutting down.
 
 ### Parameters
 
@@ -96,12 +94,12 @@ OnShutdown Registers a function to be executed when YLP is shutting down.
 | --- | --- | --- |
 | `callback` | `function` | The function to execute |
 
-## ``
+## `UnloadThisModule`
 
 ```lua
-function YLP.() end
+function YLP.UnloadThisModule() end
 ```
 
-UnloadThisModule Unloads the caller module.
+Unloads the caller module.
 
 The module can only be loaded again from the Settings tab in YLP's UI.

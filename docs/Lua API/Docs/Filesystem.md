@@ -12,13 +12,13 @@ Provides file system functions. Paths are limited to the `/Plugins` folder only.
 
 ## Methods
 
-## ``
+## `MyRoot`
 
 ```lua
-function Filesystem.() end
+function Filesystem.MyRoot() end
 ```
 
-MyRoot Returns the module's root path.
+Returns the module's root path.
 
 ### Returns
 
@@ -26,13 +26,13 @@ MyRoot Returns the module's root path.
 | --- | --- |
 | `Path` |  |
 
-## ``
+## `IterDir`
 
 ```lua
-function Filesystem.(path) end
+function Filesystem.IterDir(path) end
 ```
 
-IterDir Recursive directory iterator.
+Recursive directory iterator.
 
 ### Parameters
 
@@ -46,13 +46,11 @@ IterDir Recursive directory iterator.
 | --- | --- |
 | `fun():` | Path |
 
-## ``
+## `Rename`
 
 ```lua
-function Filesystem.(oldPath, newPath) end
+function Filesystem.Rename(oldPath, newPath) end
 ```
-
-Rename
 
 ### Parameters
 
@@ -68,13 +66,11 @@ Rename
 | `boolean` | successOrFailure |
 | `string` | failReason |
 
-## ``
+## `Remove`
 
 ```lua
-function Filesystem.(path) end
+function Filesystem.Remove(path) end
 ```
-
-Remove
 
 ### Parameters
 
