@@ -153,7 +153,7 @@ def parse_annotation(header: str, body: str) -> ApiMember | ApiLibrary:
 				description_lines.append(line)
 				continue
 
-		member_match = re.match(r"^(constructor|operator|method|function|field)(.+?)$", line)
+		member_match = re.match(r"^(constructor|operator|method|function|field)\s+?(.+?)$", line)
 		if member_match:
 			kind = member_match.group(1)
 			declaration = member_match.group(2) or ""
