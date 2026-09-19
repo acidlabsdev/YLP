@@ -6,12 +6,12 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `None` | `None` |  |
-| `PopupAlignLeft` | `None` |  |
-| `HeightSmall` | `None` |  |
-| `HeightRegular` | `None` |  |
-| `HeightHeightLarge` | `None` |  |
-| `HeightHeightLargest` | `None` |  |
-| `NoArrowButton` | `None` |  |
-| `NoPreview` | `None` |  |
-| `WidthFitPreview` | `None` |  |
+| `None` | `integer` |  |
+| `PopupAlignLeft` | `integer` |  |
+| `HeightSmall` | `integer` |  |
+| `HeightRegular` | `integer` |  |
+| `HeightHeightLarge` | `integer` |  |
+| `HeightHeightLargest` | `integer` |  |
+| `NoArrowButton` | `integer` |  |
+| `NoPreview` | `integer` |  |
+| `WidthFitPreview` | `integer` |  |

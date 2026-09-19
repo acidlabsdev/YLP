@@ -6,7 +6,7 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `None` | `None` |  |
-| `Horizontal` | `None` |  |
-| `Vertical` | `None` |  |
-| `SpanAllColumns` | `None` |  |
+| `None` | `integer` |  |
+| `Horizontal` | `integer` |  |
+| `Vertical` | `integer` |  |
+| `SpanAllColumns` | `integer` |  |

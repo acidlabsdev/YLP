@@ -6,15 +6,15 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `None` | `None` |  |
-| `Arrow` | `None` |  |
-| `TextInput` | `None` |  |
-| `ResizeAll` | `None` |  |
-| `ResizeNS` | `None` |  |
-| `ResizeEW` | `None` |  |
-| `ResizeNESW` | `None` |  |
-| `ResizeNWSE` | `None` |  |
-| `Hand` | `None` |  |
-| `Wait` | `None` |  |
-| `Progress` | `None` |  |
-| `NotAllowed` | `None` |  |
+| `None` | `integer` |  |
+| `Arrow` | `integer` |  |
+| `TextInput` | `integer` |  |
+| `ResizeAll` | `integer` |  |
+| `ResizeNS` | `integer` |  |
+| `ResizeEW` | `integer` |  |
+| `ResizeNESW` | `integer` |  |
+| `ResizeNWSE` | `integer` |  |
+| `Hand` | `integer` |  |
+| `Wait` | `integer` |  |
+| `Progress` | `integer` |  |
+| `NotAllowed` | `integer` |  |

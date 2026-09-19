@@ -8,17 +8,17 @@ Provides file system functions. Paths are limited to the `/Plugins` folder only.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `Path` | `None` | Path |
+| `Path` | `Path` | The Path class. |
 
 ## Methods
 
-## `MyRoot`
+## ``
 
 ```lua
-function Filesystem.MyRoot() end
+function Filesystem.() end
 ```
 
-Returns the module's root path.
+MyRoot Returns the module's root path.
 
 ### Returns
 
@@ -26,13 +26,13 @@ Returns the module's root path.
 | --- | --- |
 | `Path` |  |
 
-## `IterDir`
+## ``
 
 ```lua
-function Filesystem.IterDir(path) end
+function Filesystem.(path) end
 ```
 
-Recursive directory iterator.
+IterDir Recursive directory iterator.
 
 ### Parameters
 
@@ -46,11 +46,13 @@ Recursive directory iterator.
 | --- | --- |
 | `fun():` | Path |
 
-## `Rename`
+## ``
 
 ```lua
-function Filesystem.Rename(oldPath, newPath) end
+function Filesystem.(oldPath, newPath) end
 ```
+
+Rename
 
 ### Parameters
 
@@ -66,11 +68,13 @@ function Filesystem.Rename(oldPath, newPath) end
 | `boolean` | successOrFailure |
 | `string` | failReason |
 
-## `Remove`
+## ``
 
 ```lua
-function Filesystem.Remove(path) end
+function Filesystem.(path) end
 ```
+
+Remove
 
 ### Parameters
 

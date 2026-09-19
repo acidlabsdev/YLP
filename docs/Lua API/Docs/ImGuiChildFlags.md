@@ -6,11 +6,11 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `None` | `None` |  |
-| `Borders` | `None` |  |
-| `AlwaysUseWindowPadding` | `None` |  |
-| `ResizeX` | `None` |  |
-| `ResizeY` | `None` |  |
-| `AlwaysAutoResize` | `None` |  |
-| `FrameStyle` | `None` |  |
-| `NavFlattened` | `None` |  |
+| `None` | `integer` |  |
+| `Borders` | `integer` |  |
+| `AlwaysUseWindowPadding` | `integer` |  |
+| `ResizeX` | `integer` |  |
+| `ResizeY` | `integer` |  |
+| `AlwaysAutoResize` | `integer` |  |
+| `FrameStyle` | `integer` |  |
+| `NavFlattened` | `integer` |  |

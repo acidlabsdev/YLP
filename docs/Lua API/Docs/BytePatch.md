@@ -4,17 +4,17 @@
 
 Provides an abstraction around byte patching.
 
-It is exclusively returned by [Pointer](./Pointer) and can not be explicitly constructed.
+It is exclusively returned by [Pointer](./Pointer.md) and can not be explicitly constructed.
 
 ## Methods
 
-## `Apply`
+## ``
 
 ```lua
-function BytePatch:Apply() end
+function BytePatch:() end
 ```
 
-Applies the patch to the target pointer's memory.
+Apply Applies the patch to the target pointer's memory.
 
 ### Returns
 
@@ -22,13 +22,13 @@ Applies the patch to the target pointer's memory.
 | --- | --- |
 | `boolean` | success Success or failure. |
 
-## `Restore`
+## ``
 
 ```lua
-function BytePatch:Restore() end
+function BytePatch:() end
 ```
 
-Restores the target pointer's original bytes.
+Restore Restores the target pointer's original bytes.
 
 ### Returns
 
@@ -36,13 +36,13 @@ Restores the target pointer's original bytes.
 | --- | --- |
 | `boolean` | success Success or failure. |
 
-## `IsApplied`
+## ``
 
 ```lua
-function BytePatch:IsApplied() end
+function BytePatch:() end
 ```
 
-Whether this patch is currently applied.
+IsApplied Whether this patch is currently applied.
 
 ### Returns
 

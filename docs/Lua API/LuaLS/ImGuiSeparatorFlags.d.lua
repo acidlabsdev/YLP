@@ -1,8 +1,8 @@
 ---@meta
 
 ---@class ImGuiSeparatorFlags
----@field None integer
----@field Horizontal integer
----@field Vertical integer
----@field SpanAllColumns integer
+---@field None integer 
+---@field Horizontal integer 
+---@field Vertical integer 
+---@field SpanAllColumns integer 
 ImGuiSeparatorFlags = {}

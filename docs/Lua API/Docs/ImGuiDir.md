@@ -6,8 +6,8 @@
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `None` | `None` |  |
-| `Left` | `None` |  |
-| `Right` | `None` |  |
-| `Up` | `None` |  |
-| `Down` | `None` |  |
+| `None` | `integer` |  |
+| `Left` | `integer` |  |
+| `Right` | `integer` |  |
+| `Up` | `integer` |  |
+| `Down` | `integer` |  |

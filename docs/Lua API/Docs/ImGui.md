@@ -153,7 +153,7 @@ function ImGui.ArrowButton(label, direction) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `label` | `string` |  |
-| `direction` | `integer` | [ImGuiDir](./ImGuiDir) |
+| `direction` | `integer` | [ImGuiDir](./ImGuiDir.md) |
 
 ### Returns
 
@@ -289,7 +289,7 @@ function ImGui.BeginCombo(label, preview, flags) end
 | --- | --- | --- |
 | `label` | `string` |  |
 | `preview` | `string` |  |
-| `flags` | `integer?` | Optional [ImGuiComboFlags](./ImGuiComboFlags) |
+| `flags` | `integer?` | Optional [ImGuiComboFlags](./ImGuiComboFlags.md) |
 
 ### Returns
 
@@ -316,8 +316,8 @@ function ImGui.BeginChild(name, sizeX, sizeY, childFlags, windowFlags) end
 | `name` | `string` |  |
 | `sizeX` | `number?` | Optional child width. |
 | `sizeY` | `number?` | Optional child height. |
-| `childFlags` | `integer?` | Optional [ImGuiChildFlags](./ImGuiChildFlags) |
-| `windowFlags` | `integer?` | Optional [ImGuiWindowFlags](./ImGuiWindowFlags) |
+| `childFlags` | `integer?` | Optional [ImGuiChildFlags](./ImGuiChildFlags.md) |
+| `windowFlags` | `integer?` | Optional [ImGuiWindowFlags](./ImGuiWindowFlags.md) |
 
 ### Returns
 
@@ -372,7 +372,7 @@ function ImGui.SeparatorEx(flags, thickness) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `flags` | `integer` | [ImGuiSeparatorFlags](./ImGuiSeparatorFlags) |
+| `flags` | `integer` | [ImGuiSeparatorFlags](./ImGuiSeparatorFlags.md) |
 | `thickness` | `number` |  |
 
 ## `SeparatorEx`
@@ -385,7 +385,7 @@ function ImGui.SeparatorEx(flags, thickness) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `flags` | `integer` | [ImGuiSeparatorFlags](./ImGuiSeparatorFlags) |
+| `flags` | `integer` | [ImGuiSeparatorFlags](./ImGuiSeparatorFlags.md) |
 | `thickness` | `number` |  |
 
 ## `Indent`
@@ -578,7 +578,7 @@ function ImGui.PushStyleVar(styleVar, v) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `styleVar` | `integer` | [ImGuiStyleVar](./ImGuiStyleVar) index |
+| `styleVar` | `integer` | [ImGuiStyleVar](./ImGuiStyleVar.md) index |
 | `v` | `number` | style value |
 
 ## `PushStyleVar`
@@ -591,7 +591,7 @@ function ImGui.PushStyleVar(styleVar, vX, vY) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `styleVar` | `integer` | [ImGuiStyleVar](./ImGuiStyleVar) index |
+| `styleVar` | `integer` | [ImGuiStyleVar](./ImGuiStyleVar.md) index |
 | `vX` | `number` | x value |
 | `vY` | `number` | y value |
 
@@ -617,7 +617,7 @@ function ImGui.PushStyleColor(colIdx, r, g, b, a) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `colIdx` | `integer` | [ImGuiCol](./ImGuiCol) index |
+| `colIdx` | `integer` | [ImGuiCol](./ImGuiCol.md) index |
 | `r` | `number` | A number between `0.0` and `1.0` representing the `Red` component of the color. |
 | `g` | `number` | A number between `0.0` and `1.0` representing the `Green` component of the color. |
 | `b` | `number` | A number between `0.0` and `1.0` representing the `Blue` component of the color. |
@@ -645,4 +645,4 @@ function ImGui.PopStyleColor(cursorIdx) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `cursorIdx` | `integer` | [ImGuiMouseCursor](./ImGuiMouseCursor) index |
+| `cursorIdx` | `integer` | [ImGuiMouseCursor](./ImGuiMouseCursor.md) index |

@@ -2,13 +2,13 @@
 
 # HttpResponse
 
-Stores response data from the [HTTP](./HTTP) table.
+Stores response data from the [HTTP](./HTTP.md) table.
 
 ## Fields
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `body` | `None` | string |
-| `eTag` | `None` | string |
-| `status` | `None` | integer |
-| `success` | `None` | boolean |
+| `body` | `string` |  |
+| `eTag` | `string` |  |
+| `status` | `integer` |  |
+| `success` | `boolean` |  |

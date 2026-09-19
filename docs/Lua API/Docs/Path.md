@@ -6,9 +6,21 @@ A path object limited to the `/Plugins` folder
 
 ## Constructors
 
+## ``
+
 ```lua
-Path(path)
+function Path:(path) end
 ```
+
+__call
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `path` | `string` |  |
+
+__call
 
 ### Parameters
 
@@ -17,19 +29,23 @@ Path(path)
 | `path` | `string` |  |
 ## Operators
 
-### `div`
+### ``
 
 ```lua
----@operator __div(string): Path
+---@operator __(string): Path
 ```
+
+div
 
 ## Methods
 
-## `Exists`
+## ``
 
 ```lua
-function Path:Exists() end
+function Path:() end
 ```
+
+Exists
 
 ### Returns
 
@@ -37,11 +53,13 @@ function Path:Exists() end
 | --- | --- |
 | `boolean` |  |
 
-## `IsFile`
+## ``
 
 ```lua
-function Path:IsFile() end
+function Path:() end
 ```
+
+IsFile
 
 ### Returns
 
@@ -49,11 +67,13 @@ function Path:IsFile() end
 | --- | --- |
 | `boolean` |  |
 
-## `IsDir`
+## ``
 
 ```lua
-function Path:IsDir() end
+function Path:() end
 ```
+
+IsDir
 
 ### Returns
 
@@ -61,11 +81,13 @@ function Path:IsDir() end
 | --- | --- |
 | `boolean` |  |
 
-## `GetFilename`
+## ``
 
 ```lua
-function Path:GetFilename() end
+function Path:() end
 ```
+
+GetFilename
 
 ### Returns
 
@@ -73,11 +95,13 @@ function Path:GetFilename() end
 | --- | --- |
 | `string` |  |
 
-## `GetExtension`
+## ``
 
 ```lua
-function Path:GetExtension() end
+function Path:() end
 ```
+
+GetExtension
 
 ### Returns
 
@@ -85,11 +109,13 @@ function Path:GetExtension() end
 | --- | --- |
 | `string` | ext The file extension including the leading dot. Ex: `.json`. Returns empty string for folders. |
 
-## `Join`
+## ``
 
 ```lua
-function Path:Join(subPath) end
+function Path:(subPath) end
 ```
+
+Join
 
 ### Parameters
 
@@ -103,11 +129,13 @@ function Path:Join(subPath) end
 | --- | --- |
 | `Path` |  |
 
-## `Open`
+## ``
 
 ```lua
-function Path:Open(mode) end
+function Path:(mode) end
 ```
+
+Open
 
 ### Parameters
 
@@ -122,13 +150,13 @@ function Path:Open(mode) end
 | `file*?` |  |
 | `string` | failReason An error message if the operation fails. |
 
-## `IterDir`
+## ``
 
 ```lua
-function Path:IterDir() end
+function Path:() end
 ```
 
-Recursive directory iterator.
+IterDir Recursive directory iterator.
 
 ### Returns
 
@@ -136,13 +164,13 @@ Recursive directory iterator.
 | --- | --- |
 | `fun():` | Path |
 
-## `Sha256Sum`
+## ``
 
 ```lua
-function Path:Sha256Sum() end
+function Path:() end
 ```
 
-Calculates the file's SHA256 checksum. Throws if the path is not a file.
+Sha256Sum Calculates the file's SHA256 checksum. Throws if the path is not a file.
 
 ### Returns
 

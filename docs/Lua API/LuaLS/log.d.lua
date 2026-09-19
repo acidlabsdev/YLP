@@ -4,38 +4,38 @@
 ---@class log
 log = {}
 
--- Logs an information message.
+-- info Logs an information message.
 ---@param ... any Any number of arguments of any type.
-function log.info(...) end
+function log.(...) end
 
--- Logs a warning message.
+-- warning Logs a warning message.
 ---@param ... any Any number of arguments of any type.
-function log.warning(...) end
+function log.(...) end
 
--- Logs a debug message.
+-- debug Logs a debug message.
 ---@param ... any Any number of arguments of any type.
-function log.debug(...) end
+function log.(...) end
 
--- Logs an error message.
+-- error Logs an error message.
 ---@param ... any Any number of arguments of any type.
-function log.error(...) end
+function log.(...) end
 
--- Logs a formatted information message. Arguments are the same as `string.format`
+-- finfo Logs a formatted information message. Arguments are the same as `string.format`
 ---@param msg string Message.
 ---@param ... any Optional format arguments.
-function log.finfo(msg, ...) end
+function log.(msg, ...) end
 
--- Logs a formatted warning message. Arguments are the same as `string.format`
+-- fwarning Logs a formatted warning message. Arguments are the same as `string.format`
 ---@param msg string Message.
 ---@param ... any Optional format arguments.
-function log.fwarning(msg, ...) end
+function log.(msg, ...) end
 
--- Logs a formatted debug message. Arguments are the same as `string.format`
+-- fdebug Logs a formatted debug message. Arguments are the same as `string.format`
 ---@param msg string Message.
 ---@param ... any Optional format arguments.
-function log.fdebug(msg, ...) end
+function log.(msg, ...) end
 
--- Logs a formatted error message. Arguments are the same as `string.format`
+-- ferror Logs a formatted error message. Arguments are the same as `string.format`
 ---@param msg string Message.
 ---@param ... any Optional format arguments.
-function log.ferror(msg, ...) end
+function log.(msg, ...) end

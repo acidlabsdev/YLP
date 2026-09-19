@@ -4,128 +4,147 @@
 -- 
 -- It is exclusively returned by [Process](lua://Process) and can not be explicitly constructed.
 ---@class Pointer
----@operator add(integer): Pointer
----@operator sub(integer): Pointer
+---@operator (integer): Pointer
+---@operator (integer): Pointer
 Pointer = {}
 
+-- Add
 ---@param offset integer The offset to add
 ---@return Pointer ptr A new pointer at the new address.
-function Pointer:Add(offset) end
+function Pointer:(offset) end
 
+-- Sub
 ---@param offset integer The offset to subtract.
 ---@return Pointer ptr A new pointer at the new address.
-function Pointer:Sub(offset) end
+function Pointer:(offset) end
 
+-- Rip
 ---@return Pointer ptr A new pointer at the resolved RIP-relative address.
-function Pointer:Rip() end
+function Pointer:() end
 
+-- Dereference
 ---@return Pointer ptr A new pointer at the dereferenced address.
-function Pointer:Dereference() end
+function Pointer:() end
 
+-- GetAddress
 ---@return integer address The pointer's memory address.
-function Pointer:GetAddress() end
+function Pointer:() end
 
+-- IsNull
 ---@return boolean 
-function Pointer:IsNull() end
+function Pointer:() end
 
--- Creates a `BytePatch` object.
+-- AddBytePatch Creates a `BytePatch` object.
 ---@param byteArray {[integer]: integer} An array of bytes. Example: `{ 0x90, 0x90, 0x90 }`
 ---@param applyImmediately boolean? Optional: Apply the patch immediately.
 ---@return BytePatch? patch A `BytePatch` object or nil
-function Pointer:AddBytePatch(byteArray, applyImmediately) end
+function Pointer:(byteArray, applyImmediately) end
 
--- Reads up to `n` number of bytes
+-- ReadBytes Reads up to `n` number of bytes
 ---@param numOfBytes integer Number of bytes to read.
 ---@return {[integer]: integer} byteArray An array of bytes
-function Pointer:ReadBytes(numOfBytes) end
+function Pointer:(numOfBytes) end
 
+-- ReadString
 ---@return string 
-function Pointer:ReadString() end
+function Pointer:() end
 
--- Reads a signed 8bit integer
+-- ReadInt8 Reads a signed 8bit integer
 ---@return integer s8 value
-function Pointer:ReadInt8() end
+function Pointer:() end
 
--- Reads an unsigned 8bit integer
+-- ReadUint8 Reads an unsigned 8bit integer
 ---@return integer u8 value
-function Pointer:ReadUint8() end
+function Pointer:() end
 
--- Reads a signed 16bit integer
+-- ReadInt16 Reads a signed 16bit integer
 ---@return integer s16 value
-function Pointer:ReadInt16() end
+function Pointer:() end
 
--- Reads an unsigned 16bit integer
+-- ReadUint16 Reads an unsigned 16bit integer
 ---@return integer u16 value
-function Pointer:ReadUint16() end
+function Pointer:() end
 
--- Reads a signed 32bit integer
+-- ReadInt32 Reads a signed 32bit integer
 ---@return integer s32 value
-function Pointer:ReadInt32() end
+function Pointer:() end
 
--- Reads an unsigned 32bit integer
+-- ReadUint32 Reads an unsigned 32bit integer
 ---@return integer u32 value
-function Pointer:ReadUint32() end
+function Pointer:() end
 
--- Reads a signed 64bit integer
+-- ReadInt64 Reads a signed 64bit integer
 ---@return integer s64 value
-function Pointer:ReadInt64() end
+function Pointer:() end
 
--- Reads an unsigned 64bit integer
+-- ReadUint64 Reads an unsigned 64bit integer
 ---@return integer u64 value
-function Pointer:ReadUint64() end
+function Pointer:() end
 
--- Reads a float
+-- ReadFloat Reads a float
 ---@return number 
-function Pointer:ReadFloat() end
+function Pointer:() end
 
--- Reads a double
+-- ReadDouble Reads a double
 ---@return number 
-function Pointer:ReadDouble() end
+function Pointer:() end
 
+-- WriteBytes
 ---@param byteArray {[integer]: integer} An array of bytes.
 ---@return boolean success
-function Pointer:WriteBytes(byteArray) end
+function Pointer:(byteArray) end
 
+-- WriteString
 ---@param str string 
 ---@return boolean success
-function Pointer:WriteString(str) end
+function Pointer:(str) end
 
+-- WriteInt8
 ---@param s8 integer 
 ---@return boolean success
-function Pointer:WriteInt8(s8) end
+function Pointer:(s8) end
 
+-- WriteUint8
 ---@param u8 integer 
 ---@return boolean success
-function Pointer:WriteUint8(u8) end
+function Pointer:(u8) end
 
+-- WriteInt16
 ---@param s16 integer 
 ---@return boolean success
-function Pointer:WriteInt16(s16) end
+function Pointer:(s16) end
 
+-- WriteUint16
 ---@param u16 integer 
 ---@return boolean success
-function Pointer:WriteUint16(u16) end
+function Pointer:(u16) end
 
+-- WriteInt32
 ---@param s32 integer 
 ---@return boolean success
-function Pointer:WriteInt32(s32) end
+function Pointer:(s32) end
 
+-- WriteUint32
 ---@param u32 integer 
 ---@return boolean success
-function Pointer:WriteUint32(u32) end
+function Pointer:(u32) end
 
+-- WriteInt64
 ---@param s64 integer 
 ---@return boolean success
-function Pointer:WriteInt64(s64) end
+function Pointer:(s64) end
 
+-- WriteUint64
 ---@param u64 integer 
 ---@return boolean success
-function Pointer:WriteUint64(u64) end
+function Pointer:(u64) end
 
+-- WriteFloat
 ---@param v number 
 ---@return boolean success
-function Pointer:WriteFloat(v) end
+function Pointer:(v) end
 
+-- WriteDouble
 ---@param v number 
 ---@return boolean 
-function Pointer:WriteDouble(v) end
+function Pointer:(v) end

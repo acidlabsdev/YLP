@@ -6,13 +6,13 @@ Provides functions to output text to console and log file.
 
 ## Methods
 
-## `info`
+## ``
 
 ```lua
-function log.info(...) end
+function log.(...) end
 ```
 
-Logs an information message.
+info Logs an information message.
 
 ### Parameters
 
@@ -20,13 +20,13 @@ Logs an information message.
 | --- | --- | --- |
 | `...` | `any` | Any number of arguments of any type. |
 
-## `warning`
+## ``
 
 ```lua
-function log.warning(...) end
+function log.(...) end
 ```
 
-Logs a warning message.
+warning Logs a warning message.
 
 ### Parameters
 
@@ -34,13 +34,13 @@ Logs a warning message.
 | --- | --- | --- |
 | `...` | `any` | Any number of arguments of any type. |
 
-## `debug`
+## ``
 
 ```lua
-function log.debug(...) end
+function log.(...) end
 ```
 
-Logs a debug message.
+debug Logs a debug message.
 
 ### Parameters
 
@@ -48,13 +48,13 @@ Logs a debug message.
 | --- | --- | --- |
 | `...` | `any` | Any number of arguments of any type. |
 
-## `error`
+## ``
 
 ```lua
-function log.error(...) end
+function log.(...) end
 ```
 
-Logs an error message.
+error Logs an error message.
 
 ### Parameters
 
@@ -62,13 +62,13 @@ Logs an error message.
 | --- | --- | --- |
 | `...` | `any` | Any number of arguments of any type. |
 
-## `finfo`
+## ``
 
 ```lua
-function log.finfo(msg, ...) end
+function log.(msg, ...) end
 ```
 
-Logs a formatted information message. Arguments are the same as `string.format`
+finfo Logs a formatted information message. Arguments are the same as `string.format`
 
 ### Parameters
 
@@ -77,13 +77,13 @@ Logs a formatted information message. Arguments are the same as `string.format`
 | `msg` | `string` | Message. |
 | `...` | `any` | Optional format arguments. |
 
-## `fwarning`
+## ``
 
 ```lua
-function log.fwarning(msg, ...) end
+function log.(msg, ...) end
 ```
 
-Logs a formatted warning message. Arguments are the same as `string.format`
+fwarning Logs a formatted warning message. Arguments are the same as `string.format`
 
 ### Parameters
 
@@ -92,13 +92,13 @@ Logs a formatted warning message. Arguments are the same as `string.format`
 | `msg` | `string` | Message. |
 | `...` | `any` | Optional format arguments. |
 
-## `fdebug`
+## ``
 
 ```lua
-function log.fdebug(msg, ...) end
+function log.(msg, ...) end
 ```
 
-Logs a formatted debug message. Arguments are the same as `string.format`
+fdebug Logs a formatted debug message. Arguments are the same as `string.format`
 
 ### Parameters
 
@@ -107,13 +107,13 @@ Logs a formatted debug message. Arguments are the same as `string.format`
 | `msg` | `string` | Message. |
 | `...` | `any` | Optional format arguments. |
 
-## `ferror`
+## ``
 
 ```lua
-function log.ferror(msg, ...) end
+function log.(msg, ...) end
 ```
 
-Logs a formatted error message. Arguments are the same as `string.format`
+ferror Logs a formatted error message. Arguments are the same as `string.format`
 
 ### Parameters
 

@@ -4,16 +4,19 @@
 ---@class Task
 Task = {}
 
+-- Run
 ---@param callback function The callback to execute
-function Task.Run(callback) end
+function Task.(callback) end
 
--- Execute a callback after a delay
+-- RunDelayed Execute a callback after a delay
 ---@param delay integer Delay in milliseconds
 ---@param callback function The function to execute
-function Task.RunDelayed(delay, callback) end
+function Task.(delay, callback) end
 
+-- Sleep
 ---@param ms integer Sleep time in milliseconds
-function Task.Sleep(ms) end
+function Task.(ms) end
 
+-- Yield
 ---@param ms integer? Optional yield time in milliseconds
-function Task.Yield(ms) end
+function Task.(ms) end

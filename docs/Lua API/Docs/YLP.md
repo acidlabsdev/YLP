@@ -6,11 +6,13 @@
 
 ## Methods
 
-## `GetVersion`
+## ``
 
 ```lua
-function YLP.GetVersion() end
+function YLP.() end
 ```
+
+GetVersion
 
 ### Returns
 
@@ -18,13 +20,13 @@ function YLP.GetVersion() end
 | --- | --- |
 | `string` | version The current YLP version. |
 
-## `RegisterProcessWatcher`
+## ``
 
 ```lua
-function YLP.RegisterProcessWatcher(processName, callback, delay) end
+function YLP.(processName, callback, delay) end
 ```
 
-Registers a callback to be executed once when a process is first seen.
+RegisterProcessWatcher Registers a callback to be executed once when a process is first seen.
 
 You can call `Task.Yield` and `Task.Sleep` in your callback function.
 
@@ -42,13 +44,13 @@ You can call `Task.Yield` and `Task.Sleep` in your callback function.
 | --- | --- |
 | `boolean` | success Whether the registration was successful or not. |
 
-## `RegisterGui`
+## ``
 
 ```lua
-function YLP.RegisterGui(callback) end
+function YLP.(callback) end
 ```
 
-Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
+RegisterGui Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
 
 ### Parameters
 
@@ -56,19 +58,19 @@ Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
 | --- | --- | --- |
 | `callback` | `function` | The UI to draw. ImGui functions can only be called here. |
 
-## `InjectDll`
+## ``
 
 ```lua
-function YLP.InjectDll(dllPath, processName, manualMap, manualMapArgs) end
+function YLP.(dllPath, processName, manualMap, manualMapArgs) end
 ```
 
-Injects a dynamic link library into a target process.
+InjectDll Injects a dynamic link library into a target process.
 
 ### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `dllPath` | `Path` | DLL file path. Must be a [Path](./Path) object. |
+| `dllPath` | `Path` | DLL file path. Must be a [Path](./Path.md) object. |
 | `processName` | `string` | Name of the target process. |
 | `manualMap` | `boolean?` | Use manual mapping instead of standard `LoadLibrary` |
 | `manualMapArgs` | `{ eraseHeaders: boolean?, enableSEH: boolean?, randomizeBaseAddress: boolean?}?` | Optional manual mapping configuration. |
@@ -80,13 +82,13 @@ Injects a dynamic link library into a target process.
 | `boolean` | status Success or failure. |
 | `string?` | failReason Optional error message if injection fails. |
 
-## `OnShutdown`
+## ``
 
 ```lua
-function YLP.OnShutdown(callback) end
+function YLP.(callback) end
 ```
 
-Registers a function to be executed when YLP is shutting down.
+OnShutdown Registers a function to be executed when YLP is shutting down.
 
 ### Parameters
 
@@ -94,12 +96,12 @@ Registers a function to be executed when YLP is shutting down.
 | --- | --- | --- |
 | `callback` | `function` | The function to execute |
 
-## `UnloadThisModule`
+## ``
 
 ```lua
-function YLP.UnloadThisModule() end
+function YLP.() end
 ```
 
-Unloads the caller module.
+UnloadThisModule Unloads the caller module.
 
 The module can only be loaded again from the Settings tab in YLP's UI.

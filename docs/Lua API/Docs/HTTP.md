@@ -6,13 +6,13 @@ Provides basic HTTP GET requests.
 
 ## Methods
 
-## `Get`
+## ``
 
 ```lua
-function HTTP.Get(host, path, headers, outFile) end
+function HTTP.(host, path, headers, outFile) end
 ```
 
-Performs a web request. NOTE: this is synchronous so it's recommended to execute it in its own [Task](./Task)
+Get Performs a web request. NOTE: this is synchronous so it's recommended to execute it in its own [Task](./Task.md)
 
 ### Parameters
 

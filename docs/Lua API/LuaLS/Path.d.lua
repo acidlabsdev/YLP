@@ -2,38 +2,48 @@
 
 -- A path object limited to the `/Plugins` folder
 ---@class Path
----@overload fun(path: string): Path
----@operator div(string): Path
+---@operator (string): Path
 Path = {}
 
----@return boolean 
-function Path:Exists() end
+-- __call
+---@param path string 
+function Path:(path) end
 
+-- Exists
 ---@return boolean 
-function Path:IsFile() end
+function Path:() end
 
+-- IsFile
 ---@return boolean 
-function Path:IsDir() end
+function Path:() end
 
+-- IsDir
+---@return boolean 
+function Path:() end
+
+-- GetFilename
 ---@return string 
-function Path:GetFilename() end
+function Path:() end
 
+-- GetExtension
 ---@return string ext The file extension including the leading dot. Ex: `.json`. Returns empty string for folders.
-function Path:GetExtension() end
+function Path:() end
 
+-- Join
 ---@param subPath string 
 ---@return Path 
-function Path:Join(subPath) end
+function Path:(subPath) end
 
+-- Open
 ---@param mode openmode? 
 ---@return file*? 
 ---@return string failReason An error message if the operation fails.
-function Path:Open(mode) end
+function Path:(mode) end
 
--- Recursive directory iterator.
+-- IterDir Recursive directory iterator.
 ---@return fun(): Path
-function Path:IterDir() end
+function Path:() end
 
--- Calculates the file's SHA256 checksum. Throws if the path is not a file.
+-- Sha256Sum Calculates the file's SHA256 checksum. Throws if the path is not a file.
 ---@return string hash SHA256 checksum
-function Path:Sha256Sum() end
+function Path:() end
