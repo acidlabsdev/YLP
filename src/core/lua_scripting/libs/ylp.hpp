@@ -119,7 +119,13 @@ namespace YLP::LuaJIT
 			* function InjectDll Injects a dynamic link library into a target process.
 			* param dllPath<Path> DLL file path. Must be a [Path](lua://Path) object.
 			* param processName<string> Name of the target process.
-			* param manualMap<boolean?> Use manual mapping instead of standard `LoadLibrary`
+			* return boolean status Success or failure.
+			* return string? failReason Optional error message if injection fails.
+
+			* function InjectDll Injects a dynamic link library into a target process.
+			* param dllPath<Path> DLL file path. Must be a [Path](lua://Path) object.
+			* param processName<string> Name of the target process.
+			* param manualMap<boolean> Use manual mapping instead of standard `LoadLibrary`
 			* param manualMapArgs<{ eraseHeaders: boolean?, enableSEH: boolean?, randomizeBaseAddress: boolean?}?> Optional manual mapping configuration.
 			* return boolean status Success or failure.
 			* return string? failReason Optional error message if injection fails.
@@ -135,17 +141,14 @@ namespace YLP::LuaJIT
 				return YLPUpdater.GetLocalVersion();
 			};
 
-			ylpTable["IsDebug"] = []()
-			{
+			ylpTable["IsDebug"] = []() {
 #ifdef DEBUG
 				return true;
 #endif // DEBUG
 				return false;
-
 			};
 
-			ylpTable["RegisterProcessWatcher"] = [&](const std::string& processName, sol::protected_function callback, sol::optional<int> delayMs)
-			{
+			ylpTable["RegisterProcessWatcher"] = [&](const std::string& processName, sol::protected_function callback, sol::optional<int> delayMs) {
 				auto mod = GetModuleFromLuaState(L);
 				if (!mod)
 					return false;
@@ -155,8 +158,7 @@ namespace YLP::LuaJIT
 				return true;
 			};
 
-			ylpTable["RegisterGui"] = [&](sol::protected_function callback)
-			{
+			ylpTable["RegisterGui"] = [&](sol::protected_function callback) {
 				auto mod = GetModuleFromLuaState(L);
 				if (!mod)
 					return;
@@ -177,27 +179,30 @@ namespace YLP::LuaJIT
 				mod->m_GuiCallback = std::move(callback);
 			};
 
-			ylpTable["InjectDll"] = [](const LuaPath& dllPath, const std::string& processName, bool manualMap, sol::optional<sol::table> manualMappingConfig)
-			{
-				auto args                    = manualMappingConfig.value_or(sol::table());
-				Injector::InjectorConfig cfg = {
-				    .m_Mode             = manualMap ? 1 : 0,
-				    .m_WipePE           = args["eraseHeaders"].get_or(false),
-				    .m_RandomizeAddress = args["randomizeBaseAddress"].get_or(false),
-				    .m_EnableSEH        = args["enableSEH"].get_or(false)};
+			ylpTable["InjectDll"] = sol::overload(
+			    [](const LuaPath& dllPath, const std::string& processName) {
+				    Injector::InjectorConfig cfg = {.m_Mode = 0};
+				    Injector::InjectResult res   = Injector::Inject(processName, dllPath.Get(), cfg);
+				    return std::make_tuple(res.m_Success, res.m_Message);
+			    },
+			    [](const LuaPath& dllPath, const std::string& processName, bool manualMap, sol::optional<sol::table> manualMappingConfig) {
+				    auto args                    = manualMappingConfig.value_or(sol::table());
+				    Injector::InjectorConfig cfg = {
+				        .m_Mode             = manualMap ? 1 : 0,
+				        .m_WipePE           = args["eraseHeaders"].get_or(false),
+				        .m_RandomizeAddress = args["randomizeBaseAddress"].get_or(false),
+				        .m_EnableSEH        = args["enableSEH"].get_or(false)};
 
-				Injector::InjectResult res = Injector::Inject(processName, dllPath.Get(), cfg);
-				return std::make_tuple(res.m_Success, res.m_Message);
-			};
+				    Injector::InjectResult res = Injector::Inject(processName, dllPath.Get(), cfg);
+				    return std::make_tuple(res.m_Success, res.m_Message);
+			    });
 
-			ylpTable["OnShutdown"] = [&](sol::protected_function callback)
-			{
+			ylpTable["OnShutdown"] = [&](sol::protected_function callback) {
 				if (auto module = GetModuleFromLuaState(L))
 					module->RegisterShutdownCallback(callback);
 			};
 
-			ylpTable["UnloadThisModule"] = [&]()
-			{
+			ylpTable["UnloadThisModule"] = [&]() {
 				if (auto module = GetModuleFromLuaState(L))
 					module->m_UnloadFromCode = true;
 			};
