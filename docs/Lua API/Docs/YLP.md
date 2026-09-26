@@ -71,6 +71,28 @@ Registers an ImGui callback to be drawn in the 'Lua Scripting' tab.
 ## `InjectDll`
 
 ```lua
+function YLP.InjectDll(dllPath, processName) end
+```
+
+Injects a dynamic link library into a target process.
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `dllPath` | `Path` | DLL file path. Must be a [Path](./Path.md) object. |
+| `processName` | `string` | Name of the target process. |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | status Success or failure. |
+| `string?` | failReason Optional error message if injection fails. |
+
+## `InjectDll`
+
+```lua
 function YLP.InjectDll(dllPath, processName, manualMap, manualMapArgs) end
 ```
 
@@ -82,7 +104,7 @@ Injects a dynamic link library into a target process.
 | --- | --- | --- |
 | `dllPath` | `Path` | DLL file path. Must be a [Path](./Path.md) object. |
 | `processName` | `string` | Name of the target process. |
-| `manualMap` | `boolean?` | Use manual mapping instead of standard `LoadLibrary` |
+| `manualMap` | `boolean` | Use manual mapping instead of standard `LoadLibrary` |
 | `manualMapArgs` | `{ eraseHeaders: boolean?, enableSEH: boolean?, randomizeBaseAddress: boolean?}?` | Optional manual mapping configuration. |
 
 ### Returns

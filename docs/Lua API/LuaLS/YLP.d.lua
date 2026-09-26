@@ -26,7 +26,14 @@ function YLP.RegisterGui(callback) end
 -- Injects a dynamic link library into a target process.
 ---@param dllPath Path DLL file path. Must be a [Path](lua://Path) object.
 ---@param processName string Name of the target process.
----@param manualMap boolean? Use manual mapping instead of standard `LoadLibrary`
+---@return boolean status Success or failure.
+---@return string? failReason Optional error message if injection fails.
+function YLP.InjectDll(dllPath, processName) end
+
+-- Injects a dynamic link library into a target process.
+---@param dllPath Path DLL file path. Must be a [Path](lua://Path) object.
+---@param processName string Name of the target process.
+---@param manualMap boolean Use manual mapping instead of standard `LoadLibrary`
 ---@param manualMapArgs { eraseHeaders: boolean?, enableSEH: boolean?, randomizeBaseAddress: boolean?}? Optional manual mapping configuration.
 ---@return boolean status Success or failure.
 ---@return string? failReason Optional error message if injection fails.
