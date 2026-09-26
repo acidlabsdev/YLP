@@ -21,12 +21,12 @@ namespace ImGui
 {
 	inline bool ThemePreview(const YLP::Frontend::Theme& theme, bool selected = false, const ImVec2& size = {200, 200})
 	{
-		ImVec2 pos			 = ImGui::GetCursorScreenPos();
-		ImGuiStyle& style	 = ImGui::GetStyle();
+		ImVec2 pos			 = GetCursorScreenPos();
+		ImGuiStyle& style	 = GetStyle();
 		ImVec2 windowPadding = style.WindowPadding;
 
-		ImGui::BeginGroup();
-		ImGui::PushID(&theme);
+		BeginGroup();
+		PushID(&theme);
 
 		auto& themeStyles = theme.m_StyleVars;
 		auto& themeColors = theme.m_Colors;
@@ -39,21 +39,21 @@ namespace ImGui
 		
 		float childRounding			  = themeStyles.find("ChildRounding") != themeStyles.end() ? std::get<float>(themeStyles.at("ChildRounding")) : style.ChildRounding;
 		float frameRounding			  = themeStyles.find("FrameRounding") != themeStyles.end() ? std::get<float>(themeStyles.at("FrameRounding")) : style.FrameRounding;
-		bool clicked				  = ImGui::InvisibleButton("##preview", size + style.ItemSpacing + ImVec2(0, ImGui::GetFrameHeight()));
-		bool hovered				  = ImGui::IsItemHovered();
+		bool clicked				  = InvisibleButton("##preview", size + style.ItemSpacing + ImVec2(0, GetFrameHeight()));
+		bool hovered				  = IsItemHovered();
 		bool isDrawingConsole         = YLP::Settings::Get().internalConsole;
 		const float pad				  = size.x * 0.06f;
 		const float consoleMockHeight = isDrawingConsole ? size.x * 0.22f : 0.0f;
 		const float lowerTextHeight   = style.ItemSpacing.y * 7;
 		const float lineH			  = size.y * 0.025f;
 
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImDrawList* drawList = GetWindowDrawList();
 		ImVec2 min			 = pos + ImVec2(1, 1);
 		ImVec2 max			 = min + size - ImVec2(1, 1 + consoleMockHeight + lowerTextHeight);
 		drawList->AddRectFilled(
 		    min,
 		    max,
-		    ImGui::GetColorU32(windowBg),
+		    GetColorU32(windowBg),
 		    childRounding);
 
 		const float sidebarW = size.x * 0.1f;
@@ -62,13 +62,13 @@ namespace ImGui
 		drawList->AddRectFilled(
 		    sidebarMin - ImVec2(1, 1),
 		    sidebarMax + ImVec2(1, 1),
-		    ImGui::GetColorU32(borderCol),
+		    GetColorU32(borderCol),
 		    childRounding);
 
 		drawList->AddRectFilled(
 		    sidebarMin,
 		    sidebarMax,
-		    ImGui::GetColorU32(ImVec4(childBg.x, childBg.y, childBg.z, childBg.w)),
+		    GetColorU32(ImVec4(childBg.x, childBg.y, childBg.z, childBg.w)),
 		    childRounding);
 
 		ImVec2 navButtonMin(sidebarMin.x + 6.0f, sidebarMin.y + 20.0f);
@@ -79,7 +79,7 @@ namespace ImGui
 			drawList->AddRectFilled(
 			    navButtonMin,
 			    navButtonMax,
-			    ImGui::GetColorU32(textColor),
+			    GetColorU32(textColor),
 			    frameRounding);
 			navButtonMin.y += buttonPadding;
 			navButtonMax.y += buttonPadding;
@@ -91,19 +91,19 @@ namespace ImGui
 		drawList->AddRectFilled(
 		    lineMin,
 		    lineMax,
-		    ImGui::GetColorU32(textColor),
+		    GetColorU32(textColor),
 		    1.5f);
 
 		drawList->AddRectFilled(
 		    lineMin + ImVec2(0, pad),
 		    lineMax + ImVec2(0, pad),
-		    ImGui::GetColorU32(textColor),
+		    GetColorU32(textColor),
 		    1.5f);
 
 		drawList->AddRectFilled(
 		    lineMin + ImVec2(0, pad * 2),
 		    ImVec2(lineMax.x - 60.f, lineMax.y + (pad * 2)),
-		    ImGui::GetColorU32(textColor),
+		    GetColorU32(textColor),
 		    1.5f);
 
 		ImVec2 buttonMin = lineMin + ImVec2(0, pad * 4);
@@ -113,7 +113,7 @@ namespace ImGui
 			drawList->AddRectFilled(
 			    buttonMin,
 			    buttonMax,
-			    ImGui::GetColorU32(buttonColor),
+			    GetColorU32(buttonColor),
 			    frameRounding);
 			buttonMin.x += buttonPadding;
 			buttonMax.x += buttonPadding;
@@ -126,7 +126,7 @@ namespace ImGui
 			drawList->AddRectFilled(
 			    consoleMin,
 			    consoleMax,
-			    ImGui::GetColorU32(windowBg),
+			    GetColorU32(windowBg),
 			    childRounding);
 
 			drawList->AddRectFilled(
@@ -137,24 +137,24 @@ namespace ImGui
 		}
 
 		int textColIdx   = selected ? ImGuiCol_CheckMark : hovered ? ImGuiCol_TextDisabled : ImGuiCol_Text;
-		ImVec2 textSize  = ImGui::CalcTextSize(theme.m_Name.data());
-		ImVec2 rbSize	 = ImGui::CalcTextSize(ICON_MS_RADIO_BUTTON_CHECKED);
+		ImVec2 textSize  = CalcTextSize(theme.m_Name.data());
+		ImVec2 rbSize	 = CalcTextSize(ICON_MS_RADIO_BUTTON_CHECKED);
 		float textCenter = (pos.x + max.x - textSize.x) * 0.5f;
 		float rbCenter	 = (pos.x + max.x - rbSize.x) * 0.5f;
 		drawList->AddText(
 		    ImVec2(textCenter, consoleMax.y + style.ItemSpacing.y),
-		    ImGui::GetColorU32(style.Colors[textColIdx]),
+		    GetColorU32(style.Colors[textColIdx]),
 		    theme.m_Name.data());
 
 		drawList->AddText(
 		    ImVec2(rbCenter, consoleMax.y + textSize.y + (style.ItemSpacing.y * 2)),
-		    ImGui::GetColorU32(style.Colors[textColIdx]),
+		    GetColorU32(style.Colors[textColIdx]),
 		    selected ? ICON_MS_RADIO_BUTTON_CHECKED : ICON_MS_RADIO_BUTTON_UNCHECKED);
 
 		if (hovered)
 		{
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-			bool pressed = hovered && ImGui::IsMouseDown(0);
+			SetMouseCursor(ImGuiMouseCursor_Hand);
+			bool pressed = hovered && IsMouseDown(0);
 			float alpha = pressed ? 65 : 25;
 			drawList->AddRectFilled(
 			    min,
@@ -162,8 +162,8 @@ namespace ImGui
 			    IM_COL32(255, 255, 255, alpha),
 			    childRounding);
 		}
-		ImGui::PopID();
-		ImGui::EndGroup();
+		PopID();
+		EndGroup();
 		return clicked;
 	}
 }

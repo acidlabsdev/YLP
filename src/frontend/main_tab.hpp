@@ -20,12 +20,12 @@
 
 #include "../core/gui/gui_tab.hpp"
 #include "../core/gui/msgbox.hpp"
+#include "../core/gui/widgets/ylp_spinner.hpp"
 #include "../core/YimMenu/yimmenu.hpp"
 #include "../core/memory/pointers.hpp"
 #include "../core/memory/procmon.hpp"
 #include "../resources/logos/gtav.hpp"
 #include "../resources/logos/gtave.hpp"
-#include "../core/gui/widgets/ylp_spinner.hpp"
 
 
 namespace YLP::Frontend
@@ -50,20 +50,23 @@ namespace YLP::Frontend
 		{
 			ImVec2 cursorPos     = ImGui::GetCursorPos();
 			ImVec2 childSize     = ImGui::GetWindowSize();
-			auto branchIdx       = Config().mainWindowIndex;
 			float tabButtonWidth = ImGui::CalcTextSize("Enhanced").x + 40.f + (ImGui::GetStyle().ItemSpacing.x * 2);
 			float centerX        = (childSize.x - (tabButtonWidth * 2)) * 0.5;
+			int* mainWindowIndex = &Config().mainWindowIndex;
 
 			ImGui::PushFont(Fonts::Title);
-			ImGui::SegmentedControl("##branchSelector",
-				&Config().mainWindowIndex, {"Legacy", "Enhanced"}, 
-				ImGui::ImSegmentedControlAnchorPos::CENTER);
+			ImGui::SegmentedControl(mainWindowIndex, {"Legacy", "Enhanced"}, ImGui::ImSegmentedCtrlPos_Center);
 			ImGui::PopFont();
 
-			if (branchIdx == 0)
+			switch (*mainWindowIndex)
+			{
+			case 0:
 				DrawLegacy();
-			else if (branchIdx == 1)
+				break;
+			case 1:
 				DrawEnhanced();
+				break;
+			}			
 		}
 
 	private:

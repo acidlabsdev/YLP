@@ -80,7 +80,7 @@ static void __stdcall _shell(MMappingData* pData)
 			ULONG_PTR* pThunk = reinterpret_cast<ULONG_PTR*>(pBase + pImportDesc->OriginalFirstThunk);
 			ULONG_PTR* pFunc  = reinterpret_cast<ULONG_PTR*>(pBase + pImportDesc->FirstThunk);
 
-			if (!pThunk)
+			if (!pImportDesc->OriginalFirstThunk)
 				pThunk = pFunc;
 
 			for (; *pThunk; ++pThunk, ++pFunc)
@@ -121,5 +121,5 @@ static void __stdcall _shell(MMappingData* pData)
 	pData->hModule = ExceptionSupportFailed ? SEH_SUPPORT_FAILED : reinterpret_cast<HINSTANCE>(pBase);
 }
 
-#pragma runtime_checks("", on)
-#pragma optimize("", restore)
+#pragma runtime_checks("", restore)
+#pragma optimize("", on)

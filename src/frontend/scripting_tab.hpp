@@ -31,7 +31,7 @@ namespace YLP::Frontend
 	{
 	public:
 		ScriptingTab() :
-		    GuiTab(eTabID::TAB_SCRIPTING, ICON_MS_CODE, "LuaJIT Scripting")
+		    GuiTab(eTabID::TAB_SCRIPTING, ICON_MS_CODE, "Scripting")
 		{
 		}
 
@@ -80,9 +80,6 @@ namespace YLP::Frontend
 					if (m->GetLoadState() != LuaModule::RUNNING)
 						continue;
 
-					if (!m->m_GuiCallback.valid())
-						continue;
-
 					if (ImGui::Selectable(std::format("{} {}", ICON_MS_SDK, m->GetName()).c_str(), (m_SelectedModule && m == m_SelectedModule)))
 						m_SelectedModule = m;
 
@@ -100,13 +97,19 @@ namespace YLP::Frontend
 				ImGui::BeginChild("##scritpCb");
 				if (m_SelectedModule && m_SelectedModule->GetLoadState() == LuaModule::RUNNING)
 				{
-					auto res = m_SelectedModule->m_GuiCallback();
-					if (!res.valid())
+					auto& cb = m_SelectedModule->m_GuiCallback;
+					if (!cb.valid())
+						ImGui::TextWrapped("This module has no GUI to draw.");
+					else
 					{
-						sol::error e = res;
-						auto msg     = e.what();
-						LOG_ERROR(msg);
-						m_SelectedModule->SetAsBroken(msg);
+						auto res = cb();
+						if (!res.valid())
+						{
+							sol::error e = res;
+							auto msg     = e.what();
+							LOG_ERROR(msg);
+							m_SelectedModule->SetAsBroken(msg);
+						}
 					}
 				}
 				ImGui::EndChild();
@@ -117,7 +120,6 @@ namespace YLP::Frontend
 		void Draw() override
 		{
 			auto& cfg = Config();
-
 			if (!cfg.enableScripting)
 			{
 				ImGui::TextCentered("Currently Unavailable", Fonts::Title);
@@ -131,16 +133,23 @@ namespace YLP::Frontend
 				| ImGuiChildFlags_AlwaysAutoResize
 				| ImGuiChildFlags_AutoResizeY,
 				ImGuiWindowFlags_NoScrollbar);
+
+			int* scriptingWindowIndex = &cfg.scriptingWindowIndex;
 			ImGui::PushFont(Fonts::Bold);
-			ImGui::SegmentedControl("##scriptingTabs", &cfg.scriptingWindowIndex, {"Code Executor", "Script GUIs"}, ImGui::ImSegmentedControlAnchorPos::CENTER);
+			ImGui::SegmentedControl(scriptingWindowIndex, {"Code Executor", "Script GUIs"}, ImGui::ImSegmentedCtrlPos_Center);
 			ImGui::PopFont();
 			ImGui::EndChild();
 			ImGui::Spacing();
 
-			if (cfg.scriptingWindowIndex == 0)
+			switch (*scriptingWindowIndex)
+			{
+			case 0:
 				DrawCodeExecutor();
-			else if (cfg.scriptingWindowIndex == 1)
+				break;
+			case 1:
 				DrawLuaTabs();
+				break;
+			}
 		}
 	private:
 		std::shared_ptr<LuaModule> m_SelectedModule;

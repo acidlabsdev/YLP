@@ -100,7 +100,7 @@ namespace YLP::LuaJIT
 			
 			* method ReadBytes Reads up to `n` number of bytes
 			* param numOfBytes<integer> Number of bytes to read.
-			* return {[integer]: integer} byteArray An array of bytes
+			* return table<integer,integer> byteArray An array of bytes
 
 			* method ReadString
 			* return string

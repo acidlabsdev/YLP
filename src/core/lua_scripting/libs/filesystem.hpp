@@ -31,11 +31,10 @@ namespace YLP::LuaJIT
 	private:
 		fs::path GetModuleRoot(sol::state& L)
 		{
-			auto mod = GetModuleFromLuaState(L);
-			if (!mod)
-				return {};
+			if (auto mod = GetModuleFromLuaState(L))
+				return mod->GetRoot();
 
-			return mod->GetRoot();
+			return {};
 		}
 
 		inline auto Iterator(sol::state& L, const LuaPath& path)
@@ -49,10 +48,16 @@ namespace YLP::LuaJIT
 				if (*iterator == end)
 					return sol::lua_nil;
 
-				LuaPath result(modRoot, (*iterator)->path());
-				++(*iterator);
-
-				return sol::make_object(lua, result);
+				try
+				{
+					LuaPath result(modRoot, (*iterator)->path());
+					++(*iterator);
+					return sol::make_object(lua, result);
+				}
+				catch (const LuaPathError& e)
+				{
+					luaL_error(lua.lua_state(), e.what());
+				}
 			};
 		};
 
@@ -62,8 +67,6 @@ namespace YLP::LuaJIT
 			/*@ylp.table Filesystem
 			* description
 				Provides file system functions. Paths are limited to the `/Plugins` folder only.
-
-			* field Path<Path> The Path class.
 			
 			* function MyRoot Returns the module's root path.
 			* return Path
@@ -80,6 +83,7 @@ namespace YLP::LuaJIT
 
 			* function Remove
 			* param path<Path>
+			* param emptyOnly<boolean?> If true, non-empty folders will not be removed. Defaults to `true`.
 			* return boolean successOrFailure
 			* return string failReason
 			@*/
@@ -101,16 +105,32 @@ namespace YLP::LuaJIT
 				if (!oldPath.Exists())
 					return std::make_tuple(false, "File not found");
 
+				auto modRoot  = GetModuleRoot(L);
+				auto modEntry = modRoot / "main.lua";
+				auto& oldFs   = oldPath.Get();
+				auto& newFs   = newPath.Get();
+
+				if (oldFs == modRoot || oldFs == modEntry || newFs == modRoot || newFs == modEntry)
+					return std::make_tuple(false, "Can not rename module's root path or entry point!");
+
 				bool success = IO::Rename(oldPath.Get(), newPath.Get());
 				return std::make_tuple(success, success ? "" : "An error has occured.");
 			};
 
-			luaFs["Remove"] = [&](const LuaPath& path)
+			luaFs["Remove"] = [&](const LuaPath& path, sol::optional<bool> emptyOnly)
 			{
 				if (!path.Exists())
 					return std::make_tuple(false, "File not found");
 
-				bool success = IO::RemoveAll(path.Get());
+				auto modRoot  = GetModuleRoot(L);
+				auto modEntry = modRoot / "main.lua";
+				auto& pathFs  = path.Get();
+
+				if (pathFs == modRoot || pathFs == modEntry)
+					return std::make_tuple(false, "Can not remove module's root path or entry point!");
+
+				auto func    = emptyOnly.value_or(true) ? IO::Remove : IO::RemoveAll;
+				bool success = func(path.Get());
 				return std::make_tuple(success, success ? "" : "An error has occured.");
 			};
 
@@ -134,60 +154,76 @@ namespace YLP::LuaJIT
 			* method IsDir
 			* return boolean
 
+			* method MakeDir Creates a directory if it doesn't exist
+			*
+
+			* method MakeDirs Creates a directory and any missing parent directories
+			*
+
 			* method GetFilename
 			* return string
+
+			* method GetStem
+			* return string stem The file name without the extension.
 
 			* method GetExtension
 			* return string ext The file extension including the leading dot. Ex: `.json`. Returns empty string for folders.
 
-			* method Join
+			* method GetFileSize
+			* return integer filesz The file size in bytes.
+
+			* method GetParent
+			* return Path parentDir The parent directory. Note: This will throw if the path is outside the module's root directory.
+
+			* method Join Joins the path with a sub-path. Does the same thing as the division operator *(__div)*: `myPath / "somefile.txt"`
 			* param subPath<string>
 			* return Path
 
 			* method Open
 			* param mode<openmode?>
-			* return file*?
+			* return file*? File handle or nil
 			* return string failReason An error message if the operation fails.
+
+			* method ToString Returns the string representation of the path. `myPath:ToString()`, `myPath:__tostring()`, and `tostring(myPath)` all achieve the same thing.
+			* return string strPath
 
 			* method IterDir Recursive directory iterator.
 			* return fun(): Path
 
-			* method Sha256Sum Calculates the file's SHA256 checksum. Throws if the path is not a file.
-			* return string hash SHA256 checksum
+			* method CalcSha256 Calculates the file's SHA256 hash. Throws if the path is not a file.
+			* return string SHA256
 			@*/
-			auto pathCls = luaFs.new_usertype<LuaPath>("Path",
-			    sol::call_constructor, sol::factories([&](const fs::path& path)
+			auto pathCls = L.new_usertype<LuaPath>("Path",
+			    sol::call_constructor, sol::factories([&](const std::string& path)
 				{
-					auto modRoot = GetModuleRoot(L);
-					if (!IO::Exists(modRoot))
-						return LuaPath();
+				    try
+				    {
+					    return LuaPath(GetModuleRoot(L), path);
+				    }
+				    catch (const LuaPathError& e)
+				    {
+					    throw sol::error(e.what());
+				    }
+				})
+			);
 
-					if (modRoot == path)
-						return LuaPath(modRoot, modRoot);
-
-					auto absPath = IO::MakeAbsPath(modRoot, path);
-					if (!absPath.has_value())
-					{
-						L.safe_script("error(\"The Path class is restricted to the module's root folder.\", 2)");
-						return LuaPath();
-					}
-
-					return LuaPath(modRoot, *absPath); 
-				}));
-
-			pathCls["GetFilename"]  = &LuaPath::Filename;
 			pathCls["GetExtension"] = &LuaPath::Extension;
+			pathCls["GetFilename"]  = &LuaPath::Filename;
+			pathCls["GetFileSize"]  = &LuaPath::Size;
+			pathCls["GetParent"]    = &LuaPath::Parent;
+			pathCls["GetStem"]      = &LuaPath::Stem;
 			pathCls["Exists"]       = &LuaPath::Exists;
 			pathCls["IsFile"]       = &LuaPath::IsFile;
 			pathCls["IsDir"]        = &LuaPath::IsDir;
 			pathCls["MakeDir"]      = &LuaPath::MakeDir;
+			pathCls["MakeDirs"]     = &LuaPath::MakeDirs;
 			pathCls["Join"]         = &LuaPath::Join;
 
-			pathCls["Open"] = [](const LuaPath& self, std::string_view mode, sol::this_state s) {
-				sol::state_view Lua(s);
+			pathCls["Open"] = [&](const LuaPath& self, std::string_view mode) {
+				sol::state_view Lua(L);
 				auto io                        = Lua["io"];
-				sol::protected_function ioOpen = io["open"]; // we already store the original io.open in LuaModule but this bitch kept crashing when I called the function here
-				return ioOpen(self.Get().u8string().c_str(), mode);
+				sol::protected_function ioOpen = io["open"];
+				return ioOpen(self.Get().filename().u8string().c_str(), mode);
 			};
 
 			pathCls["ToString"] = [](const LuaPath& self) {
@@ -198,12 +234,13 @@ namespace YLP::LuaJIT
 				return Iterator(L, self);
 			};
 
-			pathCls["Sha256Sum"] = [&](const LuaPath& self) {
+			pathCls["CalcSha256"] = [&](const LuaPath& self) {
 				if (!self.IsFile())
 				{
-					L.safe_script("error('Attempt to calculate sha256 checksum of a non-file Path object.')");
-					return std::string(); // why do-I have to return bruh
+					LOG_ERROR("Attempt to calculate sha256 hash of a non-file Path object");
+					return std::string();
 				}
+
 				return Utils::CalcSha256(self.Get());
 			};
 
@@ -215,7 +252,7 @@ namespace YLP::LuaJIT
 				return self == other;
 			};
 
-			pathCls["__div"] = [](const LuaPath& self, std::string_view sub) {
+			pathCls["__div"] = [](const LuaPath& self, const std::string& sub) {
 				return self.Join(sub);
 			};
 		}

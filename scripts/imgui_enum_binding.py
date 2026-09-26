@@ -11,8 +11,9 @@ if ENUM_TXT.stat().st_size == 0:
 	exit(0)
 
 
-name_re   = re.compile(r"^(ImGui\w+)_")
-member_re = re.compile(r"^ImGui\w+_(\w+)")
+name_re    = re.compile(r"^(ImGui\w+)_")
+member_re  = re.compile(r"^ImGui\w+_(\w+)")
+comment_re = re.compile(r"^ImGui\w+_\w+.*//(.*)")
 
 with ENUM_TXT.open(encoding="utf-8", mode="r") as f:
 	lines = [line.strip() for line in f if line.strip()]
@@ -25,20 +26,23 @@ with ENUM_TXT.open(encoding="utf-8", mode="r") as f:
 		raise ValueError(f"Could not determine enum name from: {lines[0]!r}")
 
 	enum_name = match.group(1)
-	members = []
+	members: dict[str, str] = {}
 
 	for line in lines:
-		match = member_re.match(line)
+		member_match = member_re.match(line)
+		comment_match = comment_re.match(line)
 		if not match:
 			raise ValueError(f"Could not parse enum member: {line!r}")
 
-		members.append(match.group(1))
+		member: str     = member_match.group(1)
+		comment: str    = comment_match.group(1) or "" if comment_match is not None else ""
+		members[member] = comment.strip().replace("*/", "* /")
 
 
 with open("./binding.txt", "w", encoding="utf-8", newline="\n") as out:
 	out.write(f"/*@ylp.enum {enum_name}")
-	out.write("\n* " + "\n* ".join(f"field {field}<integer>" for field in members))
+	out.write("\n* " + "\n* ".join(f"field {field}<integer> {comment}" for field, comment in members.items()))
 	out.write("\n@*/\n")
 	out.write(f'L.new_enum("{enum_name}",\n\t')
-	out.write(",\n\t".join(f'"{field}", {enum_name}_{field}' for field in members))
-	out.write("\n);")
+	out.write(",\n\t".join(f'"{field}", {enum_name}_{field}' for field in members.keys()))
+	out.write(");")

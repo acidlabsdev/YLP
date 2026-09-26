@@ -28,7 +28,7 @@ namespace ImGui
 	inline ImTextureID __gearTex  = NULL;
 	inline ImTextureID __brandTex = NULL;
 
-	inline void YLPSpinner(const char* text = "", ImVec2 size = ImVec2(ImGui::GetFrameHeight(), ImGui::GetFrameHeight()), float speed = 2.8f)
+	inline void YLPSpinner(const char* text = "", ImVec2 size = ImVec2(GetFrameHeight(), GetFrameHeight()), float speed = 2.8f)
 	{
 		if (!__gearTex)
 			__gearTex = Renderer::LoadTextureFromMemory(logo_gear_data, logo_gear_size, "YLP_GEAR");
@@ -37,21 +37,21 @@ namespace ImGui
 			__brandTex = Renderer::LoadTextureFromMemory(logo_brand_data, logo_brand_size, "YLP_BRND");
 
 		static float angle = 0.0f;
-		angle += ImGui::GetIO().DeltaTime * speed;
+		angle += GetIO().DeltaTime * speed;
 		
-		const ImVec2 pos     = ImGui::GetCursorScreenPos();
+		const ImVec2 pos     = GetCursorScreenPos();
 		const ImVec2 center  = pos + size * 0.5f;
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImDrawList* drawList = GetWindowDrawList();
 
-		ImGui::SetCursorScreenPos(pos);
-		ImGui::Image(__brandTex, size);
+		SetCursorScreenPos(pos);
+		Image(__brandTex, size);
 		DrawRotatingImage(drawList, __gearTex, center, size, angle);
 
 		if (text && strncmp(text, "##", 2) != 0)
 		{
 			drawList->AddText(
-			    ImVec2(pos.x + size.x + ImGui::GetStyle().ItemSpacing.x, center.y - ImGui::CalcTextSize(text).y * 0.5f),
-			    ImGui::GetColorU32(ImGuiCol_Text),
+			    ImVec2(pos.x + size.x + GetStyle().ItemSpacing.x, center.y - CalcTextSize(text).y * 0.5f),
+			    GetColorU32(ImGuiCol_Text),
 			    text);
 		}
 	}

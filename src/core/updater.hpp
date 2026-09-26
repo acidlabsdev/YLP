@@ -29,7 +29,6 @@ namespace YLP
 		Updater() = default;
 		~Updater() noexcept = default;
 
-	private:
 		struct Version
 		{
 			int m_Major = 0;
@@ -53,7 +52,7 @@ namespace YLP
 
 			constexpr explicit operator bool() const noexcept
 			{
-				return m_Major != 0;
+				return m_Major != 0 || m_Minor != 0 || m_Patch != 0 || m_Build != 0;
 			}
 
 			constexpr bool operator<(const Version& other) const noexcept
@@ -67,9 +66,19 @@ namespace YLP
 				return m_Build < other.m_Build;
 			}
 
+			constexpr bool operator<=(const Version& other) const noexcept
+			{
+				return *this < other || *this == other;
+			}
+
 			constexpr bool operator>(const Version& other) const noexcept
 			{
 				return other < *this;
+			}
+
+			constexpr bool operator>=(const Version& other) const noexcept
+			{
+				return other <= *this;
 			}
 
 			constexpr bool operator!=(const Version& other) const noexcept
@@ -83,7 +92,6 @@ namespace YLP
 			}
 		};
 
-	public:
 		enum UpdateState : uint8_t
 		{
 			Idle,

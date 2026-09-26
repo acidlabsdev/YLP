@@ -11311,13 +11311,14 @@ const TextEditor::Language* TextEditor::Language::Lua() {
 
 		static const char* const keywords[] = {
 		    // clang-format off
-			"and", "break", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil",
+			"and", "break", "continue", "do", "else", "elseif", "end", "false", "for", "function", "goto", "if", "in", "local", "nil",
 			"not", "or", "repeat", "return", "then", "true", "until", "while"
 		};
 
 		static const char* const identifiers[] = {
-			"_G", "_VERSION", "abs", "acos", "asin", "assert", "atan", "atan2", "byte", "ceil", "char", "clock", "close",
-			"collectgarbage", "concat", "coroutine", "cos", "cosh", "cpath", "create", "date", "debug", "deg", "difftime",
+			"<close>", "<const>", "const",
+			"_G", "jit", "abs", "acos", "asin", "assert", "atan", "atan2", "byte", "C", "cdef", "ceil", "char", "clock", "close",
+			"collectgarbage", "concat", "coroutine", "cos", "cosh", "cpath", "create", "ctype", "date", "debug", "deg", "difftime",
 			"dofile", "dump", "error", "execute", "exit", "exp", "find", "floor", "flush", "fmod", "format", "frexp", "getenv",
 			"getfenv", "gethook", "getinfo", "getlocal", "getmetatable", "getregistry", "getupvalue", "gmatch", "gsub", "huge",
 			"input", "insert", "io", "ipairs", "ldexp", "len", "lines", "load", "loaded", "loaders", "loadfile", "loadlib",
@@ -11329,7 +11330,11 @@ const TextEditor::Language* TextEditor::Language::Lua() {
 			"tanh", "time", "tmpfile", "tmpname", "tonumber", "tostring", "traceback", "type", "unpack", "upper", "wrap",
 		    "write", "xpcall", "yield",
 
-			 "BytePatch", "printf", "Pointer", "Process", "Task", "YLP" "info", "warning"
+			// bindings
+			 "BytePatch", "Filesystem", "HTTP",
+			 "ImGui", "ImGuiChildFlags", "ImGuiCol", "ImGuiComboFlags", "ImGuiDir", "ImGuiMouseCursor", "ImGuiPopupFlags",
+			 "ImGuiSelectableFlags", "ImGuiSeparatorFlags", "ImGuiStyleVar", "ImGuiWindowFlags",
+			 "info", "Path", "Pointer", "printf", "Process", "Task", "warning", "YLP"
 			// clang-format on
 		};
 

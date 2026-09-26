@@ -21,7 +21,7 @@
 
 #include <sol/sol.hpp>
 
-#include "../directory_watcher.hpp"
+#include "../path_watcher.hpp"
 #include "../memory/scanner.hpp"
 #include "../memory/byte_patch.hpp"
 
@@ -58,8 +58,7 @@ namespace YLP::LuaJIT
 
 		void RegisterTask(sol::protected_function func, std::chrono::milliseconds delayMs = 0ms, std::vector<sol::object> args = {});
 		void AddBytePatch(std::shared_ptr<BytePatch> patch);
-		void SetRequireFolder(const fs::path& pluginsPath);
-		void SandboxLoaders(const fs::path& pluginsPath);
+		void SandboxAPI(const fs::path& pluginsPath);
 
 		std::string FormatLuaString(const std::string& fmt, sol::variadic_args args);
 
@@ -77,6 +76,8 @@ namespace YLP::LuaJIT
 		fs::path GetRoot() const noexcept;
 
 		sol::protected_function m_GuiCallback{};
+
+		bool m_UnloadFromCode{false}; // just for YLP.UnloadThisModule
 
 	private:
 		struct LuaTask
@@ -115,11 +116,12 @@ namespace YLP::LuaJIT
 		std::atomic_bool m_IsRunningTasks{false};
 		std::chrono::time_point<std::chrono::steady_clock> m_LastProcessPollTime{};
 
-		DirectoryWatcher m_DirectoryWatcher{}; // was initially part of LuaManager
+		PathWatcher m_PathWatcher{}; // was initially part of LuaManager
 
 		sol::protected_function m_LuaIoOpen{};
 		sol::protected_function m_LuaStrFmt{};
 
+		void SetRequireFolder(const fs::path& pluginsPath);
 		void SandboxOsLib();
 		void SandboxIoLib();
 	};
@@ -131,7 +133,7 @@ namespace YLP::LuaJIT
 		if (!ptr.is<void*>())
 		{
 			if (errorMsg.has_value())
-				sv.safe_script(std::format("error('{}', 2)", errorMsg.value().data()));
+				throw sol::error(errorMsg.value().data());
 			else
 				LOG_ERROR("Module pointer is null!");
 
@@ -143,7 +145,6 @@ namespace YLP::LuaJIT
 
 	inline std::string LuaStringFormat(lua_State* L, const std::string& fmt, sol::variadic_args args)
 	{
-		auto mod = GetModuleFromLuaState(L);
 		if (auto mod = GetModuleFromLuaState(L))
 			return mod->FormatLuaString(fmt, args);
 

@@ -20,51 +20,48 @@
 
 namespace ImGui
 {
-	enum class ImSegmentedControlAnchorPos : uint8_t
+	enum ImSegmentedCtrlPos : uint8_t
 	{
-		LEFT,
-		CENTER,
-		RIGHT,
+		ImSegmentedCtrlPos_Left,
+		ImSegmentedCtrlPos_Center,
+		ImSegmentedCtrlPos_Right,
 	};
 
-	inline bool SegmentedControl(const char* id,
-		int* current,
-		std::initializer_list<const char*> items,
-		ImSegmentedControlAnchorPos anchorPos = ImSegmentedControlAnchorPos::LEFT)
+	inline bool SegmentedControl(int* current, std::vector<const char*> items, ImSegmentedCtrlPos anchorPos = ImSegmentedCtrlPos_Left)
 	{
-		ImGui::PushID(id);
-		ImGuiStyle& style	 = ImGui::GetStyle();
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		const float height	 = ImGui::GetFrameHeight();
+		PushID(&items);
+		ImGuiStyle& style	 = GetStyle();
+		ImDrawList* drawList = GetWindowDrawList();
+		const float height	 = GetFrameHeight();
 		const float rounding = style.FrameRounding;
 
 		float width = 0.0f;
 		for (const char* item : items)
-			width += ImGui::CalcTextSize(item).x + style.FramePadding.x * 2.0f;
+			width += CalcTextSize(item).x + style.FramePadding.x * 2.0f;
 
-		ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+		ImVec2 cursorPos = GetCursorScreenPos();
 		ImVec2 size(width, height);
 		ImVec2 startPos{};
 		switch (anchorPos)
 		{
-			case ImSegmentedControlAnchorPos::LEFT:
-				startPos = cursorPos;
-				break;
-			case ImSegmentedControlAnchorPos::CENTER:
-			    startPos = cursorPos + ImVec2((ImGui::GetContentRegionAvail().x - size.x) * 0.5f, 0);
-				break;
-			case ImSegmentedControlAnchorPos::RIGHT:
-			    startPos = ImGui::GetCursorScreenPos() + ImVec2(ImGui::GetContentRegionAvail().x - size.x, 0);
-			    break;
-		    default:
-			    startPos = cursorPos;
-			    break;
+		case ImSegmentedCtrlPos_Left:
+			startPos = cursorPos;
+			break;
+		case ImSegmentedCtrlPos_Center:
+			startPos = cursorPos + ImVec2((GetContentRegionAvail().x - size.x) * 0.5f, 0);
+			break;
+		case ImSegmentedCtrlPos_Right:
+			startPos = GetCursorScreenPos() + ImVec2(GetContentRegionAvail().x - size.x, 0);
+			break;
+		default:
+			startPos = cursorPos;
+			break;
 		}
 
 		drawList->AddRectFilled(
 		    startPos,
 		    startPos + size,
-		    ImGui::GetColorU32(ImGuiCol_FrameBg),
+		    GetColorU32(ImGuiCol_FrameBg),
 		    rounding);
 
 		float x   = startPos.x;
@@ -72,31 +69,31 @@ namespace ImGui
 
 		for (const char* item : items)
 		{
-			float itemWidth = ImGui::CalcTextSize(item).x + style.FramePadding.x * 2.0f;
+			float itemWidth = CalcTextSize(item).x + style.FramePadding.x * 2.0f;
 			ImVec2 itemPos(x, startPos.y);
 			ImVec2 itemSize(itemWidth, height);
-			ImGui::SetCursorScreenPos(itemPos);
+			SetCursorScreenPos(itemPos);
 
-			bool pressed = ImGui::InvisibleButton(item, itemSize);
-			bool hovered = ImGui::IsItemHovered();
+			bool pressed = InvisibleButton(item, itemSize);
+			bool hovered = IsItemHovered();
 			bool selected = (*current == index);
 			if (selected)
 			{
 				drawList->AddRectFilled(
 				    itemPos,
 				    itemPos + itemSize,
-				    ImGui::GetColorU32(ImGuiCol_ButtonActive),
+				    GetColorU32(ImGuiCol_ButtonActive),
 				    rounding);
 			}
 
-			ImVec2 textSize = ImGui::CalcTextSize(item);
+			ImVec2 textSize = CalcTextSize(item);
 			drawList->AddText(
 			    itemPos + ImVec2((itemWidth - textSize.x) * 0.5f, (height - textSize.y) * 0.5f),
-			    ImGui::GetColorU32(selected || hovered ? ImGuiCol_Text : ImGuiCol_TextDisabled), 
+			    GetColorU32(selected || hovered ? ImGuiCol_Text : ImGuiCol_TextDisabled), 
 				item);
 
 			if (hovered && !selected)
-				ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+				SetMouseCursor(ImGuiMouseCursor_Hand);
 
 			if (pressed)
 				*current = index;
@@ -105,9 +102,9 @@ namespace ImGui
 			index++;
 		}
 
-		ImGui::SetCursorScreenPos(startPos);
-		ImGui::Dummy(size);
-		ImGui::PopID();
+		SetCursorScreenPos(startPos);
+		Dummy(size);
+		PopID();
 
 		return true;
 	}

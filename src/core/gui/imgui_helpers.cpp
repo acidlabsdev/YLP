@@ -167,23 +167,24 @@ namespace ImGui
 		PopFont();
 	}
 
-	bool SelectableLabel(const char* icon, bool selected)
+	bool SelectableLabel(const char* label, bool selected)
 	{
 		BeginGroup();
 		const ImVec2 framePadding = GetStyle().FramePadding;
 		const ImVec2 cursorPos    = GetCursorPos();
-		float frameHeight         = GetFrameHeight();
-		bool clicked              = InvisibleButton(icon, ImVec2(frameHeight, frameHeight));
+		float frameWidth          = CalcTextSize(label).x + framePadding.x;
+		bool clicked              = InvisibleButton(label, ImVec2(frameWidth, GetFrameHeight()));
 		bool hovered              = IsItemHovered();
 		auto colIdx               = selected ? ImGuiCol_ButtonActive : (hovered ? ImGuiCol_ButtonHovered : (clicked ? ImGuiCol_Button : ImGuiCol_Text));
 
-		if (hovered and IsMouseDown(0))
+		if (hovered && IsMouseDown(0))
 			colIdx = ImGuiCol_Button;
 
 		SameLine();
-		SetCursorPos(ImVec2(cursorPos.x + framePadding.x, cursorPos.y + framePadding.y));
-		TextColored(GetStyleColorVec4(colIdx), icon);
+		SetCursorPos(ImVec2(cursorPos.x + (framePadding.x * 0.5), cursorPos.y + (framePadding.y)));
+		TextColored(GetStyleColorVec4(colIdx), label);
 		EndGroup();
+
 		if (IsItemHovered())
 			SetMouseCursor(ImGuiMouseCursor_Hand);
 

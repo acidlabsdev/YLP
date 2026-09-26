@@ -61,7 +61,8 @@ namespace YLP
 			    static_cast<uint16_t>(HIWORD(ffi->dwFileVersionMS)),
 			    static_cast<uint16_t>(LOWORD(ffi->dwFileVersionMS)),
 			    static_cast<uint16_t>(HIWORD(ffi->dwFileVersionLS)),
-			    static_cast<uint16_t>(LOWORD(ffi->dwFileVersionLS))};
+			    static_cast<uint16_t>(LOWORD(ffi->dwFileVersionLS))
+			};
 		}
 
 		return m_LocalVersion;

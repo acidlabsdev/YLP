@@ -30,9 +30,10 @@ namespace YLP
 		ThemeManager::Init();
 
 		eTabID lastTabIdx = eTabID::TAB_MAIN;
-		if (Config().restoreLastTab)
+		auto& cfg         = Config();
+		if (cfg.restoreLastTab)
 		{
-			lastTabIdx = static_cast<eTabID>(Config().lastTabIndex);
+			lastTabIdx = static_cast<eTabID>(cfg.lastTabIndex);
 			if (lastTabIdx >= eTabID::__COUNT || lastTabIdx < eTabID::TAB_MAIN)
 				lastTabIdx = eTabID::TAB_MAIN;
 		}
@@ -99,13 +100,16 @@ namespace YLP
 
 	void GUI::DrawImpl()
 	{
-		m_WindowSize		= Renderer::GetWindowSize();
-		Theme* currentTheme = ThemeManager::GetCurrentTheme();
-		auto& themeColors   = currentTheme->m_Colors;
-		float alphaMult     = Config().bgAlphaMultiplier;
-		ImGuiStyle& style   = ImGui::GetStyle();
-		ImVec4 windowBg     = style.Colors[ImGuiCol_WindowBg];
-		ImVec4 childBg      = style.Colors[ImGuiCol_ChildBg];
+		auto& cfg      = Config();
+		m_WindowSize   = Renderer::GetWindowSize();
+		m_SidebarWidth = cfg.expandedSidebar ? 160.0f : 60.0f;
+
+		Theme* currentTheme  = ThemeManager::GetCurrentTheme();
+		auto& themeColors    = currentTheme->m_Colors;
+		float alphaMult      = cfg.bgAlphaMultiplier;
+		ImGuiStyle& style    = ImGui::GetStyle();
+		ImVec4 windowBg      = style.Colors[ImGuiCol_WindowBg];
+		ImVec4 childBg       = style.Colors[ImGuiCol_ChildBg];
 		windowBg.w          *= alphaMult;
 		childBg.w           *= alphaMult;
 
@@ -120,7 +124,7 @@ namespace YLP
 		ImGui::BeginDisabled(m_ShouldDisableUI);
 
 		const float consoleChildHeight = std::min(m_WindowSize.y * 0.3f, 240.0f);
-		float mainChildHeight          = Config().internalConsole ? m_WindowSize.y - consoleChildHeight : ImGui::GetContentRegionAvail().y;
+		float mainChildHeight          = cfg.internalConsole ? m_WindowSize.y - consoleChildHeight : ImGui::GetContentRegionAvail().y;
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, .11f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
@@ -191,18 +195,25 @@ namespace YLP
 		if (tabCount == 0)
 			return;
 
+		auto& cfg              = Config();
+		bool expandedSidebar   = cfg.expandedSidebar;
+		const char* expandIcon = expandedSidebar ? ICON_MS_ARROW_MENU_CLOSE : ICON_MS_ARROW_MENU_OPEN;
+		const char* expandHint = expandedSidebar ? "Contract" : "Expand";
+
 		const float frameH				= ImGui::GetFrameHeight();
 		static float padding			= 8.0f;
+		const float accentWidth         = 4.0f;
 		static float accentY			= 0.0f;
 		static float accentHeight		= 0.0f;
 		static float accentTargetY		= 0.0f;
 		static float accentTargetHeight = 0.0f;
 
 		ImGuiStyle& style = ImGui::GetStyle();
+		ImVec2 region     = ImGui::GetContentRegionAvail();
 		ImGui::SetCursorPosY(60);
-		ImGui::PushFont(Fonts::IconsBig);
+		ImGui::PushFont(expandedSidebar ? Fonts::Subtitle : Fonts::IconsBig);
 		float iconWidth = ImGui::CalcTextSize(ICON_MS_EXTENSION).x;
-		float offsetX   = (ImGui::GetContentRegionAvail().x - iconWidth) * 0.5f;
+		float offsetX   = (region.x - iconWidth + accentWidth) * 0.5f;
 
 		for (size_t i = 0; i < tabCount; i++)
 		{
@@ -210,22 +221,27 @@ namespace YLP
 			if (!tab)
 				continue;
 
-			bool selected = (m_ActiveTab == tab || m_NextTab == tab);
-			std::string_view name = tab->GetName();
-			ImGui::SetCursorPosX(offsetX);
-			if (ImGui::SelectableLabel(name.data(), selected))
+			bool selected         = (m_ActiveTab == tab || m_NextTab == tab);
+			std::string name      = tab->GetName().data();
+			auto hint             = tab->GetHint();
+			auto tooltip          = hint.value_or("");
+			if (expandedSidebar)
+				name = std::format("{} {}", name, tooltip.data());
+			else
+				ImGui::SetCursorPosX(offsetX);
+
+			if (ImGui::SelectableLabel(name.c_str(), selected))
 			{
 				m_IsTabSwitchInProgress = true;
-				m_NextTab = tab;
-				Config().lastTabIndex = i;
+				m_NextTab               = tab;
+				cfg.lastTabIndex        = i;
 			}
-			auto hint = tab->GetHint();
-			auto tooltip = hint ? hint.value_or(name) : name;
-			ImGui::ToolTip(tooltip.data());
+			if (!expandedSidebar)
+				ImGui::ToolTip(tooltip.data());
 
 			if (selected)
 			{
-				accentTargetY = ImGui::GetItemRectMin().y;
+				accentTargetY      = ImGui::GetItemRectMin().y;
 				accentTargetHeight = frameH;
 			}
 
@@ -233,22 +249,26 @@ namespace YLP
 		};
 		ImGui::PopFont();
 
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		const ImVec2 childMin = ImGui::GetWindowPos();
-		const ImVec2 childMax = childMin + ImGui::GetWindowSize();
-		const float accentWidth = 4.0f;
-		float speed = ImGui::GetIO().DeltaTime * 12.0f;
-		float accentPosX = childMax.x - accentWidth;
-		accentY = ImLerp(accentY, accentTargetY, speed);
-		accentHeight = ImLerp(accentHeight, accentTargetHeight, speed);
+		ImDrawList* drawList    = ImGui::GetWindowDrawList();
+		const ImVec2 childMin   = ImGui::GetWindowPos();
+		const ImVec2 childMax   = childMin + ImGui::GetWindowSize();
+		float speed             = ImGui::GetIO().DeltaTime * 12.0f;
+		float accentPosX        = childMax.x - accentWidth;
+		accentY                 = ImLerp(accentY, accentTargetY, speed);
+		accentHeight            = ImLerp(accentHeight, accentTargetHeight, speed);
 		ImVec2 accentMin(accentPosX, accentY);
 		ImVec2 accentMax(accentPosX + accentWidth, accentY + accentHeight);
 		drawList->AddRectFilled(
-			accentMin, 
-			accentMax, 
-			ImGui::GetColorU32(ImGuiCol_ButtonActive), 
-			style.FrameRounding
-		);
+		    accentMin,
+		    accentMax,
+		    ImGui::GetColorU32(ImGuiCol_ButtonActive),
+		    style.FrameRounding);
+
+		auto centerX = (region.x - ImGui::CalcTextSize(expandIcon).x) * 0.5f;
+		ImGui::SetCursorPos(ImVec2(centerX, ImGui::GetCursorPosY() + ImGui::GetContentRegionAvail().y - ImGui::GetFrameHeightWithSpacing()));
+		if (ImGui::SelectableLabel(expandIcon))
+			cfg.expandedSidebar ^= true;
+		ImGui::ToolTip(expandHint);
 	}
 
 	void GUI::DrawDebugConsoleImpl()

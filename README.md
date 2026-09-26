@@ -1,4 +1,19 @@
-<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD033 MD041 -->
+
+<details>
+  <summary><strong>Table of Contents</strong></summary>
+  <ul>
+    <li><a href="#about">About</a></li>
+    <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#themes">Themes</a></li>
+    <li><a href="#feedback">Feedback</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#preview">Preview</a></li>
+  </ul>
+</details>
+<br>
 
 # About
 
@@ -49,23 +64,52 @@ A launchpad for YimMenu Legacy and YimMenuV2 with opt-in automatic injection and
 
 ### Built-in Lua Scripting
 
-- Provides an optional (opt-in) LuaJIT scripting environment.
+- Provides an optional LuaJIT scripting environment, unrelated to any game or mod.
 - Feature can be toggled on/off at any time.
-- All scripts placed in the `/Plugins` folder (`%AppData%\YLP\Plugins`) are automatically loaded on program start if the scripting feature is toggled on. Scripts must be placed in their own subfolders and have a main entry file named exactly `main.lua` *(case-insensitive)*.
-- Lua code can also be directly typed and executed directly in the `Lua Scripting` UI tab.
-- More info can be found in the [LuaAPI](./docs/Lua%20API/Readme.md) docs section.
+- All scripts placed in the `/Plugins` folder (`%AppData%\YLP\Plugins`) are automatically loaded on program start if the scripting feature is toggled on. Plugins must be placed in their own subfolders and have a main entry file named exactly `main.lua` *(case-sensitive)*.
+- Lua code can also be directly typed and executed in the `Lua Scripting` UI tab.
+- Visit the [Lua API](./docs/Lua%20API/Readme.md) docs section to learn more.
 
 ## Themes
 
 Visit the [themes section](./docs/themes/Readme.md) to read more about UI themes.
 
-## Feedback & Issues
+## Feedback
 
 Please submit any bug reports or feature suggestions on the [Issues](https://github.com/xesdoog/ylp/issues/new/choose) page.
 
 ## Acknowledgments
 
 A huge thanks to the open source community and their immense contributions. You can find out more in the [Third Party](./docs/thirdparty/Readme.md) section
+
+## FAQ
+
+### Troubleshooting
+
+- **Q:** I can't find `YLP.exe` in the injector tab's process list.
+- **A:** Yes.
+
+- **Q:** Manual Map injection crashed my game.
+- **A:** This depends on the DLL file and the mapper's config. Some will break if you erase their PE headers, others must have structured exception handling setup, while others expect their delayed imports to be resolved which we currently don't do.
+
+- **Q:** Auto-Inject shows a warning that says it was skipped.
+- **A:** This can happen due to one of these reasons:
+  1. BattlEye was detected: Simply disable it.
+  2. The DLL file had an issue (deleted by AV, wrong signature, wrong architecture, etc.).
+  3. Game version mismatch *(Legacy only)*: Auto-Inject will also be skipped if the latest DLL is outdated.
+  4. The game loaded past the landing page: In this case, simply make sure the landing page is not disabled in your game settings.
+
+### Security
+
+- **Q:** Windows SmartScreen blocked YLP and said it *"protected my PC"*.
+- **A:** This can happen when Windows doesn't have enough reputation information for an application, particularly when it is distributed independently and isn't digitally signed. It does **not** necessarily mean that the program contains malware. The only way for a developer to get around this is to purchase a code signing certificate. I can not afford it, and even if I could, there's no reason for me to buy it because this is just a hobby.
+
+  If you downloaded an official release from this repository and trust it, you can select *"More info"* -> *"Run anyway"* in the SmartScreen dialog. If you're unsure where the file came from, **delete it instead**.
+
+- **Q:** Why did my antivirus flag YLP?
+- **A:** Some antivirus programs may flag YLP because it interacts directly with other applications, reads/writes their memory, and loads files into them. These are legitimate features required for YLP's modding and automation functionality, but they are also techniques that malware can abuse, so security software may treat them as suspicious.
+
+  YLP is open source. Its releases can be independently inspected and built from the source code.
 
 ## Preview
 

@@ -22,6 +22,12 @@ namespace fs = std::filesystem;
 
 namespace YLP::LuaJIT
 {
+	class LuaPathError : public std::runtime_error
+	{
+	public:
+		using std::runtime_error::runtime_error;
+	};
+
 	class LuaPath
 	{
 	public:
@@ -33,18 +39,25 @@ namespace YLP::LuaJIT
 		bool Exists() const;
 		bool IsFile() const;
 		bool IsDir() const;
-
-		void MakeDir() const;
+		bool MakeDir() const;
+		bool MakeDirs() const;
 
 		std::string Filename() const;
 		std::string Extension() const;
+		std::string Stem() const;
+		uintmax_t Size() const;
 
 		LuaPath Parent() const;
-		LuaPath Join(std::string_view sub) const;
+		LuaPath Join(const std::string& sub) const;
 
 		bool operator==(const LuaPath& other) const noexcept
 		{
 			return m_Root == other.Get();
+		}
+
+		LuaPath operator/(const std::string& sub) const
+		{
+			return Join(sub);
 		}
 
 	private:

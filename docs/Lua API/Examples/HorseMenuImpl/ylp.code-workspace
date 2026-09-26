@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": ".",
+		},
+	],
+	"settings": {
+		"Lua.runtime.version": "LuaJIT",
+		"Lua.runtime.enableLuaJITExtensions": true,
+		"Lua.workspace.checkThirdParty": false,
+		"Lua.workspace.library": [
+			"../shared"
+		],
+		"Lua.runtime.builtin": {
+			"debug": "disable"
+		},
+		"editor.defaultFormatter": "sumneko.lua",
+		"editor.formatOnSave": true
+	}
+}

@@ -65,6 +65,7 @@ namespace YLP
 			bool enableScripting      = false;
 			bool autoReloadLuaModules = false;
 			bool disableTooltips      = false;
+			bool expandedSidebar      = false;
 
 			int lastTabIndex         = 0;
 			int themeIndex           = 0;
@@ -196,6 +197,7 @@ namespace YLP
 			j["enable_scripting"]        = m_Config.enableScripting;
 			j["auto_reload_lua_modules"] = m_Config.autoReloadLuaModules;
 			j["disable_tooltips"]        = m_Config.disableTooltips;
+			j["expanded_sidebar"]        = m_Config.expandedSidebar;
 			j["uuid"]                    = m_Config.uuid;
 			j["injector_config"]         = m_Config.injectorConfig;
 
@@ -262,6 +264,7 @@ namespace YLP
 			m_Config.enableScripting      = j.value("enable_scripting", false);
 			m_Config.autoReloadLuaModules = j.value("auto_reload_lua_modules", false);
 			m_Config.disableTooltips      = j.value("disable_tooltips", false);
+			m_Config.expandedSidebar      = j.value("expanded_sidebar", false);
 			m_Config.uuid                 = j.value("uuid", "");
 			m_Config.injectorConfig       = j.value("injector_config", Injector::InjectorConfig{});
 
