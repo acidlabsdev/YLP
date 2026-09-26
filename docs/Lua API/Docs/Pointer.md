@@ -145,7 +145,7 @@ Reads up to `n` number of bytes
 
 | Type | Description |
 | --- | --- |
-| `{[integer]:` | integer} byteArray An array of bytes |
+| `table<integer,integer>` | byteArray An array of bytes |
 
 ## `ReadString`
 

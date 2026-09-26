@@ -2,7 +2,6 @@
 
 -- Provides file system functions. Paths are limited to the `/Plugins` folder only.
 ---@class Filesystem
----@field Path Path The Path class.
 Filesystem = {}
 
 -- Returns the module's root path.
@@ -21,6 +20,7 @@ function Filesystem.IterDir(path) end
 function Filesystem.Rename(oldPath, newPath) end
 
 ---@param path Path 
+---@param emptyOnly boolean? If true, non-empty folders will not be removed. Defaults to `true`.
 ---@return boolean successOrFailure
 ---@return string failReason
-function Filesystem.Remove(path) end
+function Filesystem.Remove(path, emptyOnly) end

@@ -61,6 +61,22 @@ function Path:IsDir() end
 | --- | --- |
 | `boolean` |  |
 
+## `MakeDir`
+
+```lua
+function Path:MakeDir() end
+```
+
+Creates a directory if it doesn't exist
+
+## `MakeDirs`
+
+```lua
+function Path:MakeDirs() end
+```
+
+Creates a directory and any missing parent directories
+
 ## `GetFilename`
 
 ```lua
@@ -72,6 +88,18 @@ function Path:GetFilename() end
 | Type | Description |
 | --- | --- |
 | `string` |  |
+
+## `GetStem`
+
+```lua
+function Path:GetStem() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | stem The file name without the extension. |
 
 ## `GetExtension`
 
@@ -85,11 +113,37 @@ function Path:GetExtension() end
 | --- | --- |
 | `string` | ext The file extension including the leading dot. Ex: `.json`. Returns empty string for folders. |
 
+## `GetFileSize`
+
+```lua
+function Path:GetFileSize() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | filesz The file size in bytes. |
+
+## `GetParent`
+
+```lua
+function Path:GetParent() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `Path` | parentDir The parent directory. Note: This will throw if the path is outside the module's root directory. |
+
 ## `Join`
 
 ```lua
 function Path:Join(subPath) end
 ```
+
+Joins the path with a sub-path. Does the same thing as the division operator *(__div)*: `myPath / "somefile.txt"`
 
 ### Parameters
 
@@ -119,8 +173,22 @@ function Path:Open(mode) end
 
 | Type | Description |
 | --- | --- |
-| `file*?` |  |
+| `file*?` | File handle or nil |
 | `string` | failReason An error message if the operation fails. |
+
+## `ToString`
+
+```lua
+function Path:ToString() end
+```
+
+Returns the string representation of the path. `myPath:ToString()`, `myPath:__tostring()`, and `tostring(myPath)` all achieve the same thing.
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | strPath |
 
 ## `IterDir`
 
@@ -136,16 +204,16 @@ Recursive directory iterator.
 | --- | --- |
 | `fun():` | Path |
 
-## `Sha256Sum`
+## `CalcSha256`
 
 ```lua
-function Path:Sha256Sum() end
+function Path:CalcSha256() end
 ```
 
-Calculates the file's SHA256 checksum. Throws if the path is not a file.
+Calculates the file's SHA256 hash. Throws if the path is not a file.
 
 ### Returns
 
 | Type | Description |
 | --- | --- |
-| `string` | hash SHA256 checksum |
+| `string` | SHA256 |

@@ -36,7 +36,7 @@ function Pointer:AddBytePatch(byteArray, applyImmediately) end
 
 -- Reads up to `n` number of bytes
 ---@param numOfBytes integer Number of bytes to read.
----@return {[integer]: integer} byteArray An array of bytes
+---@return table<integer,integer> byteArray An array of bytes
 function Pointer:ReadBytes(numOfBytes) end
 
 ---@return string 

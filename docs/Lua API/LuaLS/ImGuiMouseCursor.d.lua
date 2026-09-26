@@ -3,14 +3,14 @@
 ---@class ImGuiMouseCursor
 ---@field None integer 
 ---@field Arrow integer 
----@field TextInput integer 
----@field ResizeAll integer 
----@field ResizeNS integer 
----@field ResizeEW integer 
----@field ResizeNESW integer 
----@field ResizeNWSE integer 
----@field Hand integer 
----@field Wait integer 
----@field Progress integer 
----@field NotAllowed integer 
+---@field TextInput integer When hovering over InputText, etc.
+---@field ResizeAll integer (Unused by Dear ImGui functions)
+---@field ResizeNS integer When hovering over a horizontal border
+---@field ResizeEW integer When hovering over a vertical border or a column
+---@field ResizeNESW integer When hovering over the bottom-left corner of a window
+---@field ResizeNWSE integer When hovering over the bottom-right corner of a window
+---@field Hand integer (Unused by Dear ImGui functions. Use for e.g. hyperlinks)
+---@field Wait integer When waiting for something to process/load.
+---@field Progress integer When waiting for something to process/load, but application is still interactive.
+---@field NotAllowed integer When hovering something with disallowed interaction. Usually a crossed circle.
 ImGuiMouseCursor = {}

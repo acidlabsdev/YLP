@@ -22,6 +22,24 @@ function ImGui.PushID(id) end
 function ImGui.PopID() end
 ```
 
+## `PushFont`
+
+```lua
+function ImGui.PushFont(font) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `font` | `userdata` | Use the global [Fonts](./Fonts.md) table to access fonts. |
+
+## `PopFont`
+
+```lua
+function ImGui.PopFont() end
+```
+
 ## `Bullet`
 
 ```lua
@@ -31,7 +49,7 @@ function ImGui.Bullet() end
 ## `Text`
 
 ```lua
-function ImGui.Text(text) end
+function ImGui.Text(text, ...) end
 ```
 
 ### Parameters
@@ -39,11 +57,26 @@ function ImGui.Text(text) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `text` | `string` |  |
+| `...` | `any` | Optional string format arguments |
+
+## `TextCentered`
+
+```lua
+function ImGui.TextCentered(text, font, customWidth) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` |  |
+| `font` | `userdata?` | Optional font. Use the global [Fonts](./Fonts.md) table to access fonts. |
+| `customWidth` | `number?` | Optional width to center at. |
 
 ## `TextDisabled`
 
 ```lua
-function ImGui.TextDisabled(text) end
+function ImGui.TextDisabled(text, ...) end
 ```
 
 ### Parameters
@@ -51,11 +84,12 @@ function ImGui.TextDisabled(text) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `text` | `string` |  |
+| `...` | `any` | Optional string format arguments |
 
 ## `TextWrapped`
 
 ```lua
-function ImGui.TextWrapped(text) end
+function ImGui.TextWrapped(text, ...) end
 ```
 
 ### Parameters
@@ -63,6 +97,7 @@ function ImGui.TextWrapped(text) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `text` | `string` |  |
+| `...` | `any` | Optional string format arguments |
 
 ## `TextUnformatted`
 
@@ -76,22 +111,10 @@ function ImGui.TextUnformatted(text) end
 | --- | --- | --- |
 | `text` | `string` |  |
 
-## `BulletText`
-
-```lua
-function ImGui.BulletText(text) end
-```
-
-### Parameters
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `text` | `string` |  |
-
 ## `TextColored`
 
 ```lua
-function ImGui.TextColored(r, g, b, a, text) end
+function ImGui.TextColored(r, g, b, a, text, ...) end
 ```
 
 ### Parameters
@@ -103,11 +126,38 @@ function ImGui.TextColored(r, g, b, a, text) end
 | `b` | `number` | A number between `0.0` and `1.0` representing the `Blue` component of the color. |
 | `a` | `number` | A number between `0.0` and `1.0` representing the `Alpha` component of the color. |
 | `text` | `string` |  |
+| `...` | `any` | Optional string format arguments |
+
+## `TitleText`
+
+```lua
+function ImGui.TitleText(text, separator) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` |  |
+| `separator` | `boolean?` | Optional: Draw a SeparatorText instead. |
+
+## `BulletText`
+
+```lua
+function ImGui.BulletText(text, ...) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` |  |
+| `...` | `any` | Optional string format arguments |
 
 ## `Button`
 
 ```lua
-function ImGui.Button(label, sizeX, sizeY) end
+function ImGui.Button(label, size) end
 ```
 
 ### Parameters
@@ -115,8 +165,7 @@ function ImGui.Button(label, sizeX, sizeY) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `label` | `string` |  |
-| `sizeX` | `number?` | Optional button width |
-| `sizeY` | `number?` | Optional button height |
+| `size` | `ImVec2?` | Optional button size |
 
 ### Returns
 
@@ -244,7 +293,7 @@ function ImGui.RadioButton(label, v, vButton) end
 ## `ProgressBar`
 
 ```lua
-function ImGui.ProgressBar(fraction, sizeX, sizeY, overlayText) end
+function ImGui.ProgressBar(fraction, size, overlayText) end
 ```
 
 ### Parameters
@@ -252,8 +301,7 @@ function ImGui.ProgressBar(fraction, sizeX, sizeY, overlayText) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `fraction` | `number` |  |
-| `sizeX` | `number?` | Optional frame width |
-| `sizeY` | `number?` | Optional frame height |
+| `size` | `ImVec2?` | Optional frame size |
 | `overlayText` | `string?` | Optional overlay text. Defaults to precentage. |
 
 ## `Combo`
@@ -269,6 +317,27 @@ function ImGui.Combo(label, currentItem, itemsSeparatedByZeros) end
 | `label` | `string` |  |
 | `currentItem` | `integer` |  |
 | `itemsSeparatedByZeros` | `string` | A string with items separated by null terminators. Ex: `"Item1\0Item2\0Item3"` |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | currentItem |
+| `boolean` | opened |
+
+## `Combo`
+
+```lua
+function ImGui.Combo(label, currentItem, items) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `currentItem` | `integer` |  |
+| `items` | `{[integer]: string}` | A table of strings. Must be a contiguous string array, anything else will be ignored. |
 
 ### Returns
 
@@ -303,10 +372,116 @@ function ImGui.BeginCombo(label, preview, flags) end
 function ImGui.EndCombo() end
 ```
 
+## `ListBox`
+
+```lua
+function ImGui.ListBox(label, currentItem, items, heightInItems) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `currentItem` | `integer` |  |
+| `items` | `{[integer]: string}` | A table of strings. Must be a contiguous string array, anything else will be ignored. |
+| `heightInItems` | `integer?` | Optional max items to show. Defaults to -1 |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | currentItem |
+| `boolean` | visible |
+
+## `BeginListBox`
+
+```lua
+function ImGui.BeginListBox(label, size) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `size` | `ImVec2?` | Optional listbox size |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | visible |
+
+## `EndListBox`
+
+```lua
+function ImGui.EndListBox() end
+```
+
+## `Selectable`
+
+```lua
+function ImGui.Selectable(label, selected, flags, size) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `selected` | `boolean` |  |
+| `flags` | `integer?` | Optional [ImGuiSelectableFlags](./ImGuiSelectableFlags.md) |
+| `size` | `ImVec2?` | Optional selectable size |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | clicked |
+
+## `MenuItem`
+
+```lua
+function ImGui.MenuItem(label, selected) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `selected` | `boolean` |  |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | selected |
+| `boolean` | clicked |
+
+## `BeginDisabled`
+
+```lua
+function ImGui.BeginDisabled(cond) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `cond` | `boolean?` | Optional condition |
+
+## `EndDisabled`
+
+```lua
+function ImGui.EndDisabled() end
+```
+
 ## `BeginChild`
 
 ```lua
-function ImGui.BeginChild(name, sizeX, sizeY, childFlags, windowFlags) end
+function ImGui.BeginChild(name) end
 ```
 
 ### Parameters
@@ -314,9 +489,45 @@ function ImGui.BeginChild(name, sizeX, sizeY, childFlags, windowFlags) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `name` | `string` |  |
-| `sizeX` | `number?` | Optional child width. |
-| `sizeY` | `number?` | Optional child height. |
-| `childFlags` | `integer?` | Optional [ImGuiChildFlags](./ImGuiChildFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | visible |
+
+## `BeginChild`
+
+```lua
+function ImGui.BeginChild(name, size) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` |  |
+| `size` | `ImVec2` | child size. |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | visible |
+
+## `BeginChild`
+
+```lua
+function ImGui.BeginChild(name, size, childFlags, windowFlags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` |  |
+| `size` | `ImVec2` | child size. |
+| `childFlags` | `integer` | [ImGuiChildFlags](./ImGuiChildFlags.md) |
 | `windowFlags` | `integer?` | Optional [ImGuiWindowFlags](./ImGuiWindowFlags.md) |
 
 ### Returns
@@ -331,6 +542,406 @@ function ImGui.BeginChild(name, sizeX, sizeY, childFlags, windowFlags) end
 function ImGui.EndChild() end
 ```
 
+## `OpenPopup`
+
+```lua
+function ImGui.OpenPopup(name, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` | Popup name |
+| `flags` | `integer?` | Optional [ImGuiPopupFlags](./ImGuiPopupFlags.md) |
+
+## `IsPopupOpen`
+
+```lua
+function ImGui.IsPopupOpen(name, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` | Popup name |
+| `flags` | `integer?` | Optional [ImGuiPopupFlags](./ImGuiPopupFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` |  |
+
+## `CloseCurrentPopup`
+
+```lua
+function ImGui.CloseCurrentPopup() end
+```
+
+## `BeginPopup`
+
+```lua
+function ImGui.BeginPopup(name, windowFlags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` |  |
+| `windowFlags` | `integer?` | Optional [ImGuiWindowFlags](./ImGuiWindowFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | isOpen |
+
+## `BeginPopupModal`
+
+```lua
+function ImGui.BeginPopupModal(name, windowFlags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` |  |
+| `windowFlags` | `integer?` | Optional [ImGuiWindowFlags](./ImGuiWindowFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | visible |
+
+## `BeginPopupModal`
+
+```lua
+function ImGui.BeginPopupModal(name, open, windowFlags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string` |  |
+| `open` | `boolean` | When true, the popup will have a `(x)` close button in the title bar. |
+| `windowFlags` | `integer?` | Optional [ImGuiWindowFlags](./ImGuiWindowFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | visible |
+| `boolean` | open |
+
+## `EndPopup`
+
+```lua
+function ImGui.EndPopup() end
+```
+
+## `SliderInt`
+
+```lua
+function ImGui.SliderInt(label, v, vMin, vMax) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `integer` |  |
+| `vMin` | `integer` | Minimum value |
+| `vMax` | `integer` | Maximum value |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | v |
+| `boolean` | changed |
+
+## `SliderInt`
+
+```lua
+function ImGui.SliderInt(label, v, vMin, vMax, fmt, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `integer` |  |
+| `vMin` | `integer` | Minimum value |
+| `vMax` | `integer` | Maximum value |
+| `fmt` | `string` | format string |
+| `flags` | `integer?` | Optional [ImGuiSliderFlags](./ImGuiSliderFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | v |
+| `boolean` | changed |
+
+## `SliderFloat`
+
+```lua
+function ImGui.SliderFloat(label, v, vMin, vMax) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `number` |  |
+| `vMin` | `number` | Minimum value |
+| `vMax` | `number` | Maximum value |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | v |
+| `boolean` | changed |
+
+## `SliderFloat`
+
+```lua
+function ImGui.SliderFloat(label, v, vMin, vMax, fmt, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `number` |  |
+| `vMin` | `number` | Minimum value |
+| `vMax` | `number` | Maximum value |
+| `fmt` | `string` | format string |
+| `flags` | `integer?` | Optional [ImGuiSliderFlags](./ImGuiSliderFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | v |
+| `boolean` | changed |
+
+## `InputInt`
+
+```lua
+function ImGui.InputInt(label, v) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `integer` |  |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | v |
+| `boolean` | changed |
+
+## `InputInt`
+
+```lua
+function ImGui.InputInt(label, v, step, stepFast, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `integer` |  |
+| `step` | `integer` | step |
+| `stepFast` | `integer` | fast step |
+| `flags` | `integer?` | Optional [ImGuiInputTextFlags](./ImGuiInputTextFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | v |
+| `boolean` | changed |
+
+## `InputFloat`
+
+```lua
+function ImGui.InputFloat(label, v) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `number` |  |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | v |
+| `boolean` | changed |
+
+## `InputFloat`
+
+```lua
+function ImGui.InputFloat(label, v, step, stepFast, fmt) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `number` |  |
+| `step` | `number` | step |
+| `stepFast` | `number` | fast step |
+| `fmt` | `string?` | Optional format string |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | v |
+| `boolean` | changed |
+
+## `InputFloat`
+
+```lua
+function ImGui.InputFloat(label, v, step, stepFast, fmt, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `v` | `number` |  |
+| `step` | `number` | step |
+| `stepFast` | `number` | fast step |
+| `fmt` | `string` | format string |
+| `flags` | `integer?` | Optional [ImGuiInputTextFlags](./ImGuiInputTextFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | v |
+| `boolean` | changed |
+
+## `InputText`
+
+```lua
+function ImGui.InputText(label, text, bufferSize, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `text` | `string` |  |
+| `bufferSize` | `integer` |  |
+| `flags` | `integer?` | Optional [ImGuiInputTextFlags](./ImGuiInputTextFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | text |
+| `boolean` | changed |
+
+## `InputTextWithHint`
+
+```lua
+function ImGui.InputTextWithHint(label, hint, text, bufferSize, flags) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `hint` | `string` |  |
+| `text` | `string` |  |
+| `bufferSize` | `integer` |  |
+| `flags` | `integer?` | Optional [ImGuiInputTextFlags](./ImGuiInputTextFlags.md) |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | text |
+| `boolean` | changed |
+
+## `InputTextMultiline`
+
+```lua
+function ImGui.InputTextMultiline(label, text, bufferSize) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `text` | `string` |  |
+| `bufferSize` | `integer` |  |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | text |
+| `boolean` | changed |
+
+## `InputTextMultiline`
+
+```lua
+function ImGui.InputTextMultiline(label, text, bufferSize, flags, size) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `label` | `string` |  |
+| `text` | `string` |  |
+| `bufferSize` | `integer` |  |
+| `flags` | `integer` | [ImGuiInputTextFlags](./ImGuiInputTextFlags.md) |
+| `size` | `ImVec2?` | Optional widget size |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `string` | text |
+| `boolean` | changed |
+
+## `SameLine`
+
+```lua
+function ImGui.SameLine() end
+```
+
 ## `SameLine`
 
 ```lua
@@ -341,8 +952,8 @@ function ImGui.SameLine(offsetX, spacing) end
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `offsetX` | `number` | Optional X position to start at. Defaults to `0`. |
-| `spacing` | `number` | Optional spacing after the previous item. Defaults to the current item spacing. |
+| `offsetX` | `number` | X position to start at. Defaults to `0`. |
+| `spacing` | `number?` | Optional spacing after the previous item. Defaults to the current item spacing. |
 
 ## `NewLine`
 
@@ -373,20 +984,19 @@ function ImGui.SeparatorEx(flags, thickness) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `flags` | `integer` | [ImGuiSeparatorFlags](./ImGuiSeparatorFlags.md) |
-| `thickness` | `number` |  |
+| `thickness` | `number?` | Optional separator thickness. Defaults to 1.0 |
 
-## `SeparatorEx`
+## `SeparatorText`
 
 ```lua
-function ImGui.SeparatorEx(flags, thickness) end
+function ImGui.SeparatorText(text) end
 ```
 
 ### Parameters
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `flags` | `integer` | [ImGuiSeparatorFlags](./ImGuiSeparatorFlags.md) |
-| `thickness` | `number` |  |
+| `text` | `string` |  |
 
 ## `Indent`
 
@@ -472,8 +1082,7 @@ function ImGui.GetCursorPos() end
 
 | Type | Description |
 | --- | --- |
-| `number` | x Current X position relative to the current window. |
-| `number` | y Current Y position relative to the current window. |
+| `ImVec2` | cursorPos |
 
 ## `GetCursorPosX`
 
@@ -509,8 +1118,7 @@ function ImGui.GetContentRegionAvail() end
 
 | Type | Description |
 | --- | --- |
-| `number` | x Available width in the current content region. |
-| `number` | y Available height in the current content region. |
+| `ImVec2` | avail Available content region. |
 
 ## `GetWindowSize`
 
@@ -522,8 +1130,7 @@ function ImGui.GetWindowSize() end
 
 | Type | Description |
 | --- | --- |
-| `number` | x Current window width. |
-| `number` | y Current window height. |
+| `ImVec2` | windowSize |
 
 ## `GetWindowPos`
 
@@ -535,8 +1142,31 @@ function ImGui.GetWindowPos() end
 
 | Type | Description |
 | --- | --- |
-| `number` | x Current window X position. |
-| `number` | y Current window Y position. |
+| `ImVec2` | windowPos Current window position. |
+
+## `GetFrameHeight`
+
+```lua
+function ImGui.GetFrameHeight() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | frameHeight |
+
+## `GetFrameHeightWithSpacing`
+
+```lua
+function ImGui.GetFrameHeightWithSpacing() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `number` | frameHeight Frame height with spacing. |
 
 ## `SetNextItemWidth`
 
@@ -635,10 +1265,10 @@ function ImGui.PopStyleColor(count) end
 | --- | --- | --- |
 | `count` | `integer?` | Count of pushed style colors to pop. Defaults to 1; Must match the number of pushed style cols. |
 
-## `PopStyleColor`
+## `SetMouseCursor`
 
 ```lua
-function ImGui.PopStyleColor(cursorIdx) end
+function ImGui.SetMouseCursor(cursorIdx) end
 ```
 
 ### Parameters
@@ -646,3 +1276,126 @@ function ImGui.PopStyleColor(cursorIdx) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `cursorIdx` | `integer` | [ImGuiMouseCursor](./ImGuiMouseCursor.md) index |
+
+## `Tooltip`
+
+```lua
+function ImGui.Tooltip(text) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Tooltip text |
+
+## `HelpMarker`
+
+```lua
+function ImGui.HelpMarker(text) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Tooltip text |
+
+## `WarningMarker`
+
+```lua
+function ImGui.WarningMarker(text) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Tooltip text |
+
+## `Spinner`
+
+```lua
+function ImGui.Spinner() end
+```
+
+## `Spinner`
+
+```lua
+function ImGui.Spinner(text, radius) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Text to display next to the spinner. Can be an empty or anonymous string: "##blahblah" |
+| `radius` | `number?` | Optional spinner radius. Defaults to 10.0 |
+
+## `Spinner`
+
+```lua
+function ImGui.Spinner(text, radius, thickness) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Text to display next to the spinner. Can be an empty or anonymous string: "##blahblah" |
+| `radius` | `number` | spinner radius. Defaults to 10.0 |
+| `thickness` | `number?` | Optional spinner line thickness. Defaults to 2.0 |
+
+## `YLPSpinner`
+
+```lua
+function ImGui.YLPSpinner() end
+```
+
+## `YLPSpinner`
+
+```lua
+function ImGui.YLPSpinner(text, radius) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Text to display below the spinner. Can be an empty or anonymous string: "##blahblah" |
+| `radius` | `number?` | Optional spinner radius. Defaults to frame height. |
+
+## `YLPSpinner`
+
+```lua
+function ImGui.YLPSpinner(text, radius, speed) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `text` | `string` | Text to display below the spinner. Can be an empty or anonymous string: "##blahblah" |
+| `radius` | `number` | spinner radius. Defaults to frame height. |
+| `speed` | `number?` | Optional spinning speed. Defaults to 2.8 |
+
+## `SegmentedControl`
+
+```lua
+function ImGui.SegmentedControl(currentItem, items, anchorPos) end
+```
+
+### Parameters
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `currentItem` | `integer` | The current item |
+| `items` | `{[integer]: string}` | A table of strings. Must be a contiguous string array, anything else will be ignored. |
+| `anchorPos` | `(0|1|2)?` | Anchor position. 0: left \| 1: center \| 2: right. Defaults to 0: left. |
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `integer` | selectedItem |
+| `boolean` | clicked |

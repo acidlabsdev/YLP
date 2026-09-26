@@ -4,12 +4,6 @@
 
 Provides file system functions. Paths are limited to the `/Plugins` folder only.
 
-## Fields
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `Path` | `Path` | The Path class. |
-
 ## Methods
 
 ## `MyRoot`
@@ -69,7 +63,7 @@ function Filesystem.Rename(oldPath, newPath) end
 ## `Remove`
 
 ```lua
-function Filesystem.Remove(path) end
+function Filesystem.Remove(path, emptyOnly) end
 ```
 
 ### Parameters
@@ -77,6 +71,7 @@ function Filesystem.Remove(path) end
 | Name | Type | Description |
 | --- | --- | --- |
 | `path` | `Path` |  |
+| `emptyOnly` | `boolean?` | If true, non-empty folders will not be removed. Defaults to `true`. |
 
 ### Returns
 

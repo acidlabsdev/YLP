@@ -16,7 +16,19 @@ function YLP.GetVersion() end
 
 | Type | Description |
 | --- | --- |
-| `string` | version The current YLP version. |
+| `VersionInfo` | versionInfo The current YLP version. |
+
+## `IsDebug`
+
+```lua
+function YLP.IsDebug() end
+```
+
+### Returns
+
+| Type | Description |
+| --- | --- |
+| `boolean` | isDebug True if the current build type is debug, otherwise false. |
 
 ## `RegisterProcessWatcher`
 

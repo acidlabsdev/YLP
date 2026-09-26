@@ -4,8 +4,11 @@
 ---@class YLP
 YLP = {}
 
----@return string version The current YLP version.
+---@return VersionInfo versionInfo The current YLP version.
 function YLP.GetVersion() end
+
+---@return boolean isDebug True if the current build type is debug, otherwise false.
+function YLP.IsDebug() end
 
 -- Registers a callback to be executed once when a process is first seen.
 --

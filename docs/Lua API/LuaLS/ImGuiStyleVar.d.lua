@@ -1,42 +1,43 @@
 ---@meta
 
 ---@class ImGuiStyleVar
----@field DisabledAlpha integer 
----@field WindowPadding integer 
----@field WindowRounding integer 
----@field WindowBorderSize integer 
----@field WindowMinSize integer 
----@field WindowTitleAlign integer 
----@field ChildRounding integer 
----@field ChildBorderSize integer 
----@field PopupRounding integer 
----@field PopupBorderSize integer 
----@field FramePadding integer 
----@field FrameRounding integer 
----@field FrameBorderSize integer 
----@field ItemSpacing integer 
----@field ItemInnerSpacing integer 
----@field IndentSpacing integer 
----@field CellPadding integer 
----@field ScrollbarSize integer 
----@field ScrollbarRounding integer 
----@field ScrollbarPadding integer 
----@field GrabMinSize integer 
----@field GrabRounding integer 
----@field ImageBorderSize integer 
----@field TabRounding integer 
----@field TabBorderSize integer 
----@field TabMinWidthBase integer 
----@field TabMinWidthShrink integer 
----@field TabBarBorderSize integer 
----@field TabBarOverlineSize integer 
----@field TableAngledHeadersAngle integer 
----@field TableAngledHeadersTextAlign integer 
----@field TreeLinesSize integer 
----@field TreeLinesRounding integer 
----@field ButtonTextAlign integer 
----@field SelectableTextAlign integer 
----@field SeparatorTextBorderSize integer 
----@field SeparatorTextAlign integer 
----@field SeparatorTextPadding integer 
+---@field Alpha integer float     Alpha
+---@field DisabledAlpha integer float     DisabledAlpha
+---@field WindowPadding integer ImVec2    WindowPadding
+---@field WindowRounding integer float     WindowRounding
+---@field WindowBorderSize integer float     WindowBorderSize
+---@field WindowMinSize integer ImVec2    WindowMinSize
+---@field WindowTitleAlign integer ImVec2    WindowTitleAlign
+---@field ChildRounding integer float     ChildRounding
+---@field ChildBorderSize integer float     ChildBorderSize
+---@field PopupRounding integer float     PopupRounding
+---@field PopupBorderSize integer float     PopupBorderSize
+---@field FramePadding integer ImVec2    FramePadding
+---@field FrameRounding integer float     FrameRounding
+---@field FrameBorderSize integer float     FrameBorderSize
+---@field ItemSpacing integer ImVec2    ItemSpacing
+---@field ItemInnerSpacing integer ImVec2    ItemInnerSpacing
+---@field IndentSpacing integer float     IndentSpacing
+---@field CellPadding integer ImVec2    CellPadding
+---@field ScrollbarSize integer float     ScrollbarSize
+---@field ScrollbarRounding integer float     ScrollbarRounding
+---@field ScrollbarPadding integer float     ScrollbarPadding
+---@field GrabMinSize integer float     GrabMinSize
+---@field GrabRounding integer float     GrabRounding
+---@field ImageBorderSize integer float     ImageBorderSize
+---@field TabRounding integer float     TabRounding
+---@field TabBorderSize integer float     TabBorderSize
+---@field TabMinWidthBase integer float     TabMinWidthBase
+---@field TabMinWidthShrink integer float     TabMinWidthShrink
+---@field TabBarBorderSize integer float     TabBarBorderSize
+---@field TabBarOverlineSize integer float     TabBarOverlineSize
+---@field TableAngledHeadersAngle integer float     TableAngledHeadersAngle
+---@field TableAngledHeadersTextAlign integer ImVec2  TableAngledHeadersTextAlign
+---@field TreeLinesSize integer float     TreeLinesSize
+---@field TreeLinesRounding integer float     TreeLinesRounding
+---@field ButtonTextAlign integer ImVec2    ButtonTextAlign
+---@field SelectableTextAlign integer ImVec2    SelectableTextAlign
+---@field SeparatorTextBorderSize integer float     SeparatorTextBorderSize
+---@field SeparatorTextAlign integer ImVec2    SeparatorTextAlign
+---@field SeparatorTextPadding integer ImVec2    SeparatorTextPadding
 ImGuiStyleVar = {}
