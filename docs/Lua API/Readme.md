@@ -19,15 +19,15 @@ As of now, the API is in its baby stage so expect bugs and possibly undefined be
 
 Lua plugins must be placed in their own subfolders inside `%AppData%\YLP\Plugins` and **must** have a main entry file named `main.lua`. You can have as many subfolders and files as you want inside your plugin directory, but only main.lua will be automatically loaded when YLP starts. Example:
 
-    ```bash
-    ├─ YLP/
-    │  ├─ Plugins/
-    │  │  ├─ disabled/      # disabled modules.
-    │  │  ├─ shared/        # shared modules that can be imported by any plugin. You can place icons.lua from "docs/Lua API/shared" in this folder to use Icons in your ImGui code.
-    │  │  └─ MyCustomPlugin # Your plugin.
-    │  │     ├─ includes/   # Optional subfolder to neatly store any other files that may be required by your plugin. Folder name and contents do not matter to YLP.
-    │  │     └─ main.lua    # Your plugin's entry point. Without this file, your plugin will not be loaded.
-    ```
+```bash
+├─ YLP/
+│  ├─ Plugins/
+│  │  ├─ disabled/      # disabled modules.
+│  │  ├─ shared/        # shared modules that can be imported by any plugin. You can place icons.lua from "docs/Lua API/shared" in this folder to use Icons in your ImGui code.
+│  │  └─ MyCustomPlugin # Your plugin.
+│  │     ├─ includes/   # Optional subfolder to neatly store any other files that may be required by your plugin. Folder name and contents do not matter to YLP.
+│  │     └─ main.lua    # Your plugin's entry point. Without this file, your plugin will not be loaded.
+```
 
 ## Usage Example
 
