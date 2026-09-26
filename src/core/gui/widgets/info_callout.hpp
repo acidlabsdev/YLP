@@ -20,16 +20,16 @@
 
 namespace ImGui
 {
-	enum class ImCalloutType : uint8_t
+	enum ImCalloutType : uint8_t
 	{
-		Note,
-		Warning,
-		Important
+		ImCalloutType_Note,
+		ImCalloutType_Warning,
+		ImCalloutType_Important
 	};
 
 	inline void InfoCallout(ImCalloutType type, const std::string& text, float wrapWidth = 0.0f)
 	{
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		ImGuiWindow* window = GetCurrentWindow();
 		if (!window)
 			return;
 
@@ -39,50 +39,52 @@ namespace ImGui
 
 		switch (type)
 		{
-		case ImCalloutType::Note:
+		case ImCalloutType_Note:
 			accentColor = ImVec4(0.0f, 0.001f, 0.803f, 1.0f);
-			label = "Note";
-			icon = ICON_MS_MESSAGE;
+			label       = "Note";
+			icon        = ICON_MS_MESSAGE;
 			break;
-		case ImCalloutType::Warning:
+		case ImCalloutType_Warning:
 			accentColor = ImVec4(1.0f, 0.7568, 0.027f, 1.0f);
-			label = "Warning";
-			icon = ICON_MS_WARNING;
+			label       = "Warning";
+			icon        = ICON_MS_WARNING;
 			break;
-		case ImCalloutType::Important:
+		case ImCalloutType_Important:
 			accentColor = ImVec4(0.498f, 0.1f, 1.0f, 1.0f);
-			label = "Important";
-			icon = ICON_MS_PRIORITY_HIGH;
+			label       = "Important";
+			icon        = ICON_MS_PRIORITY_HIGH;
 			break;
 		}
 
 		if (wrapWidth <= 0.0f)
-			wrapWidth = ImGui::GetContentRegionAvail().x - 10.0f;
+			wrapWidth = GetContentRegionAvail().x - 10.0f;
 
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		ImVec2 pos = ImGui::GetCursorScreenPos();
-		ImVec2 textSize = ImGui::CalcTextSize(text.c_str(), nullptr, false, wrapWidth);
-		float panelHeight = textSize.y + 30 + (ImGui::GetStyle().WindowPadding.y * 2);
-		float barWidth = 5.0f;
+		ImDrawList* drawList = GetWindowDrawList();
+		ImVec2 pos           = GetCursorScreenPos();
+		ImVec2 textSize      = CalcTextSize(text.c_str(), nullptr, false, wrapWidth);
+		float panelHeight    = textSize.y + 30 + (GetStyle().WindowPadding.y * 2);
+		float barWidth       = 5.0f;
 
 		drawList->AddRectFilled(pos, ImVec2(pos.x + barWidth, pos.y + panelHeight), ImColor(accentColor));
-		ImGui::SetCursorScreenPos(ImVec2(pos.x + barWidth, pos.y));
-		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.f);
-		ImGui::SetNextWindowBgAlpha(0.1f);
-		ImGui::BeginChild(("##panel_" + std::to_string(static_cast<int>(type)) + "_" + std::to_string(window->GetID(text.c_str()))).c_str(),
+		SetCursorScreenPos(ImVec2(pos.x + barWidth, pos.y));
+		PushStyleVar(ImGuiStyleVar_ChildRounding, 0.f);
+		SetNextWindowBgAlpha(0.1f);
+		BeginChild(("##panel_" + std::to_string(static_cast<int>(type)) + "_" + std::to_string(window->GetID(text.c_str()))).c_str(),
 		    ImVec2(0, panelHeight),
 		    ImGuiChildFlags_None,
-		    ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_AlwaysUseWindowPadding);
+		    ImGuiWindowFlags_NoScrollbar
+			| ImGuiWindowFlags_NoScrollWithMouse
+			| ImGuiWindowFlags_AlwaysUseWindowPadding);
 
-		ImGui::PushFont(Fonts::Bold);
-		ImGui::TextColored(accentColor, std::format("{} {}", icon, label).c_str());
-		ImGui::PopFont();
-		//ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + wrapWidth);
-		ImGui::TextWrapped(text.c_str());
-		//ImGui::PopTextWrapPos();
+		PushFont(Fonts::Bold);
+		TextColored(accentColor, std::format("{} {}", icon, label).c_str());
+		PopFont();
+		//PushTextWrapPos(GetCursorPos().x + wrapWidth);
+		TextWrapped(text.c_str());
+		//PopTextWrapPos();
 
-		ImGui::EndChild();
-		ImGui::PopStyleVar();
-		ImGui::Dummy(ImVec2(0, ImGui::GetStyle().ItemSpacing.y));
+		EndChild();
+		PopStyleVar();
+		Dummy(ImVec2(0, GetStyle().ItemSpacing.y));
 	}
 }

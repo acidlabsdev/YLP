@@ -106,14 +106,11 @@ namespace YLP::LuaJIT
 		lua_CFunction traceback_function = sol::c_call<decltype(&TracebackErrorHandler), &TracebackErrorHandler>;
 		sol::protected_function::set_default_handler(sol::object(m_LuaState.lua_state(), sol::in_place, traceback_function));
 
+		m_PathWatcher = PathWatcher(root / "main.lua", 1s);
+		auto strlib   = m_LuaState["string"];
+		m_LuaStrFmt   = strlib["format"];
+
 		LuaManager::RegisterLibraries(m_LuaState);
-		m_DirectoryWatcher = DirectoryWatcher(root, 1s);
-
-		auto strlib = m_LuaState["string"];
-		m_LuaStrFmt = strlib["format"];
-
-		SandboxOsLib();
-		SandboxIoLib();
 	}
 
 	LuaModule::~LuaModule()
@@ -232,16 +229,10 @@ namespace YLP::LuaJIT
 			const auto oldPath = IO::MakeAbsPath(m_Root, oldname);
             const auto newPath = IO::MakeAbsPath(m_Root, newname);
 
-			if (!oldPath)
+			if (!oldPath || !newPath)
 			{
 				LOG_WARN("os.rename is restricted to the module's root only.");
 				return sol::make_object(m_LuaState, std::make_tuple(false, "Invalid file path."));
-			}
-
-			if (!newPath)
-			{
-				LOG_WARN("os.rename is restricted to the module's root only.");
-				return sol::make_object(m_LuaState, std::make_tuple(false, "Invalid new path."));
 			}
 
 			try
@@ -268,17 +259,32 @@ namespace YLP::LuaJIT
 		{
 			const auto absPath = IO::MakeAbsPath(m_Root, filename);
 			if (!absPath.has_value())
-				return std::make_tuple(sol::reference(sol::lua_nil), "io.open is restricted to the module's root only.");
+				return std::make_tuple(sol::reference(m_LuaState, sol::lua_nil), "io is restricted to the module's root only.");
 
-			auto res = m_LuaIoOpen(absPath.value().u8string().c_str(), mode).get<sol::reference>();
-			return std::make_tuple(res, "");
+			LOG_DEBUG("sandbox io.open: BEFORE original");
+
+			auto result = m_LuaIoOpen(absPath->u8string().c_str(), mode);
+
+			LOG_DEBUG("sandbox io.open: AFTER original");
+
+			if (!result.valid())
+			{
+				sol::error err = result;
+				LOG_ERROR("original io.open failed: {}", err.what());
+
+				return std::make_tuple(sol::reference(m_LuaState, sol::lua_nil), err.what());
+			}
+
+			LOG_DEBUG("sandbox io.open: result valid");
+
+			return std::make_tuple(result.get<sol::reference>(), "");
 		};
 
 		sandboxedIo["exists"] = [this](const std::string& filename) -> bool {
 			const auto absPath = IO::MakeAbsPath(m_Root, filename);
 			if (!absPath)
 			{
-				LOG_ERROR("io.open is restricted to the module's root only.");
+				LOG_ERROR("io is restricted to the module's root only.");
 				return false;
 			}
 
@@ -308,7 +314,7 @@ namespace YLP::LuaJIT
 	}
 
 	// https://github.com/Mr-X-GTA/YimMenu/blob/master/src/lua/lua_module.cpp#L321
-	void LuaModule::SandboxLoaders(const fs::path& pluginsPath)
+	void LuaModule::SandboxAPI(const fs::path& pluginsPath)
 	{
 		m_LuaState["load"]       = DisabledLuaFunc("load");
 		m_LuaState["loadstring"] = DisabledLuaFunc("loadstring");
@@ -321,6 +327,8 @@ namespace YLP::LuaJIT
 		m_LuaState["package"]["searchers"][4] = DisabledLuaFunc("package.searcher Croot");
 
 		SetRequireFolder(pluginsPath);
+		SandboxIoLib();
+		SandboxOsLib();
 	}
 
 	const bool LuaModule::IsRunningTasks() const noexcept
@@ -428,18 +436,25 @@ namespace YLP::LuaJIT
 				++it;
 			}
 		}
+
 		if (Config().autoReloadLuaModules)
 		{
-			m_DirectoryWatcher.PollOnce([this](const fs::path& _unused, DirectoryWatcher::ePathStatus status) {
-				switch (status) // TODO: handle different cases properly
+			m_PathWatcher.PollOnce([this](const fs::path& _unused, PathWatcher::ePathStatus status) {
+				switch (status)
 				{
-				case DirectoryWatcher::ePathStatus::Created:
-				case DirectoryWatcher::ePathStatus::Modified:
-				case DirectoryWatcher::ePathStatus::Erased:
+				case PathWatcher::ePathStatus::Created:
+				case PathWatcher::ePathStatus::Modified:
+				case PathWatcher::ePathStatus::Erased:
 					m_LoadState = WANTS_RELOAD;
 					break;
 				}
 			});
+		}
+
+		if (m_UnloadFromCode)
+		{
+			m_UnloadFromCode = false;
+			m_LoadState    = WANTS_UNLOAD;
 		}
 
 		m_IsRunningTasks.store(false);

@@ -19,6 +19,7 @@
 
 #include "../lua_library.hpp"
 #include "../lua_module.hpp"
+#include "../../gui/widgets/ylp_spinner.hpp"
 
 
 namespace YLP::LuaJIT
@@ -26,6 +27,63 @@ namespace YLP::LuaJIT
 	class LuaImGuiLib : public LuaLibrary
 	{
 		using LuaLibrary::LuaLibrary;
+
+	private:
+		struct SolStrArray
+		{
+			std::vector<std::string> strings;
+			std::vector<const char*> chars;
+		};
+
+		static inline SolStrArray SolTbl2StrArr(const sol::table& t)
+		{
+			SolStrArray result;
+			result.strings.reserve(t.size());
+			for (auto&& [i, v] : t)
+			{
+				if (!v.is<std::string>())
+					continue;
+
+				result.strings.emplace_back(v.as<std::string>());
+			}
+
+			result.chars.reserve(result.strings.size());
+			for (const auto& str : result.strings)
+				result.chars.emplace_back(str.c_str());
+
+			return result;
+		}
+
+		static inline std::tuple<std::string, bool> InputTextMultiline(const std::string& label, std::string text, unsigned int buffSize)
+		{
+			text.resize(buffSize);
+			bool selected = ImGui::InputTextMultiline(label.c_str(), text.data(), buffSize);
+			return std::make_tuple(text.c_str(), selected);
+		}
+
+		static inline std::tuple<std::string, bool> InputTextMultiline1(const std::string& label, std::string text, unsigned int buffSize, ImVec2 size, sol::optional<int> flags)
+		{
+			text.resize(buffSize);
+			auto inputFlags = static_cast<ImGuiInputTextFlags>(flags.value_or(0));
+			bool selected   = ImGui::InputTextMultiline(label.c_str(), text.data(), buffSize, size, inputFlags);
+			return std::make_tuple(text.c_str(), selected);
+		}
+
+		static inline bool BeginChild(const std::string& name)
+		{
+			return ImGui::BeginChild(name.c_str());
+		}
+
+		static inline bool BeginChild1(const std::string& name, ImVec2 size)
+		{
+			return ImGui::BeginChild(name.c_str(), size);
+		}
+
+		static inline bool BeginChild2(const std::string& name, ImVec2 size, int childFlags, sol::optional<int> windowFlags)
+		{
+			auto winFlags = static_cast<ImGuiWindowFlags>(windowFlags.value_or(0));
+			return ImGui::BeginChild(name.c_str(), size, static_cast<ImGuiChildFlags>(childFlags), winFlags);
+		}
 
 	public:
 		void Register(sol::state& L) override
@@ -50,6 +108,20 @@ namespace YLP::LuaJIT
 				ImGui::PopID();
 			};
 
+			/*@ylp.function ImGui.PushFont
+			* param font<userdata> Use the global [Fonts](lua://Fonts) table to access fonts.
+			@*/
+			imguiTable["PushFont"] = [](ImFont* font) {
+				ImGui::PushFont(font);
+			};
+
+			/*@ylp.function ImGui.PopFont
+			*
+			@*/
+			imguiTable["PopFont"] = []() {
+				ImGui::PopFont();
+			};
+
 			/*@ylp.function ImGui.Bullet
 			* 
 			@*/
@@ -59,20 +131,36 @@ namespace YLP::LuaJIT
 
 			/*@ylp.function ImGui.Text
 			* param text<string> 
+			* param ...<any> Optional string format arguments
 			@*/
 			imguiTable["Text"] = [&](const std::string& fmt, sol::variadic_args args) {
 				ImGui::Text(LuaStringFormat(L, fmt, args).c_str());
 			};
 
-			/*@ylp.function ImGui.TextDisabled
+			/*@ylp.function ImGui.TextCentered Draws a text centered at either the current available region's width or the specified optional width.
 			* param text<string> 
+			* param font<userdata?> Optional font. Use the global [Fonts](lua://Fonts) table to access fonts.
+			* param customWidth<number?> Optional width to center at.
+			@*/
+			imguiTable["TextCentered"] = sol::overload(
+			    [](const std::string& text) {
+				    ImGui::TextCentered(text.c_str());
+			    },
+			    [](const std::string& text, ImFont* font, sol::optional<float> customWidth) {
+				    ImGui::TextCentered(text.c_str(), font, customWidth.value_or(0.0f));
+			    });
+
+			/*@ylp.function ImGui.TextDisabled
+			* param text<string>
+			* param ...<any> Optional string format arguments
 			@*/
 			imguiTable["TextDisabled"] = [&](const std::string& fmt, sol::variadic_args args) {
 				ImGui::TextDisabled(LuaStringFormat(L, fmt, args).c_str());
 			};
 
 			/*@ylp.function ImGui.TextWrapped
-			* param text<string> 
+			* param text<string>
+			* param ...<any> Optional string format arguments
 			@*/
 			imguiTable["TextWrapped"] = [&](const std::string& fmt, sol::variadic_args args) {
 				ImGui::TextWrapped(LuaStringFormat(L, fmt, args).c_str());
@@ -85,32 +173,41 @@ namespace YLP::LuaJIT
 				ImGui::TextUnformatted(text.c_str());
 			};
 
-			/*@ylp.function ImGui.BulletText
-			* param text<string> 
-			@*/
-			imguiTable["BulletText"] = [&](const std::string& fmt, sol::variadic_args args) {
-				ImGui::BulletText(LuaStringFormat(L, fmt, args).c_str());
-			};
-
 			/*@ylp.function ImGui.TextColored
 			* param r<number> A number between `0.0` and `1.0` representing the `Red` component of the color.
 			* param g<number> A number between `0.0` and `1.0` representing the `Green` component of the color.
 			* param b<number> A number between `0.0` and `1.0` representing the `Blue` component of the color.
 			* param a<number> A number between `0.0` and `1.0` representing the `Alpha` component of the color.
-			* param text<string> 
+			* param text<string>
+			* param ...<any> Optional string format arguments
 			@*/
 			imguiTable["TextColored"] = [&](float r, float g, float b, float a, const std::string& fmt, sol::variadic_args args) {
 				ImGui::TextColored(ImVec4(r, g, b, a), LuaStringFormat(L, fmt, args).c_str());
 			};
 
+			/*@ylp.function ImGui.TitleText Draws a large and bold text.
+			* param text<string>
+			* param separator<boolean?> Optional: Draw a SeparatorText instead.
+			@*/
+			imguiTable["TitleText"] = [&](const std::string& text, sol::optional<bool> separator) {
+				ImGui::TitleText(text.c_str(), separator.value_or(false));
+			};
+
+			/*@ylp.function ImGui.BulletText
+			* param text<string>
+			* param ...<any> Optional string format arguments
+			@*/
+			imguiTable["BulletText"] = [&](const std::string& fmt, sol::variadic_args args) {
+				ImGui::BulletText(LuaStringFormat(L, fmt, args).c_str());
+			};
+
 			/*@ylp.function ImGui.Button
 			* param label<string> 
-			* param sizeX<number?> Optional button width
-			* param sizeY<number?> Optional button height
+			* param size<ImVec2?> Optional button size
 			* return boolean clicked
 			@*/
-			imguiTable["Button"] = [](const std::string& label, sol::optional<float> sizeX, sol::optional<float> sizeY) {
-				return ImGui::Button(label.c_str(), ImVec2(sizeX.value_or(0.f), sizeY.value_or(0.f)));
+			imguiTable["Button"] = [](const std::string& label, sol::optional<ImVec2> size) {
+				return ImGui::Button(label.c_str(), size.value_or(ImVec2()));
 			};
 
 			/*@ylp.function ImGui.SmallButton
@@ -157,9 +254,6 @@ namespace YLP::LuaJIT
 			* param active<boolean>
 			* return boolean clicked
 			@*/
-			imguiTable["RadioButton"] = [](const std::string& label, bool active) {
-				return ImGui::RadioButton(label.c_str(), active);
-			};
 
 			/*@ylp.function ImGui.RadioButton
 			* param label<string> 
@@ -168,24 +262,27 @@ namespace YLP::LuaJIT
 			* return integer newValue
 			* return boolean clicked
 			@*/
-			imguiTable["RadioButton"] = [](const std::string& label, int v, int vButton) {
-				bool ret{ImGui::RadioButton(label.c_str(), &v, vButton)};
-				return std::make_tuple(v, ret);
-			};
+			imguiTable["RadioButton"] = sol::overload(
+			    [](const std::string& label, bool active) {
+				    return ImGui::RadioButton(label.c_str(), active);
+			    },
+			    [](const std::string& label, int v, int vButton) {
+				    bool ret = ImGui::RadioButton(label.c_str(), &v, vButton);
+				    return std::make_tuple(v, ret);
+			    });
 
 			/*@ylp.function ImGui.ProgressBar
 			* param fraction<number> 
-			* param sizeX<number?> Optional frame width
-			* param sizeY<number?> Optional frame height
+			* param size<ImVec2?> Optional frame size
 			* param overlayText<string?> Optional overlay text. Defaults to precentage.
 			@*/
-			imguiTable["ProgressBar"] = [](float fraction,
-				sol::optional<float> sizeX,
-				sol::optional<float> sizeY,
-				sol::optional<std::string> overlay)
-			{
-				ImGui::ProgressBar(fraction, ImVec2(sizeX.value_or(0.f), sizeY.value_or(0.f)), overlay.value_or("").c_str());
-			};
+			imguiTable["ProgressBar"] = sol::overload(
+			    [](float fraction) {
+				    ImGui::ProgressBar(fraction);
+			    },
+			    [](float fraction, ImVec2 size, sol::optional<std::string> overlay) {
+				    ImGui::ProgressBar(fraction, size, overlay.value_or("").c_str());
+			    });
 
 			/*@ylp.function ImGui.Combo
 			* param label<string>
@@ -194,11 +291,24 @@ namespace YLP::LuaJIT
 			* return integer currentItem
 			* return boolean opened
 			@*/
-			imguiTable["Combo"] = [](const std::string& label, int currentItem, const std::string& itemsSeparatedByZeros)
-			{
-				bool clicked = ImGui::Combo(label.c_str(), &currentItem, itemsSeparatedByZeros.c_str());
-				return std::make_tuple(currentItem, clicked);
-			};
+
+			/*@ylp.function ImGui.Combo
+			* param label<string>
+			* param currentItem<integer>
+			* param items<{[integer]: string}> A table of strings. Must be a contiguous string array, anything else will be ignored.
+			* return integer currentItem
+			* return boolean opened
+			@*/
+			imguiTable["Combo"] = sol::overload(
+			    [](const std::string& label, int currentItem, const std::string& itemsSeparatedByZeros) {
+				    bool clicked = ImGui::Combo(label.c_str(), &currentItem, itemsSeparatedByZeros.c_str());
+				    return std::make_tuple(currentItem, clicked);
+			    },
+			    [](const std::string& label, int currentItem, const sol::table& items) {
+				    auto res     = SolTbl2StrArr(items);
+				    bool clicked = ImGui::Combo(label.c_str(), &currentItem, res.chars.data(), static_cast<int>(res.chars.size()));
+				    return std::make_tuple(currentItem, clicked);
+			    });
 
 			/*@ylp.function ImGui.BeginCombo
 			* param label<string> 
@@ -206,8 +316,7 @@ namespace YLP::LuaJIT
 			* param flags<integer?> Optional [ImGuiComboFlags](lua://ImGuiComboFlags)
 			* return boolean opened
 			@*/
-			imguiTable["BeginCombo"] = [](const std::string& label, const std::string& previewValue, sol::optional<int> flags)
-			{
+			imguiTable["BeginCombo"] = [](const std::string& label, const std::string& previewValue, sol::optional<int> flags) {
 				return ImGui::BeginCombo(label.c_str(), previewValue.c_str(), static_cast<ImGuiComboFlags>(flags.value_or(0)));
 			};
 
@@ -218,26 +327,101 @@ namespace YLP::LuaJIT
 				ImGui::EndCombo();
 			};
 
+			/*@ylp.function ImGui.ListBox
+			* param label<string>
+			* param currentItem<integer>
+			* param items<{[integer]: string}> A table of strings. Must be a contiguous string array, anything else will be ignored.
+			* param heightInItems<integer?> Optional max items to show. Defaults to -1
+			* return integer currentItem
+			* return boolean visible
+			@*/
+			imguiTable["ListBox"] = [](const std::string& label, int currentItem, const sol::table& items, sol::optional<int> heightInItems) {
+				auto res     = SolTbl2StrArr(items);
+				bool visible = ImGui::ListBox(label.c_str(),
+				    &currentItem,
+				    res.chars.data(),
+				    static_cast<int>(res.chars.size()),
+				    heightInItems.value_or(-1));
+
+				return std::make_tuple(currentItem, visible);
+			};
+
+			/*@ylp.function ImGui.BeginListBox
+			* param label<string> 
+			* param size<ImVec2?> Optional listbox size
+			* return boolean visible
+			@*/
+			imguiTable["BeginListBox"] = [](const std::string& label, sol::optional<ImVec2> size) {
+				return ImGui::BeginListBox(label.c_str(), size.value_or(ImVec2()));
+			};
+
+			/*@ylp.function ImGui.EndListBox
+			* 
+			@*/
+			imguiTable["EndListBox"] = []() {
+				ImGui::EndListBox();
+			};
+
+			/*@ylp.function ImGui.Selectable
+			* param label<string> 
+			* param selected<boolean>
+			* param flags<integer?> Optional [ImGuiSelectableFlags](lua://ImGuiSelectableFlags)
+			* param size<ImVec2?> Optional selectable size
+			* return boolean clicked
+			@*/
+			imguiTable["Selectable"] = sol::overload(
+			    [](const std::string& label, bool selected) {
+				    return ImGui::Selectable(label.c_str(), selected);
+			    },
+			    [](const std::string& label, bool selected, int flags, sol::optional<ImVec2> size) {
+				    auto selectableFlags = static_cast<ImGuiSelectableFlags>(flags);
+				    return ImGui::Selectable(label.c_str(), selected, selectableFlags, size.value_or(ImVec2()));
+			    });
+
+			/*@ylp.function ImGui.MenuItem
+			* param label<string> 
+			* param selected<boolean>
+			* return boolean selected
+			* return boolean clicked
+			@*/
+			imguiTable["MenuItem"] = [](const std::string& label, bool selected) {
+				bool clicked = ImGui::MenuItem(label.c_str(), nullptr, &selected);
+				return std::make_tuple(selected, clicked);
+			};
+
+			/*@ylp.function ImGui.BeginDisabled Disables all ImGui widgets created between this call and EndDisabled
+			* param cond<boolean?> Optional condition
+			@*/
+			imguiTable["BeginDisabled"] = [](sol::optional<bool> bCond) {
+				ImGui::BeginDisabled(bCond.value_or(true));
+			};
+
+			/*@ylp.function ImGui.EndDisabled
+			*
+			@*/
+			imguiTable["EndDisabled"] = []() {
+				ImGui::EndDisabled();
+			};
+
 			/*@ylp.function ImGui.BeginChild
 			* param name<string>
-			* param sizeX<number?> Optional child width.
-			* param sizeY<number?> Optional child height.
-			* param childFlags<integer?> Optional [ImGuiChildFlags](lua://ImGuiChildFlags)
+			* return boolean visible
+			@*/
+
+			/*@ylp.function ImGui.BeginChild
+			* param name<string>
+			* param size<ImVec2> child size.
+			* return boolean visible
+			@*/
+
+			/*@ylp.function ImGui.BeginChild
+			* param name<string>
+			* param size<ImVec2> child size.
+			* param childFlags<integer> [ImGuiChildFlags](lua://ImGuiChildFlags)
 			* param windowFlags<integer?> Optional [ImGuiWindowFlags](lua://ImGuiWindowFlags)
 			* return boolean visible
 			@*/
-			imguiTable["BeginChild"] = [](const std::string& name,
-				sol::optional<float> sizeX,
-				sol::optional<float> sizeY,
-				sol::optional<int> childFlags,
-				sol::optional<int> windowFlags)
-			{
-				return ImGui::BeginChild(name.c_str(),
-					ImVec2(sizeX.value_or(0.f), sizeY.value_or(0.f)),
-				    static_cast<ImGuiChildFlags>(childFlags.value_or(0)),
-				    static_cast<ImGuiWindowFlags>(windowFlags.value_or(0))
-				);
-			};
+			imguiTable["BeginChild"] = sol::overload(&BeginChild, &BeginChild1, &BeginChild2);
 
 			/*@ylp.function ImGui.EndChild
 			* 
@@ -246,15 +430,273 @@ namespace YLP::LuaJIT
 				ImGui::EndChild();
 			};
 
+			/*@ylp.function ImGui.OpenPopup
+			* param name<string> Popup name
+			* param flags<integer?> Optional [ImGuiPopupFlags](lua://ImGuiPopupFlags)
+			@*/
+			imguiTable["OpenPopup"] = [](const std::string& name, sol::optional<int> popupFlags) {
+				ImGui::OpenPopup(name.c_str(), static_cast<ImGuiPopupFlags>(popupFlags.value_or(0)));
+			};
+
+
+			/*@ylp.function ImGui.IsPopupOpen
+			* param name<string> Popup name
+			* param flags<integer?> Optional [ImGuiPopupFlags](lua://ImGuiPopupFlags)
+			* return boolean
+			@*/
+			imguiTable["IsPopupOpen"] = [](const std::string& name, sol::optional<int> popupFlags) {
+				return ImGui::IsPopupOpen(name.c_str(), static_cast<ImGuiPopupFlags>(popupFlags.value_or(0)));
+			};
+
+			/*@ylp.function ImGui.CloseCurrentPopup
+			* 
+			@*/
+			imguiTable["CloseCurrentPopup"] = []() {
+				ImGui::CloseCurrentPopup();
+			};
+
+			/*@ylp.function ImGui.BeginPopup
+			* param name<string>
+			* param windowFlags<integer?> Optional [ImGuiWindowFlags](lua://ImGuiWindowFlags)
+			* return boolean isOpen
+			@*/
+			imguiTable["BeginPopup"] = [](const std::string& name, sol::optional<int> windowFlags) {
+				return ImGui::BeginPopup(name.c_str(), static_cast<ImGuiWindowFlags>(windowFlags.value_or(0)));
+			};
+
+			/*@ylp.function ImGui.BeginPopupModal
+			* param name<string>
+			* param windowFlags<integer?> Optional [ImGuiWindowFlags](lua://ImGuiWindowFlags)
+			* return boolean visible
+			@*/
+
+			/*@ylp.function ImGui.BeginPopupModal
+			* param name<string>
+			* param open<boolean> When true, the popup will have a `(x)` close button in the title bar.
+			* param windowFlags<integer?> Optional [ImGuiWindowFlags](lua://ImGuiWindowFlags)
+			* return boolean visible
+			* return boolean open
+			@*/
+			imguiTable["BeginPopupModal"] = sol::overload(
+			    [](const std::string& name, sol::optional<int> windowFlags) {
+				    return ImGui::BeginPopupModal(name.c_str(), nullptr, static_cast<ImGuiWindowFlags>(windowFlags.value_or(0)));
+			    },
+			    [](const std::string& name, bool open, sol::optional<int> windowFlags) {
+				    bool visible = ImGui::BeginPopupModal(name.c_str(), &open, static_cast<ImGuiWindowFlags>(windowFlags.value_or(0)));
+				    return std::make_tuple(visible, open);
+			    });
+
+			/*@ylp.function ImGui.EndPopup
+			* 
+			@*/
+			imguiTable["EndPopup"] = []() {
+				ImGui::EndPopup();
+			};
+
+			/*@ylp.function ImGui.SliderInt
+			* param label<string>
+			* param v<integer>
+			* param vMin<integer> Minimum value
+			* param vMax<integer> Maximum value
+			* return integer v
+			* return boolean changed
+			@*/
+
+			/*@ylp.function ImGui.SliderInt
+			* param label<string>
+			* param v<integer>
+			* param vMin<integer> Minimum value
+			* param vMax<integer> Maximum value
+			* param fmt<string> format string
+			* param flags<integer?> Optional [ImGuiSliderFlags](lua://ImGuiSliderFlags)
+			* return integer v
+			* return boolean changed
+			@*/
+			imguiTable["SliderInt"] = sol::overload(
+			    [](const std::string& label, int v, int vMin, int vMax) {
+				    bool changed = ImGui::SliderInt(label.c_str(), &v, vMin, vMax);
+				    return std::make_tuple(v, changed);
+			    },
+			    [](const std::string& label, int v, int vMin, int vMax, const std::string& fmt, sol::optional<int> flags) {
+				    auto sliderFlags = static_cast<ImGuiSliderFlags>(flags.value_or(0));
+				    bool changed     = ImGui::SliderInt(label.c_str(), &v, vMin, vMax, fmt.c_str(), sliderFlags);
+				    return std::make_tuple(v, changed);
+			    });
+
+			/*@ylp.function ImGui.SliderFloat
+			* param label<string>
+			* param v<number>
+			* param vMin<number> Minimum value
+			* param vMax<number> Maximum value
+			* return number v
+			* return boolean changed
+			@*/
+
+			/*@ylp.function ImGui.SliderFloat
+			* param label<string>
+			* param v<number>
+			* param vMin<number> Minimum value
+			* param vMax<number> Maximum value
+			* param fmt<string> format string
+			* param flags<integer?> Optional [ImGuiSliderFlags](lua://ImGuiSliderFlags)
+			* return number v
+			* return boolean changed
+			@*/
+			imguiTable["SliderFloat"] = sol::overload(
+			    [](const std::string& label, float v, float vMin, float vMax) {
+				    bool changed = ImGui::SliderFloat(label.c_str(), &v, vMin, vMax);
+				    return std::make_tuple(v, changed);
+			    },
+			    [](const std::string& label, float v, float vMin, float vMax, const std::string& fmt, sol::optional<int> flags) {
+				    auto sliderFlags = static_cast<ImGuiSliderFlags>(flags.value_or(0));
+				    bool changed     = ImGui::SliderFloat(label.c_str(), &v, vMin, vMax, fmt.c_str(), sliderFlags);
+				    return std::make_tuple(v, changed);
+			    });
+
+			/*@ylp.function ImGui.InputInt
+			* param label<string>
+			* param v<integer>
+			* return integer v
+			* return boolean changed
+			@*/
+
+			/*@ylp.function ImGui.InputInt
+			* param label<string>
+			* param v<integer>
+			* param step<integer> step
+			* param stepFast<integer> fast step
+			* param flags<integer?> Optional [ImGuiInputTextFlags](lua://ImGuiInputTextFlags)
+			* return integer v
+			* return boolean changed
+			@*/
+			imguiTable["InputInt"] = sol::overload(
+			    [](const std::string& label, int v, sol::optional<int> step) {
+				    bool changed = ImGui::InputInt(label.c_str(), &v);
+				    return std::make_tuple(v, changed);
+			    },
+			    [](const std::string& label, int v, int step, int stepFast, sol::optional<int> flags) {
+				    bool changed = ImGui::InputInt(label.c_str(), &v, step, stepFast, static_cast<ImGuiInputTextFlags>(flags.value_or(0)));
+				    return std::make_tuple(v, changed);
+			    });
+
+			/*@ylp.function ImGui.InputFloat
+			* param label<string>
+			* param v<number>
+			* return number v
+			* return boolean changed
+			@*/
+
+			/*@ylp.function ImGui.InputFloat
+			* param label<string>
+			* param v<number>
+			* param step<number> step
+			* param stepFast<number> fast step
+			* param fmt<string?> Optional format string
+			* return number v
+			* return boolean changed
+			@*/
+
+			/*@ylp.function ImGui.InputFloat
+			* param label<string>
+			* param v<number>
+			* param step<number> step
+			* param stepFast<number> fast step
+			* param fmt<string> format string
+			* param flags<integer?> Optional [ImGuiInputTextFlags](lua://ImGuiInputTextFlags)
+			* return number v
+			* return boolean changed
+			@*/
+			imguiTable["InputFloat"] = sol::overload(
+			    [](const std::string& label, float v) {
+				    bool changed = ImGui::InputFloat(label.c_str(), &v);
+				    return std::make_tuple(v, changed);
+			    },
+			    [](const std::string& label, float v, int step, int stepFast, sol::optional<std::string> fmt) {
+				    bool changed = ImGui::InputFloat(label.c_str(), &v, step, stepFast, fmt.value_or("%.3f").c_str());
+				    return std::make_tuple(v, changed);
+			    },
+			    [](const std::string& label, float v, int step, int stepFast, const std::string& fmt, sol::optional<int> flags) {
+				    auto inputFlags = static_cast<ImGuiInputTextFlags>(flags.value_or(0));
+				    bool changed    = ImGui::InputFloat(label.c_str(), &v, step, stepFast, fmt.c_str(), inputFlags);
+				    return std::make_tuple(v, changed);
+			    });
+
+			/*@ylp.function ImGui.InputText
+			* param label<string>
+			* param text<string>
+			* param bufferSize<integer>
+			* param flags<integer?> Optional [ImGuiInputTextFlags](lua://ImGuiInputTextFlags)
+			* return string text
+			* return boolean changed
+			@*/
+			imguiTable["InputText"] = [](const std::string& label, std::string text, uint32_t bufferSize, sol::optional<int> flags) {
+				text.resize(bufferSize);
+				bool changed = ImGui::InputText(label.c_str(), text.data(), bufferSize, static_cast<ImGuiInputTextFlags>(flags.value_or(0)));
+				return std::make_tuple(text.c_str(), changed);
+			};
+
+			/*@ylp.function ImGui.InputTextWithHint
+			* param label<string>
+			* param hint<string>
+			* param text<string>
+			* param bufferSize<integer>
+			* param flags<integer?> Optional [ImGuiInputTextFlags](lua://ImGuiInputTextFlags)
+			* return string text
+			* return boolean changed
+			@*/
+			imguiTable["InputTextWithHint"] = [](const std::string& label,
+			                                      const std::string& hint,
+			                                      std::string text,
+			                                      uint32_t bufferSize,
+			                                      sol::optional<int>
+			                                          flags) {
+				text.resize(bufferSize);
+				bool changed = ImGui::InputTextWithHint(label.c_str(),
+				    hint.c_str(),
+				    text.data(),
+				    bufferSize,
+				    static_cast<ImGuiInputTextFlags>(flags.value_or(0)));
+
+				return std::make_tuple(text.c_str(), changed);
+			};
+
+			/*@ylp.function ImGui.InputTextMultiline
+			* param label<string>
+			* param text<string>
+			* param bufferSize<integer>
+			* return string text
+			* return boolean changed
+			@*/
+
+			/*@ylp.function ImGui.InputTextMultiline
+			* param label<string>
+			* param text<string>
+			* param bufferSize<integer>
+			* param flags<integer> [ImGuiInputTextFlags](lua://ImGuiInputTextFlags)
+			* param size<ImVec2?> Optional widget size
+			* return string text
+			* return boolean changed
+			@*/
+			imguiTable["InputTextMultiline"] = sol::overload(&InputTextMultiline, &InputTextMultiline1);
+
 			// layout stuff
 
 			/*@ylp.function ImGui.SameLine
-			* param offsetX<number> Optional X position to start at. Defaults to `0`.
-			* param spacing<number> Optional spacing after the previous item. Defaults to the current item spacing.
+			*
 			@*/
-			imguiTable["SameLine"] = [](sol::optional<float> offsetX, sol::optional<float> spacing) {
-				ImGui::SameLine(offsetX.value_or(0), spacing.value_or(-1.0f));
-			};
+
+			/*@ylp.function ImGui.SameLine
+			* param offsetX<number> X position to start at. Defaults to `0`.
+			* param spacing<number?> Optional spacing after the previous item. Defaults to the current item spacing.
+			@*/
+			imguiTable["SameLine"] = sol::overload(
+			    []() { ImGui::SameLine(); },
+			    [](sol::optional<float> offsetX) {
+				    ImGui::SameLine(offsetX.value_or(0.0f));
+			    },
+			    [](float offsetX, float spacing) {
+				    ImGui::SameLine(offsetX, spacing);
+			    });
 
 			/*@ylp.function ImGui.NewLine
 			* 
@@ -279,15 +721,14 @@ namespace YLP::LuaJIT
 
 			/*@ylp.function ImGui.SeparatorEx
 			* param flags<integer> [ImGuiSeparatorFlags](lua://ImGuiSeparatorFlags)
-			* param thickness<number>
+			* param thickness<number?> Optional separator thickness. Defaults to 1.0
 			@*/
-			imguiTable["SeparatorEx"] = [](int flags, float thickness = 1.0f) {
-				ImGui::SeparatorEx(static_cast<ImGuiSeparatorFlags>(flags), thickness);
+			imguiTable["SeparatorEx"] = [](int flags, sol::optional<float> thickness) {
+				ImGui::SeparatorEx(static_cast<ImGuiSeparatorFlags>(flags), thickness.value_or(1.0f));
 			};
 
-			/*@ylp.function ImGui.SeparatorEx
-			* param flags<integer> [ImGuiSeparatorFlags](lua://ImGuiSeparatorFlags)
-			* param thickness<number>
+			/*@ylp.function ImGui.SeparatorText
+			* param text<string>
 			@*/
 			imguiTable["SeparatorText"] = [](const std::string& text) {
 				ImGui::SeparatorText(text.c_str());
@@ -338,12 +779,10 @@ namespace YLP::LuaJIT
 			};
 
 			/*@ylp.function ImGui.GetCursorPos
-			* return number x Current X position relative to the current window.
-			* return number y Current Y position relative to the current window.
+			* return ImVec2 cursorPos
 			@*/
 			imguiTable["GetCursorPos"] = []() {
-				const ImVec2 pos = ImGui::GetCursorPos();
-				return std::make_tuple(pos.x, pos.y);
+				return ImGui::GetCursorPos();
 			};
 
 			/*@ylp.function ImGui.GetCursorPosX
@@ -361,30 +800,38 @@ namespace YLP::LuaJIT
 			};
 
 			/*@ylp.function ImGui.GetContentRegionAvail
-			* return number x Available width in the current content region.
-			* return number y Available height in the current content region.
+			* return ImVec2 avail Available content region.
 			@*/
 			imguiTable["GetContentRegionAvail"] = []() {
-				const ImVec2 size = ImGui::GetContentRegionAvail();
-				return std::make_tuple(size.x, size.y);
+				return ImGui::GetContentRegionAvail();
 			};
 
 			/*@ylp.function ImGui.GetWindowSize
-			* return number x Current window width.
-			* return number y Current window height.
+			* return ImVec2 windowSize
 			@*/
 			imguiTable["GetWindowSize"] = []() {
-				const ImVec2 size = ImGui::GetWindowSize();
-				return std::make_tuple(size.x, size.y);
+				return ImGui::GetWindowSize();
 			};
 
 			/*@ylp.function ImGui.GetWindowPos
-			* return number x Current window X position.
-			* return number y Current window Y position.
+			* return ImVec2 windowPos Current window position.
 			@*/
 			imguiTable["GetWindowPos"] = []() {
-				const ImVec2 pos = ImGui::GetWindowPos();
-				return std::make_tuple(pos.x, pos.y);
+				return ImGui::GetWindowPos();
+			};
+
+			/*@ylp.function ImGui.GetFrameHeight
+			* return number frameHeight
+			@*/
+			imguiTable["GetFrameHeight"] = []() {
+				return ImGui::GetFrameHeight();
+			};
+
+			/*@ylp.function ImGui.GetFrameHeightWithSpacing
+			* return number frameHeight Frame height with spacing.
+			@*/
+			imguiTable["GetFrameHeightWithSpacing"] = []() {
+				return ImGui::GetFrameHeightWithSpacing();
 			};
 
 			/*@ylp.function ImGui.SetNextItemWidth
@@ -414,18 +861,19 @@ namespace YLP::LuaJIT
 			* param styleVar<integer> [ImGuiStyleVar](lua://ImGuiStyleVar) index
 			* param v<number> style value
 			@*/
-			imguiTable["PushStyleVar"] = [](int styleVar, float v) {
-				ImGui::PushStyleVar(static_cast<ImGuiStyleVar>(styleVar), v);
-			};
 
 			/*@ylp.function ImGui.PushStyleVar
 			* param styleVar<integer> [ImGuiStyleVar](lua://ImGuiStyleVar) index
 			* param vX<number> x value
 			* param vY<number> y value
 			@*/
-			imguiTable["PushStyleVar"] = [](int styleVar, float vX, float vY) {
-				ImGui::PushStyleVar(static_cast<ImGuiStyleVar>(styleVar), ImVec2(vX, vY));
-			};
+			imguiTable["PushStyleVar"] = sol::overload(
+			    [](int styleVar, float v) {
+				    ImGui::PushStyleVar(static_cast<ImGuiStyleVar>(styleVar), v);
+			    },
+			    [](int styleVar, float vX, float vY) {
+				    ImGui::PushStyleVar(static_cast<ImGuiStyleVar>(styleVar), ImVec2(vX, vY));
+			    });
 
 			/*@ylp.function ImGui.PopStyleVar
 			* param count<integer?> Count of pushed style variables to pop. Defaults to 1; Must match the number of pushed style vars.
@@ -452,11 +900,97 @@ namespace YLP::LuaJIT
 				ImGui::PopStyleColor(std::max(count.value_or(1), 1));
 			};
 
-			/*@ylp.function ImGui.PopStyleColor
+			/*@ylp.function ImGui.SetMouseCursor
 			* param cursorIdx<integer> [ImGuiMouseCursor](lua://ImGuiMouseCursor) index
 			@*/
 			imguiTable["SetMouseCursor"] = [](int cursorIdx) {
 				ImGui::SetMouseCursor(static_cast<ImGuiMouseCursor>(cursorIdx));
+			};
+
+			// custom widgets
+
+			/*@ylp.function ImGui.Tooltip Draws a tooltip when the widget this function is called after is hovered.
+			* param text<string> Tooltip text
+			@*/
+			imguiTable["Tooltip"] = [](const std::string& text) {
+				ImGui::ToolTip(text.c_str());
+			};
+
+			/*@ylp.function ImGui.HelpMarker Draws a help marker (?) symbol in front of the widget this function is called after. When the symbol is hovered, it draws a tooltip.
+			* param text<string> Tooltip text
+			@*/
+			imguiTable["HelpMarker"] = [](const std::string& text) {
+				ImGui::HelpMarker(text.c_str());
+			};
+
+			/*@ylp.function ImGui.WarningMarker Draws a warning marker [!] symbol in front of the widget this function is called after. When the symbol is hovered, it draws a tooltip.
+			* param text<string> Tooltip text
+			@*/
+			imguiTable["WarningMarker"] = [](const std::string& text) {
+				ImGui::WarningMarker(text.c_str());
+			};
+
+			/*@ylp.function ImGui.Spinner Draws a spinner indicating 'busy' state.
+			*
+			@*/
+
+			/*@ylp.function ImGui.Spinner Draws a spinner indicating 'busy' state.
+			* param text<string> Text to display next to the spinner. Can be an empty or anonymous string: "##blahblah"
+			* param radius<number?> Optional spinner radius. Defaults to 10.0
+			@*/
+
+			/*@ylp.function ImGui.Spinner Draws a spinner indicating 'busy' state.
+			* param text<string> Text to display next to the spinner. Can be an empty or anonymous string: "##blahblah"
+			* param radius<number> spinner radius. Defaults to 10.0
+			* param thickness<number?> Optional spinner line thickness. Defaults to 2.0
+			@*/
+			imguiTable["Spinner"] = sol::overload(
+			    []() { ImGui::Spinner(); },
+			    [](const std::string& text, sol::optional<float> radius) {
+				    ImGui::Spinner(text.c_str(), radius.value_or(10.0f));
+			    },
+			    [](const std::string& text, float radius, sol::optional<float> thickness) {
+				    ImGui::Spinner(text.c_str(), radius, thickness.value_or(2.0f));
+			    });
+
+			/*@ylp.function ImGui.YLPSpinner Draws a spinner made out of YLP's logo with a rotating gear and a fixed label.
+			*
+			@*/
+
+			/*@ylp.function ImGui.YLPSpinner Draws a spinner made out of YLP's logo with a rotating gear and a fixed label.
+			* param text<string> Text to display below the spinner. Can be an empty or anonymous string: "##blahblah"
+			* param radius<number?> Optional spinner radius. Defaults to frame height.
+			@*/
+
+			/*@ylp.function ImGui.YLPSpinner Draws a spinner made out of YLP's logo with a rotating gear and a fixed label.
+			* param text<string> Text to display below the spinner. Can be an empty or anonymous string: "##blahblah"
+			* param radius<number> spinner radius. Defaults to frame height.
+			* param speed<number?> Optional spinning speed. Defaults to 2.8
+			@*/
+			imguiTable["YLPSpinner"] = sol::overload(
+			    []() {
+				    ImGui::YLPSpinner();
+			    },
+			    [](const std::string& text, sol::optional<float> radius) {
+				    float rectW = radius.value_or(ImGui::GetFrameHeight());
+				    ImGui::YLPSpinner(text.c_str(), ImVec2(rectW, rectW));
+			    },
+			    [](const std::string& text, float radius, sol::optional<float> speed) {
+				    ImGui::YLPSpinner(text.c_str(), ImVec2(radius, radius), speed.value_or(2.8f));
+			    });
+
+			/*@ylp.function ImGui.SegmentedControl
+			* param currentItem<integer> The current item
+			* param items<{[integer]: string}> A table of strings. Must be a contiguous string array, anything else will be ignored.
+			* param anchorPos<(0|1|2)?> Anchor position. 0: left | 1: center | 2: right. Defaults to 0: left.
+			* return integer selectedItem
+			* return boolean clicked
+			@*/
+			imguiTable["SegmentedControl"] = [](int currentItem, const sol::table& items, sol::optional<int> anchorPos) {
+				auto res     = SolTbl2StrArr(items);
+				auto pos     = static_cast<ImGui::ImSegmentedCtrlPos>(anchorPos.value_or(0));
+				bool clicked = ImGui::SegmentedControl(&currentItem, res.chars, pos);
+				return std::make_tuple(currentItem, clicked);
 			};
 		}
 	};

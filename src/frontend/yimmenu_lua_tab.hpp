@@ -29,7 +29,7 @@ namespace YLP::Frontend
 	{
 	public:
 		YimLuaTab() :
-		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MS_EXTENSION, "YimMenu-Lua Repositories")
+		    GuiTab(eTabID::TAB_YIMMENU_LUA, ICON_MS_EXTENSION, "YimMenu-Lua")
 		{
 		}
 
@@ -284,7 +284,7 @@ namespace YLP::Frontend
 		}
 
 	private:
-		char searchBuffer[64];
+		char searchBuffer[64]{};
 
 		const float m_RepoCardHeight = 190;
 

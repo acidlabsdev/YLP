@@ -8,13 +8,14 @@
 #	- Press the 'Filters' button, go to 'Styles' and select 'Material Symbols (new)'
 #	- Search for the icon you want to add, click on it, and in the right hand menu that pops up scroll down to 'Icon name'
 #	- Copy the name and paste it in the 'names.txt' file next to this file (create one if it doesn't exist)
-#	- Run the generator.
-#	- Optionql: If you already have the font ttf on your machine, pass the full path to it as a command line arg (ex: python icons_gen.py "C:\\Path\\To\\MaterialSymbolsOutlined.ttf")
+#	- Run the generator: python icons_gen.py --cpp
+#   - Optional: Pass --lua to generate a Lua table of icon definitions.
+#	- Optional: If you already have the font ttf on your machine, pass the full path to it as a positional argument (ex: python icons_gen.py --cpp --lua "C:\\Path\\To\\MaterialSymbolsOutlined.ttf")
 
 
 import re, requests, subprocess, shutil, sys
+from argparse import ArgumentParser as ArgParser
 from pathlib import Path
-# from alive_progress import alive_bar
 
 
 ROOT  = Path(__file__).parent.parent.parent
@@ -115,7 +116,10 @@ def download_font_ttf():
 		f.write(resp.content)
 
 
-def write_icon_defs(icons: dict[str, int], used: set[str], codepoints: list[int]):
+def write_icon_defs(icons: dict[str, int], used: set[str], codepoints: list[int], gen_cpp: bool, gen_lua: bool):
+	if not gen_cpp and not gen_lua:
+		return
+
 	cpp_lines = []
 	lua_lines = []
 
@@ -127,22 +131,27 @@ def write_icon_defs(icons: dict[str, int], used: set[str], codepoints: list[int]
 		cpp_lines.append(f"#define {name} {icondef} // U+{cp_hex}\n")
 		lua_lines.append(f"\t{name} = {icondef}, -- U+{cp_hex}\n")
 
-	with OUT_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
-		f.write(f"/*{YLP_NOTICE}*/\n\n\n")
-		f.write("#pragma once\n\n")
-		f.write(f"#define ICON_MIN_MS 0x{min(codepoints):X}\n")
-		f.write(f"#define ICON_MAX_MS 0x{max(codepoints):X}\n\n")
-		f.writelines(cpp_lines)
-		f.write("\n")
+	if gen_cpp:
+		with OUT_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
+			f.write(f"/*{YLP_NOTICE}*/\n\n\n")
+			f.write("#pragma once\n\n")
+			f.write(f"#define ICON_MIN_MS 0x{min(codepoints):X}\n")
+			f.write(f"#define ICON_MAX_MS 0x{max(codepoints):X}\n\n")
+			f.writelines(cpp_lines)
+			f.write("\n")
 
-	with LUA_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
-		f.write(f"--[[{YLP_NOTICE}]]\n\n\n")
-		f.write("return {\n")
-		f.writelines(lua_lines)
-		f.write("}\n")
+	if gen_lua:
+		with LUA_DEFS_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
+			f.write(f"--[[{YLP_NOTICE}]]\n\n\n")
+			f.write("return {\n")
+			f.writelines(lua_lines)
+			f.write("}\n")
 
 
-def main(local_font_path: str | None = None):
+def main(gen_cpp: bool = False, gen_lua: bool = False, local_font_path: str = None):
+	if local_font_path and not gen_cpp and not gen_lua:
+		gen_cpp = True
+
 	print("\033[H\033[J", end="")
 	print("=" * 60)
 	print()
@@ -184,66 +193,67 @@ def main(local_font_path: str | None = None):
 	codepoints  = sorted(icons[name] for name in used)
 	unicode_arg = ",".join(f"U+{cp:04X}" for cp in codepoints)
 
-	if local_font_path:
-		font_path = Path(local_font_path)
-		if not font_path.exists():
-			print(f"ERROR: Local font does not exist.")
-			print(f"  {font_path}")
-			raise SystemExit(1)
+	if gen_cpp:
+		if local_font_path:
+			font_path = Path(local_font_path)
+			if not font_path.exists():
+				print(f"ERROR: Local font does not exist.")
+				print(f"  {font_path}")
+				raise SystemExit(1)
 
-		print("Using local Material Symbols font.")
-	else:
-		print("Downloading Material Symbols font...")
-		font_path = download_font_ttf()
+			print("Using local Material Symbols font.")
+		else:
+			print("Downloading Material Symbols font...")
+			font_path = download_font_ttf()
 
-	print()
-	original_size = font_path.stat().st_size
-	print(f"  Size: {sizefmt(original_size)}\n")
+		print()
+		original_size = font_path.stat().st_size
+		print(f"  Size: {sizefmt(original_size)}\n")
 
-	print("Subsetting font...\n")
-	subprocess.run(
-		[
-			"pyftsubset",
-			str(font_path),
-			f"--unicodes={unicode_arg}",
-			f"--output-file={STRIPPED_TEMP_PATH}",
-			"--glyph-names",
-			"--symbol-cmap",
-			"--legacy-cmap",
-			"--notdef-glyph",
-			"--notdef-outline",
-			"--recommended-glyphs",
-		],
-		check=True,
-	)
-
-	print("Compressing font into C++ header...\n")
-	OUT_FONT_HEADER_PATH.parent.mkdir(parents=True, exist_ok=True)
-	with OUT_FONT_HEADER_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
-		subprocess.run([str(BIN2C), str(STRIPPED_TEMP_PATH), "material_symbols"],
+		print("Subsetting font...\n")
+		subprocess.run(
+			[
+				"pyftsubset",
+				str(font_path),
+				f"--unicodes={unicode_arg}",
+				f"--output-file={STRIPPED_TEMP_PATH}",
+				"--glyph-names",
+				"--symbol-cmap",
+				"--legacy-cmap",
+				"--notdef-glyph",
+				"--notdef-outline",
+				"--recommended-glyphs",
+			],
 			check=True,
-			stdout=f,
 		)
 
-	print("Generating icon definitions...\n")
-	write_icon_defs(icons, used, codepoints)
+		print("Compressing font into C++ header...\n")
+		OUT_FONT_HEADER_PATH.parent.mkdir(parents=True, exist_ok=True)
+		with OUT_FONT_HEADER_PATH.open(mode="w", encoding="utf-8", newline="\n") as f:
+			subprocess.run([str(BIN2C), str(STRIPPED_TEMP_PATH), "material_symbols"],
+				check=True,
+				stdout=f,
+			)
 
+	print("Generating icon definitions...\n")
+	write_icon_defs(icons, used, codepoints, gen_cpp, gen_lua)
 	print("Done.\n")
 
-	stripped_size = STRIPPED_TEMP_PATH.stat().st_size
-	reduction     = 100 * (1 - stripped_size / original_size)
-	print("=" * 60)
-	print()
-	print(f"  Icons:          {len(used)}")
-	print(f"  Original font:  {sizefmt(original_size)}")
-	print(f"  Stripped font:  {sizefmt(stripped_size)}")
-	print(f"  Reduction:      {reduction:.2f}%")
-	print()
-	print("  Generated C++ Headers:")
-	print(f"    {OUT_FONT_HEADER_PATH}")
-	print(f"    {OUT_DEFS_PATH}\n")
-	print("=" * 60)
-	print()
+	if gen_cpp:
+		stripped_size = STRIPPED_TEMP_PATH.stat().st_size
+		reduction     = 100 * (1 - stripped_size / original_size)
+		print("=" * 60)
+		print()
+		print(f"  Icons:          {len(used)}")
+		print(f"  Original font:  {sizefmt(original_size)}")
+		print(f"  Stripped font:  {sizefmt(stripped_size)}")
+		print(f"  Reduction:      {reduction:.2f}%")
+		print()
+		print("  Generated C++ Headers:")
+		print(f"    {OUT_FONT_HEADER_PATH}")
+		print(f"    {OUT_DEFS_PATH}\n")
+		print("=" * 60)
+		print()
 
 	try:
 		shutil.rmtree(TEMP)
@@ -252,4 +262,15 @@ def main(local_font_path: str | None = None):
 
 
 if __name__ == "__main__":
-	main(sys.argv[1] if len(sys.argv) > 1 else None)
+	parser = ArgParser(description="Generate a stripped version of Google's Material Design Symbols Outlined font.")
+	parser.add_argument("--cpp", action="store_true", help="Generate C++ font and icon macro headers.")
+	parser.add_argument("--lua", action="store_true", help="Generate a Lua table of icon definitions. The file will be written to 'docs/Lua API/shared/icons.lua'")
+	parser.add_argument("local_font_path", type=str, nargs="?", default="", help="Path to your local font ttf. If not provided, a fresh font will be downloaded from GitHub.")
+	args = parser.parse_args()
+
+	if len(sys.argv) == 1:
+		print("Missing at least one argument!\n")
+		parser.print_help()
+		raise SystemExit()
+
+	main(args.cpp, args.lua, args.local_font_path)

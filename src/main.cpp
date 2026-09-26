@@ -46,24 +46,24 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	g_YimPath	  = appdata / "YimMenu";
 	g_YimV2Path   = appdata / "YimMenuV2";
 
-	if (!std::filesystem::exists(g_ProjectPath))
-		std::filesystem::create_directory(g_ProjectPath);
+	if (!IO::Exists(g_ProjectPath))
+		IO::CreateFolder(g_ProjectPath);
 
-	ThreadManager	::Init();
-	Settings		::Init(g_ProjectPath / "settings.json");
-	Logger			::Init(g_ProjectPath / "cout.log", Config().externalConsole);
+	ThreadManager::Init();
+	Settings::Init(g_ProjectPath / "settings.json");
+	Logger::Init(g_ProjectPath / "cout.log", Config().externalConsole);
 
 	if (!Renderer::Init())
 	{
-		Renderer		::Destroy();
-		Settings		::Destroy();
-		Logger			::Destroy();
-		ThreadManager	::Destroy();
+		Renderer::Destroy();
+		Settings::Destroy();
+		Logger::Destroy();
+		ThreadManager::Destroy();
 		return 1;
 	}
 
-	GitHubManager	::Init();
-	YimMenuHandler	::Init();
+	GitHubManager::Init();
+	YimMenuHandler::Init();
 
 	g_Pointers.Init();
 

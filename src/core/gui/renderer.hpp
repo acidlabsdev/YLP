@@ -26,13 +26,6 @@ namespace YLP
 	using PFNWGLSWAPINTERVALEXTPROC    = BOOL(WINAPI*)(int);
 	using PFNWGLGETSWAPINTERVALEXTPROC = int(WINAPI*)();
 
-	enum eTextureRequestType : uint8_t
-	{
-		RequestTypeMemory,
-		RequestTypeFile,
-		RequestTypeRgba, // for process list icons (if I ever implement them)
-	};
-
 	class Renderer : public Singleton<Renderer>
 	{
 		friend class Singleton<Renderer>;
@@ -43,9 +36,9 @@ namespace YLP
 	public:
 		~Renderer();
 
-		Renderer(const Renderer&) = delete;
-		Renderer(Renderer&&) noexcept = delete;
-		Renderer& operator=(const Renderer&) = delete;
+		Renderer(const Renderer&)                = delete;
+		Renderer(Renderer&&) noexcept            = delete;
+		Renderer& operator=(const Renderer&)     = delete;
 		Renderer& operator=(Renderer&&) noexcept = delete;
 
 		static void Destroy()
@@ -98,32 +91,6 @@ namespace YLP
 			return GetInstance().LoadRawTextureImpl(rgbaData, w, h, name);
 		}
 
-		static std::optional<ImTextureID> FindTextureByName(const std::string& name)
-		{
-			for (auto& tex : GetInstance().m_Textures)
-			{
-				if (tex.m_Name == name)
-				{
-					tex.m_RefCount++;
-					return tex.m_ImGuiId;
-				}
-			}
-
-			return std::nullopt;
-		}
-
-		static void RequestTexture(const std::string& name,
-		    eTextureRequestType requestType,
-		    ImTextureID outImTexture,
-		    const unsigned char* textureData,
-		    size_t dataSize,
-		    const std::filesystem::path& filePath = "");
-
-		static void LoadPendingTextures()
-		{
-			GetInstance().LoadPendingTexturesImpl();
-		}
-
 		static void ReleaseTexture(const std::string& name)
 		{
 			GetInstance().ReleaseTextureImpl(name);
@@ -156,13 +123,14 @@ namespace YLP
 
 		ImVec2 GetWindowSizeImpl() noexcept;
 
+		std::optional<ImTextureID> FindTextureByName(const std::string& name);
+
 		ImTextureID LoadTextureFromFileImpl(const std::filesystem::path& filepath);
 		ImTextureID LoadTextureFromMemoryImpl(const unsigned char* data, size_t size, const std::string& name);
 		ImTextureID LoadRawTextureImpl(const unsigned char* rgbaData, int w, int h, const std::string& name);
 
 		void ReleaseTextureImpl(const std::string& name);
 		void ReleaseTextureImpl(const ImTextureID& imguiID);
-		void LoadPendingTexturesImpl();
 
 		WNDCLASSEX m_WndClass{};
 		HWND m_HWND{};
@@ -180,18 +148,6 @@ namespace YLP
 
 		LRESULT WndProcImpl(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-		struct PendingTexture
-		{
-			const std::string m_Name;
-			uint8_t m_RequestType;
-			ImTextureID m_OuTexture;
-			const unsigned char* m_Data;
-			size_t m_DataSize;
-			const std::filesystem::path m_Path;
-			int m_Width;
-			int m_Height;
-		};
-
 		struct Texture
 		{
 			std::string m_Name;
@@ -201,7 +157,6 @@ namespace YLP
 		};
 
 		std::mutex m_TextureMutex;
-		std::vector<PendingTexture> m_PendingTextures{};
 		std::vector<Texture> m_Textures;
 
 		static Renderer& GetInstance()

@@ -92,7 +92,7 @@ namespace YLP::LuaJIT
 			if (!IO::IsFile(entry))
 				continue;
 
-			if (Utils::StringToLower(entry.path().filename().string()) == "main.lua")
+			if (entry.path().filename().string() == "main.lua")
 			{
 				m_LoadQueue.push(root);
 				break;
@@ -157,7 +157,7 @@ namespace YLP::LuaJIT
 		if (!m_CodeExecutor)
 		{
 			m_CodeExecutor = std::make_unique<LuaModule>("/CodeExecutor");
-			m_CodeExecutor->SandboxLoaders(m_PluginsDir);
+			m_CodeExecutor->SandboxAPI(m_PluginsDir);
 		}
 
 		if (!IO::Exists(m_PluginsDir) || !IO::IsDir(m_PluginsDir) || IO::IsEmpty(m_PluginsDir))
@@ -216,7 +216,7 @@ namespace YLP::LuaJIT
 				while (!m_LoadQueue.empty())
 				{
 					auto m = std::make_shared<LuaModule>(m_LoadQueue.front());
-					m->SandboxLoaders(m_PluginsDir);
+					m->SandboxAPI(m_PluginsDir);
 
 					if (m->Load())
 						m_Modules.push_back(m);

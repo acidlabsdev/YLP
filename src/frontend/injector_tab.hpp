@@ -30,7 +30,7 @@ namespace YLP::Frontend
 	{
 	public:
 		InjectorTab() :
-		    GuiTab(eTabID::TAB_INJECTOR, ICON_MS_BROWSE, "Standalone Injector & Custom DLLs")
+		    GuiTab(eTabID::TAB_INJECTOR, ICON_MS_BROWSE, "Injector")
 		{
 		}
 
@@ -374,10 +374,12 @@ namespace YLP::Frontend
 
 				if (injectorCfg.m_RandomizeAddress)
 				{
+					ImGui::Indent();
 					ImGui::Text("Max Randomization Attempts");
 					ImGui::HelpMarker("Number of times to retry failed randomization attempts before giving up.");
 					ImGui::SetNextItemWidth(-1);
 					ImGui::SliderInt("##attempts", &injectorCfg.m_MaxRandomizationAttempts, 1, 5);
+					ImGui::Unindent();
 				}
 				ImGui::PopFont();
 				ImGui::EndChild();
@@ -524,7 +526,7 @@ namespace YLP::Frontend
 
 		int selectedInjectorMode{0};
 
-		char searchBuffer[64];
+		char searchBuffer[64]{};
 
 		std::mutex m_Mutex{};
 

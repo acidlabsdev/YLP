@@ -17,12 +17,11 @@
 
 #pragma once
 
-#include "core/updater.hpp"
-#include "core/injector/injector.hpp"
-#include "core/memory/scanner.hpp"
-
 #include "../lua_library.hpp"
 #include "../lua_module.hpp"
+
+#include "core/updater.hpp"
+#include "core/injector/injector.hpp"
 
 
 namespace YLP::LuaJIT
@@ -32,14 +31,81 @@ namespace YLP::LuaJIT
 		using LuaLibrary::LuaLibrary;
 
 	public:
+		using VersionInfo = YLP::Updater::Version;
+
 		void Register(sol::state& L) override
 		{
+			/* @ylp.class VersionInfo
+			* description
+				A user type that stores version information with support for direct equality comparisons.
+
+				__Usage Example:__
+
+				```lua
+				local version_min = VersionInfo(2, 0, 1, 4)
+				if (YLP.GetVersion() < version_min) then
+				    YLP.UnloadThisModule()
+				end
+				```
+
+			* constructor __call
+			* param major<integer>
+			* param minor<integer>
+			* param patch<integer>
+			* param build<integer>
+			
+			* field major<integer>
+			
+			* field minor<integer>
+			
+			* field patch<integer>
+			
+			* field build<integer>
+			
+			* method ToString
+			* return string strVer The string representation of the current version. Ex: `"1.2.3.4"`
+			@*/
+			auto versionUT = L.new_usertype<VersionInfo>("VersionInfo",
+			    // clang-format off
+			    sol::call_constructor, [](int major, int minor, int patch, int build)
+				{
+					return VersionInfo{major, minor, patch, build};
+				},
+
+				sol::meta_function::less_than, [](const VersionInfo& self, const VersionInfo& other)
+				{
+					return self < other;
+				},
+
+				sol::meta_function::equal_to, [](const VersionInfo& self, const VersionInfo& other)
+				{
+					return self == other;
+				},
+
+				sol::meta_function::less_than_or_equal_to, [](const VersionInfo& self, const VersionInfo& other)
+				{
+					return self <= other;
+				},
+			 
+			    "major", sol::readonly(&VersionInfo::m_Major),
+			    "minor", sol::readonly(&VersionInfo::m_Minor),
+			    "patch", sol::readonly(&VersionInfo::m_Patch),
+			    "build", sol::readonly(&VersionInfo::m_Build),
+
+				"ToString",					   &VersionInfo::ToString,
+			    sol::meta_function::to_string, &VersionInfo::ToString
+			    // clang-format on
+			);
+
 			/* @ylp.table YLP
 			* description
 				### YLP namespace
 
 			* function GetVersion
-			* return string version The current YLP version.
+			* return VersionInfo versionInfo The current YLP version.
+
+			* function IsDebug
+			* return boolean isDebug True if the current build type is debug, otherwise false.
 
 			* function RegisterProcessWatcher Registers a callback to be executed once when a process is first seen.~~You can call `Task.Yield` and `Task.Sleep` in your callback function.
 			* param processName<string> The name of the process
@@ -65,9 +131,17 @@ namespace YLP::LuaJIT
 			@*/
 			auto ylpTable = L["YLP"].get_or_create<sol::table>();
 
-			ylpTable["GetVersion"] = []()
+			ylpTable["GetVersion"] = []() {
+				return YLPUpdater.GetLocalVersion();
+			};
+
+			ylpTable["IsDebug"] = []()
 			{
-				return YLPUpdater.GetLocalVersion().ToString();
+#ifdef DEBUG
+				return true;
+#endif // DEBUG
+				return false;
+
 			};
 
 			ylpTable["RegisterProcessWatcher"] = [&](const std::string& processName, sol::protected_function callback, sol::optional<int> delayMs)
@@ -103,16 +177,14 @@ namespace YLP::LuaJIT
 				mod->m_GuiCallback = std::move(callback);
 			};
 
-			ylpTable["InjectDll"] = [&](const LuaPath& dllPath, const std::string& processName, bool manualMap, sol::optional<sol::table> manualMappingConfig)
+			ylpTable["InjectDll"] = [](const LuaPath& dllPath, const std::string& processName, bool manualMap, sol::optional<sol::table> manualMappingConfig)
 			{
-				auto args = manualMappingConfig.value_or(sol::table());
-
+				auto args                    = manualMappingConfig.value_or(sol::table());
 				Injector::InjectorConfig cfg = {
 				    .m_Mode             = manualMap ? 1 : 0,
 				    .m_WipePE           = args["eraseHeaders"].get_or(false),
 				    .m_RandomizeAddress = args["randomizeBaseAddress"].get_or(false),
-				    .m_EnableSEH        = args["enableSEH"].get_or(false)
-				};
+				    .m_EnableSEH        = args["enableSEH"].get_or(false)};
 
 				Injector::InjectResult res = Injector::Inject(processName, dllPath.Get(), cfg);
 				return std::make_tuple(res.m_Success, res.m_Message);
@@ -127,7 +199,7 @@ namespace YLP::LuaJIT
 			ylpTable["UnloadThisModule"] = [&]()
 			{
 				if (auto module = GetModuleFromLuaState(L))
-					module->Unload();
+					module->m_UnloadFromCode = true;
 			};
 		}
 	};

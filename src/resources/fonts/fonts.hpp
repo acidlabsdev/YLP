@@ -26,6 +26,7 @@ namespace Fonts
 	extern ImFont* Regular;
 	extern ImFont* Bold;
 	extern ImFont* Title;
+	extern ImFont* Subtitle;
 	extern ImFont* IconsBig;
 
 	void Load(ImGuiIO& io);

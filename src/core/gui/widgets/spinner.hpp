@@ -20,20 +20,20 @@
 
 namespace ImGui
 {
-	inline void Spinner(const char* label, float radius = 10.0f, float thickness = 2.0f)
+	inline void Spinner(const char* label = "", float radius = 10.0f, float thickness = 2.0f)
 	{
-		ImGuiWindow* window = ImGui::GetCurrentWindow();
+		ImGuiWindow* window = GetCurrentWindow();
 		if (window->SkipItems)
 			return;
 
-		ImGuiStyle& style = ImGui::GetStyle();
+		ImGuiStyle& style = GetStyle();
 		ImGuiContext& g = *GImGui;
-		ImVec2 pos = ImGui::GetCursorScreenPos();
+		ImVec2 pos = GetCursorScreenPos();
 		ImVec2 center = ImVec2(pos.x + thickness + radius, pos.y + thickness + radius);
 
 		const int num_segments = 30;
 		const float speed = 8.0f;
-		float time = static_cast<float>(ImGui::GetTime());
+		float time = static_cast<float>(GetTime());
 		float start = fmodf(time * speed, IM_PI * 2.0f);
 		float a_min = start;
 		float a_max = start + IM_PI * 1.5f;
@@ -42,8 +42,8 @@ namespace ImGui
 		ImVec4 col2 = plotCol - ImVec4(0.01f, 0.01f, 0.01f, 0.5f);
 		float phase = fmodf(time * 1.5f, 1.0f);
 		ImVec4 col = ImLerp(plotCol, col2, (sinf(phase * IM_PI * 2.0f) * 0.5f) + 0.5f);
-		ImU32 color = ImGui::ColorConvertFloat4ToU32(col);
-		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		ImU32 color = ColorConvertFloat4ToU32(col);
+		ImDrawList* draw_list = GetWindowDrawList();
 		draw_list->PathClear();
 
 		for (int i = 0; i <= num_segments; i++)
@@ -55,12 +55,12 @@ namespace ImGui
 
 		draw_list->PathStroke(color, 0, thickness);
 
-		if (label && label[0] && strncmp(label, "##", 2) != 0)
+		if (label[0] && strncmp(label, "##", 2) != 0)
 		{
 			ImVec2 text_pos = ImVec2(center.x + radius + thickness + style.ItemSpacing.x, pos.y + (radius * 0.5));
-			draw_list->AddText(text_pos, ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]), label);
+			draw_list->AddText(text_pos, ColorConvertFloat4ToU32(style.Colors[ImGuiCol_Text]), label);
 		}
 
-		ImGui::Dummy(ImVec2(radius * 2 + style.FramePadding.x + thickness, radius * 2 + style.FramePadding.y + thickness));
+		Dummy(ImVec2(radius * 2 + style.FramePadding.x + thickness, radius * 2 + style.FramePadding.y + thickness));
 	}
 }

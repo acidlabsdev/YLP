@@ -76,8 +76,7 @@ namespace YLP
 		ATOM regResult = RegisterClassEx(&m_WndClass);
 		if (regResult == 0)
 		{
-			DWORD err = GetLastError();
-			LOG_ERROR("RegisterClassExW failed with code {}", err);
+			LOG_ERROR("RegisterClassExW failed with code {}", GetLastError());
 			return false;
 		}
 
@@ -114,8 +113,7 @@ namespace YLP
 
 		if (!m_HWND)
 		{
-			DWORD err = GetLastError();
-			LOG_ERROR("CreateWindowW failed with error code {}", err);
+			LOG_ERROR("CreateWindowW failed with error code {}", GetLastError());
 			return false;
 		}
 		g_Hwnd = m_HWND;
@@ -130,14 +128,16 @@ namespace YLP
 
 		if (hIcon)
 		{
-			SendMessage(m_HWND, WM_SETICON, ICON_BIG,   reinterpret_cast<LPARAM>(hIcon));
-			SendMessage(m_HWND, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hIcon));
+
+			auto lParam = reinterpret_cast<LPARAM>(hIcon);
+			SendMessage(m_HWND, WM_SETICON, ICON_BIG,   lParam);
+			SendMessage(m_HWND, WM_SETICON, ICON_SMALL, lParam);
 		}
 		else
 			LOG_WARN("Failed to load window icon!");
 
 		SetBackgroundAccentState(m_HWND, static_cast<eWindowAccentState>(cfg.windowAccentState));
-		ShowWindow(m_HWND, Config().fullscreenWindow ? SW_SHOWMAXIMIZED : SW_SHOWDEFAULT);
+		ShowWindow(m_HWND, cfg.fullscreenWindow ? SW_SHOWMAXIMIZED : SW_SHOWDEFAULT);
 		UpdateWindow(m_HWND);
 
 		m_HDC = GetDC(m_HWND);
@@ -160,16 +160,6 @@ namespace YLP
 			return false;
 		}
 
-#ifdef DEBUG
-		PIXELFORMATDESCRIPTOR fucktard{};
-		DescribePixelFormat(m_HDC, pf, sizeof(fucktard), &fucktard); // dis moi what the fuck is your problème?
-		LOG_DEBUG("Pixel format: c={} a={} d={} s={}",
-		    fucktard.cColorBits,
-		    fucktard.cAlphaBits,
-		    fucktard.cDepthBits,
-		    fucktard.cStencilBits);
-#endif // DEBUG
-
 		if (!SetPixelFormat(m_HDC, pf, &pfd))
 		{
 			LOG_ERROR("SetPixelFormat failed!");
@@ -190,19 +180,6 @@ namespace YLP
 			return false;
 		}
 
-		//auto wglGetSwapIntervalEXT = reinterpret_cast<PFNWGLGETSWAPINTERVALEXTPROC>(wglGetProcAddress("wglGetSwapIntervalEXT"));
-		//auto wglSwapIntervalEXT = reinterpret_cast<PFNWGLSWAPINTERVALEXTPROC>(wglGetProcAddress("wglSwapIntervalEXT"));
-		//if (!wglSwapIntervalEXT)
-		//{
-		//	LOG_WARN("WGL_EXT_swap_control is unavailable, VSync cannot be enabled therefore YLP may consume more CPU than necessary.");
-		//	m_HasVSync = false;
-		//}
-		//else
-		//{
-		//	wglSwapIntervalEXT(1);
-		//	m_HasVSync = wglGetSwapIntervalEXT ? wglGetSwapIntervalEXT() : 0;
-		//}
-
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 
@@ -213,8 +190,6 @@ namespace YLP
 
 		ImGui_ImplWin32_Init(m_HWND);
 		ImGui_ImplOpenGL3_Init("#version 130");
-		LoadPendingTextures();
-
 		GUI::Init();
 
 		m_Initialized = true;
@@ -319,6 +294,20 @@ namespace YLP
 	ImVec2 Renderer::GetWindowSizeImpl() noexcept
 	{
 		return ImVec2(static_cast<float>(m_Width), static_cast<float>(m_Height));
+	}
+
+	std::optional<ImTextureID> Renderer::FindTextureByName(const std::string& name)
+	{
+		for (auto& tex : m_Textures)
+		{
+			if (tex.m_Name == name)
+			{
+				tex.m_RefCount++;
+				return tex.m_ImGuiId;
+			}
+		}
+
+		return std::nullopt;
 	}
 
 	ImTextureID Renderer::LoadTextureFromFileImpl(const std::filesystem::path& filepath)
@@ -427,42 +416,6 @@ namespace YLP
 				break;
 			}
 		}
-	}
-
-	void Renderer::RequestTexture(const std::string& name,
-	    eTextureRequestType requestType,
-	    ImTextureID ImTexture,
-	    const unsigned char* textureData,
-	    size_t dataSize,
-	    const std::filesystem::path& filePath)
-	{
-		std::scoped_lock lock(GetInstance().m_TextureMutex);
-		GetInstance().m_PendingTextures.push_back({name, requestType, ImTexture, textureData, dataSize, filePath});
-	}
-
-	void Renderer::LoadPendingTexturesImpl()
-	{
-		ThreadManager::RunDetached([this]() {
-			std::scoped_lock lock(m_TextureMutex);
-
-			for (auto& tex : m_PendingTextures)
-			{
-				switch (tex.m_RequestType)
-				{
-				case RequestTypeMemory:
-					tex.m_OuTexture = LoadTextureFromMemory(tex.m_Data, tex.m_DataSize, tex.m_Name);
-					break;
-				case RequestTypeFile:
-					tex.m_OuTexture = LoadTextureFromFile(tex.m_Path);
-					break;
-				case RequestTypeRgba:
-					tex.m_OuTexture = LoadRawTexture(tex.m_Data, tex.m_Width, tex.m_Height, tex.m_Name);
-					break;
-				default:
-					break;
-				}
-			}
-		});
 	}
 
 	LRESULT CALLBACK Renderer::WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)

@@ -74,16 +74,16 @@ def split_member_name(name: str) -> tuple[str | None, str]:
 
 
 def parse_field(value: str) -> ApiMember:
-    match = PARAM_RE.match(value.strip())
-    if not match:
-        raise ValueError(f"Invalid field declaration: {value!r}")
+	match = PARAM_RE.match(value.strip())
+	if not match:
+		raise ValueError(f"Invalid field declaration: {value!r}")
 
-    return ApiMember(
-        kind="field",
-        name=match.group("name"),
-        type=match.group("type"),
-        description=(match.group("description") or "").strip(),
-    )
+	return ApiMember(
+		kind="field",
+		name=match.group("name"),
+		type=match.group("type"),
+		description=(match.group("description") or "").strip(),
+	)
 
 
 def parse_param(value: str) -> Parameter:
@@ -153,13 +153,13 @@ def parse_annotation(header: str, body: str) -> ApiMember | ApiLibrary:
 				description_lines.append(line)
 				continue
 
-		member_match = re.match(r"^(constructor|operator|method|function|field)\s+?(.+?)$", line)
+		member_match = re.match(r"^(constructor|operator|method|function|field)\s+?(.*?)$", line)
 		if member_match:
 			kind = member_match.group(1)
-			declaration = member_match.group(2) or ""
+			declaration = (member_match.group(2) or "").strip()
 
 			if kind == "field":
-				current_member = parse_field(declaration.strip())
+				current_member = parse_field(declaration)
 			else:
 				member_name, _, maybe_desc = declaration.partition(" ")
 				current_member = ApiMember(
@@ -376,12 +376,12 @@ def md_operator(operator: ApiMember) -> str:
 
 
 def md_field(field: ApiMember) -> str:
-    field_type = field.type or "any"
+	field_type = field.type or "any"
 
-    return (
-        f"| `{field.name}` | {md_type(field_type)} | "
-        f"{md_escape(field.description)} |"
-    )
+	return (
+		f"| `{field.name}` | {md_type(field_type)} | "
+		f"{md_escape(field.description)} |"
+	)
 
 
 def parse_markdown(lib: ApiLibrary, write_path: Path):

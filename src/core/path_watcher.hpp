@@ -20,7 +20,7 @@
 
 namespace YLP
 {
-	class DirectoryWatcher
+	class PathWatcher
 	{
 	public:
 		enum class ePathStatus : uint8_t
@@ -31,29 +31,36 @@ namespace YLP
 		};
 
 		using WatchCallback = std::function<void(const fs::path&, ePathStatus)>;
-		DirectoryWatcher() = default;
+		PathWatcher() = default;
 
-		explicit DirectoryWatcher(fs::path root, std::chrono::duration<int, std::milli> pollInterval, const std::vector<std::string>& ignoreList = {}) :
+		explicit PathWatcher(fs::path root, std::chrono::duration<int, std::milli> pollInterval, const std::vector<std::string>& ignoreList = {}) :
 		    m_Root(std::move(root)),
 		    m_PollInterval(pollInterval)
 		{
-			std::error_code ec{};
-			if (!fs::exists(m_Root, ec))
+			if (!IO::Exists(m_Root))
 				return;
 
-			for (const auto& entry : fs::recursive_directory_iterator(m_Root))
+			std::error_code ec;
+			if (IO::IsFile(m_Root))
 			{
-				if (std::find(ignoreList.begin(), ignoreList.end(), entry.path().filename().string()) != ignoreList.end())
+				m_Snapshot[m_Root] = fs::last_write_time(m_Root, ec);
+			}
+			else if (IO::IsDir(m_Root))
+			{
+				for (const auto& entry : fs::recursive_directory_iterator(m_Root))
 				{
-					LOG_DEBUG("Ignored path {}", entry.path().filename().string());
-					continue;
-				}
+					if (std::find(ignoreList.begin(), ignoreList.end(), entry.path().filename().string()) != ignoreList.end())
+					{
+						LOG_DEBUG("Ignored path {}", entry.path().filename().string());
+						continue;
+					}
 
-				m_Snapshot[entry.path()] = fs::last_write_time(entry);
+					m_Snapshot[entry.path()] = fs::last_write_time(entry, ec);
+				}
 			}
 		}
 
-		~DirectoryWatcher()
+		~PathWatcher()
 		{
 			Stop();
 		}
@@ -64,36 +71,26 @@ namespace YLP
 			if (now - m_LastPollTime < m_PollInterval)
 				return;
 
-			if (fs::exists(m_Root))
+			if (IO::Exists(m_Root))
 			{
-				for (const auto& entry : fs::recursive_directory_iterator(m_Root))
+				if (IO::IsFile(m_Root))
+					HandleWriteTime(m_Root, callback);
+				else if (IO::IsDir(m_Root))
 				{
-					auto lwt = fs::last_write_time(entry);
-					if (m_Snapshot.find(entry.path()) == m_Snapshot.end())
-					{
-						m_Snapshot[entry.path()] = lwt;
-						callback(entry.path(), ePathStatus::Created);
-					}
-
-					else if (m_Snapshot[entry.path()] != lwt)
-					{
-						m_Snapshot[entry.path()] = lwt;
-						callback(entry.path(), ePathStatus::Modified);
-					}
+					for (const auto& entry : fs::recursive_directory_iterator(m_Root))
+						HandleWriteTime(entry.path(), callback);
 				}
 			}
 
 			for (auto it = m_Snapshot.begin(); it != m_Snapshot.end();)
 			{
-				if (!fs::exists(it->first))
+				if (!IO::Exists(it->first))
 				{
 					callback(it->first, ePathStatus::Erased);
 					it = m_Snapshot.erase(it);
 				}
 				else
-				{
 					++it;
-				}
 			}
 			m_LastPollTime = now;
 		}
@@ -126,5 +123,21 @@ namespace YLP
 		std::unordered_map<fs::path, fs::file_time_type> m_Snapshot{};
 
 		bool m_IsRunning{false};
+
+		void HandleWriteTime(const fs::path& _path, const WatchCallback& callback)
+		{
+			std::error_code ec;
+			auto lwt = fs::last_write_time(_path, ec);
+			if (m_Snapshot.find(_path) == m_Snapshot.end())
+			{
+				m_Snapshot[_path] = lwt;
+				callback(_path, ePathStatus::Created);
+			}
+			else if (m_Snapshot[_path] != lwt)
+			{
+				m_Snapshot[_path] = lwt;
+				callback(_path, ePathStatus::Modified);
+			}
+		}
 	};
 }

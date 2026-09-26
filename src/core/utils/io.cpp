@@ -375,9 +375,6 @@ namespace YLP::IO
 
 	std::optional<std::filesystem::path> MakeAbsPath(const fs::path& root, const fs::path& other)
 	{
-		if (other.is_absolute())
-			return std::nullopt;
-
 		auto canon        = std::filesystem::weakly_canonical(root);
 		auto final        = std::filesystem::weakly_canonical(canon / other);
 		auto [rootEnd, _] = std::mismatch(canon.begin(), canon.end(), final.begin());

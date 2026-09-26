@@ -63,7 +63,7 @@ YLP exists solely to enhance the player's experience through transparency and co
 )");
 
 			ImGui::Dummy(ImVec2(0, 10));
-			ImGui::InfoCallout(ImGui::ImCalloutType::Important,
+			ImGui::InfoCallout(ImGui::ImCalloutType_Important,
 			    R"(YLP is provided "as is", without any warranty of any kind, express or implied.
 The author shall not be held liable for any damages, data loss, or issues arising from the use or misuse of this software.
 )");

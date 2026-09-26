@@ -40,6 +40,7 @@ ImFont* Fonts::Small	= nullptr;
 ImFont* Fonts::Regular  = nullptr;
 ImFont* Fonts::Bold		= nullptr;
 ImFont* Fonts::Title	= nullptr;
+ImFont* Fonts::Subtitle	= nullptr;
 ImFont* Fonts::IconsBig = nullptr;
 
 static void MergeIcons(ImGuiIO& io, float size)
@@ -82,6 +83,10 @@ void Fonts::Load(ImGuiIO& io)
 	strcpy(cfg.Name, "JetBrainsMono Small");
 	Small = fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 15.0f, &cfg);
 	MergeIcons(io, 17.0f);
+
+	strcpy(cfg.Name, "JetBrainsMono Subtitle");
+	Subtitle = fonts->AddFontFromMemoryCompressedTTF(jbm_data, jbm_size, 20.0f, &cfg);
+	MergeIcons(io, 22.0f);
 
 	strcpy(cfg.Name, "JetBrainsMono Title");
 	Title = fonts->AddFontFromMemoryCompressedTTF(jbmb_data, jbmb_size, 25.0f, &cfg);
