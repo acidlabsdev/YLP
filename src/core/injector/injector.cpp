@@ -287,7 +287,7 @@ namespace YLP::Injector
 
 	InjectResult Inject(const std::string_view& processName, fs::path dllPath, const InjectorConfig& cfg)
 	{
-		IO::DllInfo dllInfo{};
+		IO::DllInfo dllInfo{.m_Path = dllPath, .m_Name = processName.data()};
 		IO::ValidateDLL(dllInfo);
 
 		if (!dllInfo.m_Ok)
@@ -298,7 +298,7 @@ namespace YLP::Injector
 
 		auto maybepid = PsUtils::GetProcessId(processName);
 		if (!maybepid.has_value())
-			return InjectResult::Err("Process not found: " + std::string(processName));
+			return InjectResult::Err("Process not found!");
 
 		DWORD pid = maybepid.value();
 		ScopedHandle hProcess(OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid));
@@ -306,7 +306,7 @@ namespace YLP::Injector
 			return InjectResult::Err("OpenProcess failed!", GetLastError());
 
 		if (!IsSameArch(hProcess.Get()))
-			return InjectResult::Err("Process mismatch (YLP and target process must be the same architecture).");
+			return InjectResult::Err("Process architecture mismatch!.");
 
 		InjectResult result;
 
@@ -325,11 +325,7 @@ namespace YLP::Injector
 		}
 
 		if (result.m_Success)
-		{
-			char buf[256];
-			sprintf_s(buf, "Successfully injected %s into %s", dllPath.filename().string().c_str(), processName.data());
-			LOG_INFO(buf);
-		}
+			LOG_INFO("Successfully injected '{}' into '{}'", dllPath.filename().string(), processName);
 
 		return result;
 	}

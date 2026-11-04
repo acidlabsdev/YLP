@@ -11,7 +11,7 @@ end
 local ok, ICONS = pcall(require, "icons")
 if not (ok && ICONS) then
 	log.warning(
-		"Could not locate icon definitions table. Please download the file from YLP's repository at 'https://github.com/xesdoog/YLP/tree/main/docs/Lua%20API/shared/icons.lua' and place it in the '/Plugins/shared' directory.")
+		"Could not locate icon definitions table. Please download the file from YLP's repository at 'https://github.com/xesdoog/YLP/tree/main/docs/Lua%20API/shared/icons.lua' and place it in the '/Plugins/shared' directory. For the time being, all icons we be shown as empty strings.")
 
 	ICONS = setmetatable({}, { __index = function(...) return "" end })
 end
@@ -23,7 +23,7 @@ local buttonBig = ImVec2(-1, 45)
 
 local modPath       = Filesystem.MyRoot() / "Downloads" / "HorseMenu.dll"
 local modFile       = require("includes.ModFile")
-local modURL        = Pair("github.com", "/YimMenu/HorseMenu/releases/download/nightly/HorseMenu.dll")
+local modURL        = Pair("github.com", "/xesdoog/Terminus/releases/download/nightly/Terminus.dll")
 local targetProcess = "RDR2.exe"
 local HorseMenu     = modFile:new(modPath, modURL, targetProcess)
 

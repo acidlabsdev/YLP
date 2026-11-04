@@ -13,106 +13,18 @@ Since most of YLP's users are technical enough and almost all of them come from 
 
 As of now, the API is in its baby stage so expect bugs and possibly undefined behavior.
 
-## Basic Code Example
+## API Demo
 
-To demonstrate what you can currently do with the Lua API, here's an example GTA V Legacy `ScriptGlobal` implementation:
+Basic API demonstrations can be found in the [Examples](./Examples/) directory.
 
-```Lua
-local SG_PTR ---@type Pointer?
-
-------------------------------------
-------------------------------------
-------------------------------------
-
----@class ScriptGlobal
----@field private m_ptr Pointer
----@overload fun(address: integer): ScriptGlobal
-local ScriptGlobal = setmetatable({}, {
-    __call = function(t, address)
-        return t:new(address)
-    end
-}); ScriptGlobal.__index = ScriptGlobal
-
----@param ptr Pointer
----@return ScriptGlobal
-local function fromptr(ptr)
-    ---@diagnostic disable-next-line
-    return setmetatable({ m_ptr = ptr }, ScriptGlobal)
-end
-
----@param index integer
----@return ScriptGlobal
-function ScriptGlobal:new(index)
-    assert(SG_PTR and not SG_PTR:IsNull(), "Globals table pointer is null!")
-    assert(type(index) == "number", "Address must be an integer.")
-    return setmetatable({
-        m_ptr = SG_PTR:Add(((index >> 0x12) & 0x3F) * 8):Dereference():Add((index & 0x3FFFF) * 8)
-    }, self)
-end
-
----@nodiscard
----@return boolean
-function ScriptGlobal:IsValid()
-    return self.m_ptr:GetAddress() >= 0x1000
-end
-
----@param offset number
-function ScriptGlobal:At(offset)
-    return fromptr(self.m_ptr:Add(offset * 8))
-end
-
----@return integer
-function ScriptGlobal:GetAddress()
-    return self.m_ptr:GetAddress()
-end
-
--- For the sake of testing, we're only going to define a `ReadFloat` method.
---
--- You can add all read/write methods from the [Pointer](lua://Pointer) class.
----@return number
-function ScriptGlobal:ReadFloat()
-    return self.m_ptr:ReadFloat()
-end
-
-----------------------------------------
-----------------------------------------
-----------------------------------------
-
-local function test()
-    local fKickVotesNeededRatio = ScriptGlobal(262145):At(6)
-    if (not fKickVotesNeededRatio:IsValid()) then
-        log.warning("Please reload the script after loading into a game mode.")
-        return
-    end
-
-    printf("fKickVotesNeededRatio: %.2ff", fKickVotesNeededRatio:ReadFloat())
-end
-
-YLP.RegisterProcessWatcher("GTA5.exe", function(process --[[This parameter is passed by YLP when the process is found]])
-    local ptr = process:FindPattern("48 8D 15 ? ? ? ? 4C 8B C0 E8 ? ? ? ? 48 85 FF 48 89 1D", "Script Globals")
-    if (ptr:IsNull()) then
-        return
-    end
-
-    SG_PTR = ptr:Add(0x3):Rip()
-    test()
-end)
-
-```
-
->[!Note]
->The example code above is GTA V-specific but the underlying API is not. [Process](./Docs/Process.md) and [Pointer](./Docs/Pointer.md) operate on arbitrary processes so Lua scripts can be used to extend YLP for other applications and modding frameworks as well.
-
-The Lua API is not limited to making external basic cheats similar to the example above, *(actually that's a side effect)*. It was mainly implemented to allow you to to do pretty much the exact thing YLP currently does to [maintain](../../src/core/YimMenu/yimmenu.hpp) and [auto-inject](../../src/core/memory/pointers.cpp) YimMenu for any other mod/game combo using its [Task](./Docs/Task.md), [Filesystem](./Docs/Filesystem.md), [Path](./Docs/Path.md), basic [HTTP](./Docs/HTTP.md) `GET` requests, and the [DLL injection function](./Docs/YLP.md#injectdll).
-
-For advanced users, the `JIT` and `FFI` libs are open. `debug` is not. If you experience crashes/instability with certain shared modules *(JSON/XML parsers, web scrapers, etc.)* try disabling jit either for those specific modules only or for your entire plugin.
+For advanced users, the `JIT` and `FFI` libraries are open. `debug` is not. If you experience crashes or instability with certain shared modules *(JSON/XML parsers, web scrapers, etc.)* try disabling jit either for those specific modules only or for your entire plugin.
 
 ## Language Server
 
 To have type hints in your code editor, follow these steps:
 
 1. Install Lua Language Server *([VS Code Extension](https://marketplace.visualstudio.com/items?itemName=sumneko.lua), [GitHub repository](https://github.com/LuaLS/lua-language-server))*.
-2. Download the [/LuaLS](./LuaLS/) folder and place it in `%AppData%\YLP\Plugins\shared`.
+2. Download the [/LuaLS](./LuaLS/) folder and note down its save path.
 3. For Visual Studio Code users, create a `.code-workspace` file in your plugin folder *(next to your `main.lua` file)* and paste this in it:
 
     ```JSON
@@ -127,7 +39,7 @@ To have type hints in your code editor, follow these steps:
             "Lua.runtime.enableLuaJITExtensions": true,
             "Lua.workspace.checkThirdParty": false,
             "Lua.workspace.library": [
-                "../shared"
+                "C:\\Path\\To\\LuaLS"
             ],
             "Lua.runtime.builtin": {
                 "debug": "disable"
